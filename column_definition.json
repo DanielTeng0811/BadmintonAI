@@ -1,0 +1,154 @@
+[
+    {
+        "column": "rally",
+        "definition": "該局（set）中的第幾回合，從1開始。"
+    },
+    {
+        "column": "ball_round",
+        "definition": "在當次回合中，第幾次擊球（第幾拍）。"
+    },
+    {
+        "column": "score_status",
+        "definition": "分數差距"
+    },
+    {
+        "column": "player_score",
+        "definition": "該球員當前的分數"
+    },
+    {
+        "column": "opponent_score",
+        "definition": "對方球員當前的分數"
+    },
+    {
+        "column": "player",
+        "definition": "球員姓名"
+    },
+    {
+        "column": "server",
+        "definition": "發球方標籤"
+    },
+    {
+        "column": "type",
+        "definition": "擊球類型"
+    },
+    {
+        "column": "hit_area",
+        "definition": "擊球的位置區塊"
+    },
+    {
+        "column": "hit_x",
+        "definition": "擊球的X座標(可以當作球的x位置)"
+    },
+    {
+        "column": "hit_y",
+        "definition": "擊球的Y座標(可以當作球的y位置)"
+    },
+    {
+        "column": "landing_area",
+        "definition": "落點的位置區塊"
+    },
+    {
+        "column": "landing_x",
+        "definition": "落點X座標"
+    },
+    {
+        "column": "landing_y",
+        "definition": "落點Y座標"
+    },
+    {
+        "column": "lose_reason",
+        "definition": "輸球原因"
+    },
+    {
+        "column": "win_reason",
+        "definition": "贏球原因"
+    },
+    {
+        "column": "getpoint_player",
+        "definition": "該回合得分的玩家"
+    },
+    {
+        "column": "player_location_area",
+        "definition": "球員所在區域"
+    },
+    {
+        "column": "player_location_x",
+        "definition": "球員X座標"
+    },
+    {
+        "column": "player_location_y",
+        "definition": "球員Y座標"
+    },
+    {
+        "column": "player_move_x",
+        "definition": "球員下一次要移動到的X座標"
+    },
+    {
+        "column": "player_move_y",
+        "definition": "球員下一次要移動到的Y座標"
+    },
+    {
+        "column": "opponent_location_area",
+        "definition": "對手所在區域"
+    },
+    {
+        "column": "opponent_location_x",
+        "definition": "對手X座標"
+    },
+    {
+        "column": "opponent_location_y",
+        "definition": "對手Y座標"
+    },
+    {
+        "column": "opponent_move_x",
+        "definition": "對手下一次要移動到的X座標"
+    },
+    {
+        "column": "opponent_move_y",
+        "definition": "對手下一次要移動到的Y座標"
+    },
+    {
+        "column": "ball_distance",
+        "definition": "球路徑距離"
+    },
+    {
+        "column": "player_type",
+        "definition": "球員打的球種"
+    },
+    {
+        "column": "opponent_type",
+        "definition": "對手要回擊的球種"
+    },
+    {
+        "column": "player_move_area",
+        "definition": "球員移動後的區域代碼"
+    },
+    {
+        "column": "moving_x",
+        "definition": "球員移動後的X座標"
+    },
+    {
+        "column": "moving_y",
+        "definition": "球員移動後的Y座標"
+    },
+    {
+        "column": "ball_distance_x",
+        "definition": "player_x和hit_x的差距"
+    },
+    {
+        "column": "ball_distance_y",
+        "definition": "player_y和hit_y的差距"
+    },
+    {
+        "column": "set",
+        "definition": "當下是第幾局"
+    },
+    {
+        "column": "match_id",
+        "definition": "每場比賽的唯一識別碼，用於區分不同場次。"
+    },
+    {
+        "column": "rally_id",
+        "definition": "每個回合在全部數據集中的唯一識別碼。"
+    }
+]
