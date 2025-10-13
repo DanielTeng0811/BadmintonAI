@@ -1,0 +1,112 @@
+[
+    {
+        "question": "這位選手在多數回合中主要站在哪個場區發球或接球？",
+        "sql_template": "SELECT player_location_area, COUNT(*) AS freq FROM all_dataset WHERE server = '{player_name}' GROUP BY player_location_area ORDER BY freq DESC LIMIT 1;",
+        "category": "位置與站位"
+    },
+    {
+        "question": "這位選手在得分回合時站位區域是否有明顯偏好？",
+        "sql_template": "SELECT player_location_area, COUNT(*) AS count FROM all_dataset WHERE getpoint_player = '{player_name}' GROUP BY player_location_area ORDER BY count DESC;",
+        "category": "位置與站位"
+    },
+    {
+        "question": "對手失分時，我方選手多半位於哪個位置？",
+        "sql_template": "SELECT player_location_area, COUNT(*) AS count FROM all_dataset WHERE getpoint_player = '{opponent_name}' GROUP BY player_location_area ORDER BY count DESC;",
+        "category": "位置與站位"
+    },
+    {
+        "question": "某場比賽中哪個區域的出現頻率最高？",
+        "sql_template": "SELECT player_location_area, COUNT(*) AS freq FROM all_dataset WHERE match_id = '{match_id}' GROUP BY player_location_area ORDER BY freq DESC LIMIT 1;",
+        "category": "位置與站位"
+    },
+    {
+        "question": "這位選手平均每回合移動距離是多少？",
+        "sql_template": "SELECT AVG(ABS(moving_x) + ABS(moving_y)) AS avg_move FROM all_dataset WHERE player_name = '{player_name}';",
+        "category": "移動能力"
+    },
+    {
+        "question": "這位選手在得分回合的移動距離是否較長？",
+        "sql_template": "SELECT AVG(ABS(moving_x) + ABS(moving_y)) AS avg_move FROM all_dataset WHERE getpoint_player = '{player_name}';",
+        "category": "移動能力"
+    },
+    {
+        "question": "失分回合中選手的移動距離是否變短？",
+        "sql_template": "SELECT AVG(ABS(moving_x) + ABS(moving_y)) AS avg_move FROM all_dataset WHERE flaw != 0 AND player_name = '{player_name}';",
+        "category": "移動能力"
+    },
+    {
+        "question": "每回合開始到結束選手平均位移方向為何？",
+        "sql_template": "SELECT AVG(player_move_x) AS avg_x, AVG(player_move_y) AS avg_y FROM all_dataset WHERE player_name = '{player_name}';",
+        "category": "移動能力"
+    },
+    {
+        "question": "哪位選手的平均覆蓋距離最大？",
+        "sql_template": "SELECT player_name, AVG(ABS(moving_x) + ABS(moving_y)) AS avg_distance FROM all_dataset GROUP BY player_name ORDER BY avg_distance DESC LIMIT 1;",
+        "category": "移動能力"
+    },
+    {
+        "question": "發球後的第一拍，哪位選手得分機率最高？",
+        "sql_template": "SELECT server, COUNT(*) AS serve_count, SUM(CASE WHEN getpoint_player = server THEN 1 ELSE 0 END) AS serve_points, ROUND(100.0 * SUM(CASE WHEN getpoint_player = server THEN 1 ELSE 0 END) / COUNT(*), 2) AS serve_win_rate FROM all_dataset GROUP BY server ORDER BY serve_win_rate DESC;",
+        "category": "得分策略"
+    },
+    {
+        "question": "每位選手的得分率是多少？",
+        "sql_template": "SELECT getpoint_player AS player, COUNT(*) AS points, ROUND(100.0 * COUNT(*) / (SELECT COUNT(*) FROM all_dataset), 2) AS rate FROM all_dataset GROUP BY getpoint_player ORDER BY rate DESC;",
+        "category": "得分策略"
+    },
+    {
+        "question": "不同局數中選手得分率有沒有變化？",
+        "sql_template": "SELECT set, getpoint_player, COUNT(*) AS points FROM all_dataset GROUP BY set, getpoint_player ORDER BY set;",
+        "category": "得分策略"
+    },
+    {
+        "question": "每場比賽中我方選手連續得分最長的回合數是多少？",
+        "sql_template": "-- 需邏輯計算連續得分，可透過窗口函數計算\nSELECT match_id, getpoint_player, MAX(streak) AS max_streak FROM (SELECT match_id, getpoint_player, SUM(is_new_streak) OVER (PARTITION BY match_id, getpoint_player ORDER BY rally_id) AS streak FROM (SELECT *, CASE WHEN getpoint_player = LAG(getpoint_player) OVER (PARTITION BY match_id ORDER BY rally_id) THEN 0 ELSE 1 END AS is_new_streak FROM all_dataset)) GROUP BY match_id, getpoint_player;",
+        "category": "得分策略"
+    },
+    {
+        "question": "哪位選手在發球局中得分最多？",
+        "sql_template": "SELECT server, COUNT(*) AS serve_points FROM all_dataset WHERE getpoint_player = server GROUP BY server ORDER BY serve_points DESC;",
+        "category": "得分策略"
+    },
+    {
+        "question": "這位選手在整場比賽中總共失誤幾次？",
+        "sql_template": "SELECT COUNT(*) AS total_flaws FROM all_dataset WHERE flaw != 0 AND player_name = '{player_name}' AND match_id = '{match_id}';",
+        "category": "失誤穩定性"
+    },
+    {
+        "question": "不同選手類型平均失誤率差異多少？",
+        "sql_template": "SELECT player_type, ROUND(100.0 * SUM(CASE WHEN flaw != 0 THEN 1 ELSE 0 END) / COUNT(*), 2) AS flaw_rate FROM all_dataset GROUP BY player_type;",
+        "category": "失誤穩定性"
+    },
+    {
+        "question": "這位選手的失誤集中在哪些回合？",
+        "sql_template": "SELECT rally_id, flaw FROM all_dataset WHERE flaw != 0 AND player_name = '{player_name}';",
+        "category": "失誤穩定性"
+    },
+    {
+        "question": "哪位選手在長回合中失誤最多？",
+        "sql_template": "SELECT player_name, COUNT(*) AS flaw_count FROM all_dataset WHERE flaw != 0 GROUP BY player_name ORDER BY flaw_count DESC LIMIT 1;",
+        "category": "失誤穩定性"
+    },
+    {
+        "question": "哪種選手類型在高壓分數階段失誤最多？",
+        "sql_template": "SELECT player_type, COUNT(*) AS flaw_count FROM all_dataset WHERE flaw != 0 AND score_status >= (SELECT MAX(score_status) - 3 FROM all_dataset) GROUP BY player_type ORDER BY flaw_count DESC;",
+        "category": "失誤穩定性"
+    },
+    {
+        "question": "某場比賽中平均每回合球的移動距離是多少？",
+        "sql_template": "SELECT match_id, AVG(ball_distance) AS avg_ball_distance FROM all_dataset WHERE match_id = '{match_id}';",
+        "category": "整體表現"
+    },
+    {
+        "question": "哪場比賽的整體移動量最大？",
+        "sql_template": "SELECT match_id, SUM(ABS(moving_x) + ABS(moving_y)) AS total_move FROM all_dataset GROUP BY match_id ORDER BY total_move DESC LIMIT 1;",
+        "category": "整體表現"
+    },
+    {
+        "question": "這場比賽的平均回合長度是多少？",
+        "sql_template": "SELECT match_id, COUNT(DISTINCT rally_id) AS rally_count FROM all_dataset WHERE match_id = '{match_id}';",
+        "category": "整體表現"
+    }
+]
