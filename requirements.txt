@@ -1,5 +1,36 @@
+# Web 框架
 streamlit>=1.32.0
+
+# AI/ML
 openai>=1.12.0
+
+# 環境變數
 python-dotenv>=1.0.0
+
+# 資料處理和視覺化
 pandas>=2.0.0
 matplotlib>=3.7.0
+
+# ===== 以下為 csv2json.ipynb 所需套件 =====
+
+# 深度學習框架
+torch
+transformers
+accelerate>=0.26.0
+
+# 量化和優化
+bitsandbytes
+
+# 檢索和 NLP
+rank_bm25
+sentence_transformers
+jieba
+
+# 科學計算
+numpy
+
+# 進度條
+tqdm
+
+# TensorFlow (通常不需要，sentence_transformers 會用 PyTorch)
+# tf-keras
