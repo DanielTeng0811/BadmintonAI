@@ -124,16 +124,16 @@ if prompt := st.chat_input("請輸入你的問題..."):
                 model=model_choice,
                 messages=[
                     {"role": "system", "content": """你是一個羽球數據分析助手。
-你需要幫助使用者分析羽球比賽數據。
-可用的數據欄位包括：match_id, game_no, rally_id, stroke_no, player, opponent, shot_type, landing_zone, error_type, rally_winner 等。
+                    你需要幫助使用者分析羽球比賽數據。
+                    可用的數據欄位包括：match_id, game_no, rally_id, stroke_no, player, opponent, shot_type, landing_zone, error_type, rally_winner 等。
 
-當使用者提問時，你應該：
-1. 理解問題的意圖
-2. 說明需要哪些數據欄位
-3. 建議如何計算或分析
-4. 推薦適合的視覺化方式（圓餅圖/長條圖/熱區圖等）
+                    當使用者提問時，你應該：
+                    1. 理解問題的意圖
+                    2. 說明需要哪些數據欄位
+                    3. 建議如何計算或分析
+                    4. 推薦適合的視覺化方式（圓餅圖/長條圖/熱區圖等）
 
-目前是測試階段，還沒有實際數據，請先解釋如何回答這個問題。"""},
+                    目前是測試階段，還沒有實際數據，請先解釋如何回答這個問題。"""},
                     *st.session_state.messages
                 ],
                 stream=True
