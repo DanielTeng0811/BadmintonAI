@@ -57,8 +57,8 @@ wandb/
 data/
 dataset/
 datasets/
-*.csv
-*.json
+#*.csv
+#*.json
 *.xml
 *.npy
 *.npz
