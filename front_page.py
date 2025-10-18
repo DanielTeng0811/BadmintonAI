@@ -42,6 +42,7 @@ with st.sidebar:
     )
 
     if api_mode == "Gemini":
+        # 保持與您原始碼一致的模型選項
         model_choice = st.selectbox("選擇模型", ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
     else:
         model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
@@ -54,6 +55,11 @@ with st.sidebar:
     - 各球員 (`player`) 的殺球 (`smash`) 次數比較。
     - 誰是失誤王？請統計各球員的失誤次數。
     """)
+    
+    # 新增清除對話按鈕
+    if st.button("🗑️ 清除對話"):
+        st.session_state.messages = []
+        st.rerun()
 
 # 初始化 AI client
 client = initialize_client(api_mode, api_key_input)
@@ -98,8 +104,9 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
         # 準備呼叫 API
         with st.chat_message("assistant"):
-            with st.spinner("AI 數據分析師正在生成程式碼並繪製圖表中..."):
+            with st.spinner("AI 數據分析師正在思考中..."):
                 try:
+                    # --- 步驟 1: 第一次 AI 呼叫，生成程式碼和初步說明 ---
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
                     
                     response = client.chat.completions.create(
@@ -119,59 +126,90 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         code_end = ai_response_text.rfind("```")
                         code_to_execute = ai_response_text[code_start:code_end].strip()
 
-                    # 顯示 AI 的文字說明
-                    st.markdown(ai_response_text)
-                    
+                    # --- 步驟 2: 如果有程式碼，就執行並準備好圖表和摘要數據 ---
                     final_fig = None
+                    summary_data = None
                     if code_to_execute:
-                        # 顯示即將執行的程式碼
-                        with st.expander("點此查看 AI 生成的 Python 程式碼"):
-                            st.code(code_to_execute, language="python")
-                        
-                        # 建立一個安全的執行環境
-                        import platform
                         exec_globals = {
-                            "pd": pd,
-                            "st": st,
-                            "df": df.copy(),  # 使用副本以防意外修改
-                            "platform": platform  # 讓 AI 生成的程式碼能判斷作業系統
+                            "pd": pd, "st": st, "df": df.copy(),
+                            "platform": platform, "io": io
                         }
-                        
                         # 執行程式碼
                         exec(code_to_execute, exec_globals)
                         
-                        # 從執行環境中獲取圖表物件
-                        if 'fig' in exec_globals:
-                            final_fig = exec_globals['fig']
-                            st.pyplot(final_fig)
+                        # 獲取圖表物件
+                        final_fig = exec_globals.get('fig', None)
+                        
+                        # 尋找摘要數據 (DataFrame or Series)
+                        for var_name, var_value in exec_globals.items():
+                            if isinstance(var_value, (pd.DataFrame, pd.Series)) and var_name != 'df':
+                                summary_data = var_value
+                                break
+                    
+                    # --- 步驟 3: 如果有摘要數據，進行第二次 AI 呼叫以生成數據洞察 ---
+                    summary_text = ""
+                    if summary_data is not None:
+                        with st.spinner("AI 正在分析數據並生成文字洞察..."):
+                            try:
+                                table_markdown = summary_data.to_markdown()
+                                insight_prompt = f"""
+                                這是原始的使用者問題: "{prompt}"
+                                這是根據問題計算出的摘要表格:
+                                ```markdown
+                                {table_markdown}
+                                ```
+                                請扮演專業數據分析師，根據此表格，用繁體中文撰寫一段簡短精闢的數據洞察。
+                                直接提供結論，不要複述問題或程式碼。
+                                """
+                                insight_response = client.chat.completions.create(
+                                    model=model_choice,
+                                    messages=[
+                                        {"role": "system", "content": "你是一位專業的數據分析師，專門從數據表格中解讀出有價值的洞察。"},
+                                        {"role": "user", "content": insight_prompt}
+                                    ],
+                                    temperature=0.5,
+                                )
+                                summary_text = insight_response.choices[0].message.content
+                            except Exception as e:
+                                # 如果生成洞察失敗，給一個提示訊息，但不中斷整個流程
+                                summary_text = f"\n\n*(無法自動生成數據洞察: {e})*"
 
-                            # 加入下載圖表按鈕
-                            buf = io.BytesIO()
-                            final_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
-                            buf.seek(0)
+                    # --- 步驟 4: 整合所有結果並一次性顯示 ---
+                    
+                    # 組合最終的文字輸出
+                    final_content = ai_response_text
+                    if summary_text:
+                        final_content += f"\n\n---\n#### 📊 數據洞察\n{summary_text}"
+                    
+                    # 顯示文字和程式碼區塊
+                    st.markdown(final_content)
+                    if code_to_execute:
+                        with st.expander("點此查看 AI 生成的 Python 程式碼"):
+                            st.code(code_to_execute, language="python")
 
-                            st.download_button(
-                                label="📥 下載圖表",
-                                data=buf,
-                                file_name=f"羽球分析_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
-                                mime="image/png",
-                                use_container_width=False
-                            )
-                        else:
-                            st.warning("AI 生成的程式碼中未找到名為 `fig` 的圖表物件。")
+                    # 顯示圖表和下載按鈕
+                    if final_fig:
+                        st.pyplot(final_fig)
+                        buf = io.BytesIO()
+                        final_fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
+                        buf.seek(0)
+                        st.download_button(
+                            label="📥 下載圖表",
+                            data=buf,
+                            file_name=f"羽球分析_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
+                            mime="image/png",
+                            use_container_width=False
+                        )
+                    elif code_to_execute and not final_fig:
+                         st.warning("AI 生成的程式碼已執行，但未找到名為 `fig` 的圖表物件。")
 
-                    # 將完整結果存入 session state
+                    # --- 步驟 5: 將完整結果存入 session state ---
                     st.session_state.messages.append({
                         "role": "assistant",
-                        "content": ai_response_text,
+                        "content": final_content,
                         "figure": final_fig
                     })
 
                 except Exception as e:
-                    st.error(f"發生錯誤：{e}")
+                    st.error(f"處理您的請求時發生錯誤：{e}")
                     st.session_state.messages.append({"role": "assistant", "content": str(e), "figure": None})
-
-# 清除對話按鈕
-if st.sidebar.button("🗑️ 清除對話"):
-    st.session_state.messages = []
-    st.rerun()

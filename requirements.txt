@@ -10,6 +10,7 @@ python-dotenv>=1.0.0
 # Data Analysis (未來會用到)
 pandas>=2.0.0
 numpy>=1.24.0
+tabulate>=0.9.0 # Added for pandas .to_markdown() support
 
 # Visualization (未來會用到)
 matplotlib>=3.7.0

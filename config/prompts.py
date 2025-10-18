@@ -32,6 +32,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 2.  **絕對不要** 包含 `pd.read_csv()` 或任何讀取資料的程式碼，因為 `df` 已經存在於執行環境中。
 3.  程式碼的最終結果**必須**是一個 Matplotlib 的 Figure 物件，並將其賦值給一個名為 `fig` 的變數。例如：`fig, ax = plt.subplots()`。
 4.  **絕對不要** 在程式碼中使用 `plt.show()`，Streamlit 會負責處理圖表的顯示。
+5.  類別務必是名稱而非數字。
 
 **字體設定（必須嚴格遵守，每次都要寫，放在程式碼最開頭）:**
 ```python
