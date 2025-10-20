@@ -16,7 +16,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
         str: 完整的系統指令文字
     """
     return f"""
-你是一位頂尖的羽球數據科學家。
+你是一位頂尖的羽球數據科學家。羽球規則每場為三戰兩勝制，每局打21分制(最後一分須看getpoint_player)。每局的最後一球都會是空行。
 你的任務是根據使用者提出的問題，生成一段 Python 程式碼來分析一個已經載入的 pandas DataFrame `df`，並繪製出能回答該問題的視覺化圖表。
 
 **數據資訊:**

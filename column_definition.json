@@ -10,19 +10,19 @@
     },
     {
       "column": "score_status",
-      "definition": "分數差距"
+      "definition": "分數差距(player_score-opponent_score)"
     },
     {
       "column": "player_score",
-      "definition": "該球員當前的分數"
+      "definition": "Kento MOMOTA當前的分數"
     },
     {
       "column": "opponent_score",
-      "definition": "對方球員當前的分數"
+      "definition": "CHOU Tien Chen當前的分數"
     },
     {
       "column": "player",
-      "definition": "球員姓名"
+      "definition": "當次擊球球員姓名"
     },
     {
       "column": "server",
@@ -58,19 +58,19 @@
     },
     {
       "column": "lose_reason",
-      "definition": "輸球原因"
+      "definition": "輸球原因(每一回合只有最後一球才會記錄)"
     },
     {
       "column": "win_reason",
-      "definition": "贏球原因"
+      "definition": "贏球原因(每一回合只有最後一球才會記錄)"
     },
     {
       "column": "getpoint_player",
-      "definition": "該回合得分的玩家"
+      "definition": "該回合最後得分的玩家"
     },
     {
       "column": "player_location_area",
-      "definition": "球員所在區域"
+      "definition": "球員所在的區域塊"
     },
     {
       "column": "player_location_x",
@@ -90,7 +90,7 @@
     },
     {
       "column": "opponent_location_area",
-      "definition": "對手所在區域"
+      "definition": "對手所在的區域塊"
     },
     {
       "column": "opponent_location_x",
@@ -110,15 +110,15 @@
     },
     {
       "column": "ball_distance",
-      "definition": "球路徑距離"
+      "definition": "player位置和hit位置的差距"
     },
     {
       "column": "player_type",
-      "definition": "球員打的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
+      "definition": "球員這拍打的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
     },
     {
       "column": "opponent_type",
-      "definition": "對手要回擊的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
+      "definition": "對手上一拍的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
     },
     {
       "column": "player_move_area",
@@ -142,7 +142,7 @@
     },
     {
       "column": "set",
-      "definition": "當下是第幾局"
+      "definition": "在當場次中是第幾局"
     },
     {
       "column": "match_id",
