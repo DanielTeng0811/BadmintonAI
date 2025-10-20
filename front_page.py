@@ -5,6 +5,7 @@ import platform
 import pandas as pd
 from datetime import datetime
 from dotenv import load_dotenv
+import zipfile # <--- 引入必要的模組
 
 # 自訂模組
 from config.prompts import create_system_prompt
@@ -42,7 +43,6 @@ with st.sidebar:
     )
 
     if api_mode == "Gemini":
-        # 保持與您原始碼一致的模型選項
         model_choice = st.selectbox("選擇模型", ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
     else:
         model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
@@ -56,7 +56,72 @@ with st.sidebar:
     - 誰是失誤王？請統計各球員的失誤次數。
     """)
     
-    # 新增清除對話按鈕
+    st.divider()
+
+    # --- START: 全新修改的儲存對話功能 ---
+    # 準備一個記憶體內的 BytesIO 物件來存放 ZIP 檔案
+    zip_buffer = io.BytesIO()
+
+    # 檢查是否有對話紀錄可以儲存
+    has_messages = "messages" in st.session_state and st.session_state.messages
+    
+    if has_messages:
+        # 使用 'with' 陳述式來安全地建立 ZIP 檔案
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_f:
+            markdown_content = f"# 🏸 羽球 AI 數據分析師 - 分析報告\n"
+            markdown_content += f"**儲存時間:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n---\n\n"
+            
+            chart_counter = 0
+
+            for message in st.session_state.messages:
+                role_emoji = "👤" if message["role"] == "user" else "🤖"
+                role_title = "使用者提問" if message["role"] == "user" else "AI 分析師回覆"
+                
+                content_to_save = message["content"]
+
+                # 如果是 AI 的回覆，就移除程式碼區塊
+                if message["role"] == "assistant" and "```python" in content_to_save:
+                    parts = content_to_save.split("```python")
+                    before_code = parts[0]
+                    after_code_parts = parts[1].split("```", 1)
+                    after_code = after_code_parts[1] if len(after_code_parts) > 1 else ""
+                    content_to_save = before_code + after_code
+                
+                markdown_content += f"### {role_emoji} {role_title}\n"
+                markdown_content += f"{content_to_save.strip()}\n\n"
+                
+                # 如果訊息中有圖表，將其存入 ZIP 並在 Markdown 中引用
+                if message.get("figure") is not None:
+                    chart_counter += 1
+                    chart_filename = f"chart_{chart_counter}.png"
+                    
+                    # 將圖表存入一個記憶體內的 buffer
+                    img_buffer = io.BytesIO()
+                    message["figure"].savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                    img_buffer.seek(0)
+                    
+                    # 將圖表的 byte 寫入 ZIP 檔案
+                    zip_f.writestr(chart_filename, img_buffer.getvalue())
+                    
+                    # 在 Markdown 內容中加入圖片的引用
+                    markdown_content += f"![產生的圖表 {chart_counter}]({chart_filename})\n\n"
+
+                markdown_content += "---\n\n"
+            
+            # 最後，將整理好的 Markdown 文字內容寫入 ZIP 檔案中
+            zip_f.writestr("分析報告.md", markdown_content.encode('utf-8'))
+
+    st.download_button(
+       label="💾 下載分析報告 (ZIP)",
+       data=zip_buffer.getvalue(),
+       file_name=f"羽球分析報告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+       mime="application/zip",
+       disabled=not has_messages, # 如果沒有對話紀錄，則禁用按鈕
+       help="點此可將圖文並茂的分析報告下載為 ZIP 壓縮檔"
+    )
+    # --- END: 全新修改的儲存對話功能 ---
+
+    # 清除對話按鈕
     if st.button("🗑️ 清除對話"):
         st.session_state.messages = []
         st.rerun()
@@ -74,21 +139,17 @@ for idx, message in enumerate(st.session_state.messages):
         st.markdown(message["content"])
         if "figure" in message and message["figure"] is not None:
             st.pyplot(message["figure"])
-
-            # 為歷史圖表也加入下載按鈕
             buf = io.BytesIO()
             message["figure"].savefig(buf, format='png', dpi=300, bbox_inches='tight')
             buf.seek(0)
-
             st.download_button(
                 label="📥 下載圖表",
                 data=buf,
                 file_name=f"羽球分析_{idx}_{datetime.now().strftime('%Y%m%d')}.png",
                 mime="image/png",
-                key=f"download_history_{idx}",  # 每個按鈕需要唯一的 key
+                key=f"download_history_{idx}",
                 use_container_width=False
             )
-
 
 # --- 主對話流程 ---
 if prompt := st.chat_input("請輸入你的數據分析問題..."):
@@ -97,18 +158,15 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
     elif not api_key_input:
         st.error("請在左側側邊欄輸入您的 API Key。")
     else:
-        # 將使用者問題加入歷史紀錄並顯示
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # 準備呼叫 API
         with st.chat_message("assistant"):
             with st.spinner("AI 數據分析師正在思考中..."):
                 try:
-                    # --- 步驟 1: 第一次 AI 呼叫，生成程式碼和初步說明 ---
+                    # 步驟 1: 第一次 AI 呼叫
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
-                    
                     response = client.chat.completions.create(
                         model=model_choice,
                         messages=[
@@ -116,17 +174,15 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             {"role": "user", "content": prompt}
                         ],
                     )
-                    
                     ai_response_text = response.choices[0].message.content
                     
-                    # 從 AI 回應中解析程式碼
                     code_to_execute = None
                     if "```python" in ai_response_text:
                         code_start = ai_response_text.find("```python") + len("```python\n")
                         code_end = ai_response_text.rfind("```")
                         code_to_execute = ai_response_text[code_start:code_end].strip()
 
-                    # --- 步驟 2: 如果有程式碼，就執行並準備好圖表和摘要數據 ---
+                    # 步驟 2: 執行程式碼
                     final_fig = None
                     summary_data = None
                     if code_to_execute:
@@ -134,19 +190,15 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             "pd": pd, "st": st, "df": df.copy(),
                             "platform": platform, "io": io
                         }
-                        # 執行程式碼
                         exec(code_to_execute, exec_globals)
-                        
-                        # 獲取圖表物件
                         final_fig = exec_globals.get('fig', None)
                         
-                        # 尋找摘要數據 (DataFrame or Series)
                         for var_name, var_value in exec_globals.items():
                             if isinstance(var_value, (pd.DataFrame, pd.Series)) and var_name != 'df':
                                 summary_data = var_value
                                 break
                     
-                    # --- 步驟 3: 如果有摘要數據，進行第二次 AI 呼叫以生成數據洞察 ---
+                    # 步驟 3: 第二次 AI 呼叫 (生成洞察)
                     summary_text = ""
                     if summary_data is not None:
                         with st.spinner("AI 正在分析數據並生成文字洞察..."):
@@ -171,23 +223,18 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 )
                                 summary_text = insight_response.choices[0].message.content
                             except Exception as e:
-                                # 如果生成洞察失敗，給一個提示訊息，但不中斷整個流程
                                 summary_text = f"\n\n*(無法自動生成數據洞察: {e})*"
 
-                    # --- 步驟 4: 整合所有結果並一次性顯示 ---
-                    
-                    # 組合最終的文字輸出
+                    # 步驟 4: 整合結果並顯示
                     final_content = ai_response_text
                     if summary_text:
                         final_content += f"\n\n---\n#### 📊 數據洞察\n{summary_text}"
                     
-                    # 顯示文字和程式碼區塊
                     st.markdown(final_content)
                     if code_to_execute:
                         with st.expander("點此查看 AI 生成的 Python 程式碼"):
                             st.code(code_to_execute, language="python")
 
-                    # 顯示圖表和下載按鈕
                     if final_fig:
                         st.pyplot(final_fig)
                         buf = io.BytesIO()
@@ -203,7 +250,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     elif code_to_execute and not final_fig:
                          st.warning("AI 生成的程式碼已執行，但未找到名為 `fig` 的圖表物件。")
 
-                    # --- 步驟 5: 將完整結果存入 session state ---
+                    # 步驟 5: 存入 session state
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": final_content,
