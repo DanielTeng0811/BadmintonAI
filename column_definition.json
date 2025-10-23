@@ -1,159 +1,368 @@
 {
+  "metadata": {
+    "description": "羽球比賽數據欄位定義",
+    "players": ["Kento MOMOTA", "CHOU Tien Chen"],
+    "match_structure": {
+      "format": "三戰兩勝制",
+      "set_scoring": "21分制",
+      "note": "每局的rally編號會重新計數"
+    },
+    "data_recording_note": "⚠️ 資料記錄特性：每局的最後一分（決勝分）沒有記錄在數據中。因此查詢比分時，贏家的分數需要+1才是真實的最終比分。例如：記錄顯示20-15，實際應為21-15。"
+  },
+  "shot_types": {
+    "1": {"name": "發短球", "english": "short serve"},
+    "2": {"name": "發長球", "english": "long serve"},
+    "3": {"name": "長球", "english": "clear"},
+    "4": {"name": "殺球", "english": "smash"},
+    "5": {"name": "切球", "english": "drop"},
+    "6": {"name": "挑球", "english": "lob"},
+    "7": {"name": "平球", "english": "drive"},
+    "8": {"name": "網前球", "english": "net"},
+    "9": {"name": "推撲球", "english": "push"},
+    "10": {"name": "接殺防守", "english": "defense"},
+    "11": {"name": "接不到", "english": "miss"}
+  },
   "data_columns": [
     {
-      "column": "rally",
-      "definition": "該局（set）中的第幾回合，從1開始。"
-    },
-    {
-      "column": "ball_round",
-      "definition": "在當次回合中，第幾次擊球（第幾拍）。"
-    },
-    {
-      "column": "score_status",
-      "definition": "分數差距(player_score-opponent_score)"
-    },
-    {
-      "column": "player_score",
-      "definition": "Kento MOMOTA當前的分數"
-    },
-    {
-      "column": "opponent_score",
-      "definition": "CHOU Tien Chen當前的分數"
-    },
-    {
-      "column": "player",
-      "definition": "當次擊球球員姓名"
-    },
-    {
-      "column": "server",
-      "definition": "發球方標籤, 1:player發球 2:正在對打中 3:該回合結束"
-    },
-    {
-      "column": "type",
-      "definition": "擊球類型"
-    },
-    {
-      "column": "hit_area",
-      "definition": "擊球的位置區塊"
-    },
-    {
-      "column": "hit_x",
-      "definition": "擊球的X座標(可以當作球的x位置)"
-    },
-    {
-      "column": "hit_y",
-      "definition": "擊球的Y座標(可以當作球的y位置)"
-    },
-    {
-      "column": "landing_area",
-      "definition": "落點的位置區塊"
-    },
-    {
-      "column": "landing_x",
-      "definition": "落點X座標"
-    },
-    {
-      "column": "landing_y",
-      "definition": "落點Y座標"
-    },
-    {
-      "column": "lose_reason",
-      "definition": "輸球原因(每一回合只有最後一球才會記錄)"
-    },
-    {
-      "column": "win_reason",
-      "definition": "贏球原因(每一回合只有最後一球才會記錄)"
-    },
-    {
-      "column": "getpoint_player",
-      "definition": "該回合最後得分的玩家"
-    },
-    {
-      "column": "player_location_area",
-      "definition": "球員所在的區域塊"
-    },
-    {
-      "column": "player_location_x",
-      "definition": "球員X座標"
-    },
-    {
-      "column": "player_location_y",
-      "definition": "球員Y座標"
-    },
-    {
-      "column": "player_move_x",
-      "definition": "球員下一次要移動到的X座標"
-    },
-    {
-      "column": "player_move_y",
-      "definition": "球員下一次要移動到的Y座標"
-    },
-    {
-      "column": "opponent_location_area",
-      "definition": "對手所在的區域塊"
-    },
-    {
-      "column": "opponent_location_x",
-      "definition": "對手X座標"
-    },
-    {
-      "column": "opponent_location_y",
-      "definition": "對手Y座標"
-    },
-    {
-      "column": "opponent_move_x",
-      "definition": "對手下一次要移動到的X座標"
-    },
-    {
-      "column": "opponent_move_y",
-      "definition": "對手下一次要移動到的Y座標"
-    },
-    {
-      "column": "ball_distance",
-      "definition": "player位置和hit位置的差距"
-    },
-    {
-      "column": "player_type",
-      "definition": "球員這拍打的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
-    },
-    {
-      "column": "opponent_type",
-      "definition": "對手上一拍的球種, 發短球: 1, 發長球: 2, 長球: 3, 殺球: 4, 切球: 5, 挑球: 6, 平球: 7, 網前球: 8, 推撲球: 9, 接殺防守: 10, 接不到: 11"
-    },
-    {
-      "column": "player_move_area",
-      "definition": "球員移動後的區域代碼"
-    },
-    {
-      "column": "moving_x",
-      "definition": "球員移動後的X座標"
-    },
-    {
-      "column": "moving_y",
-      "definition": "球員移動後的Y座標"
-    },
-    {
-      "column": "ball_distance_x",
-      "definition": "player_x和hit_x的差距"
-    },
-    {
-      "column": "ball_distance_y",
-      "definition": "player_y和hit_y的差距"
+      "column": "match_id",
+      "description": "比賽唯一識別碼",
+      "data_type": "string",
+      "granularity": "match",
+      "usage": "區分不同場次，用於跨場次統計時的分組依據"
     },
     {
       "column": "set",
-      "definition": "在當場次中是第幾局"
+      "description": "局數",
+      "data_type": "integer",
+      "value_range": "1-3",
+      "granularity": "set",
+      "usage": "識別當前是第幾局，配合match_id用於精確定位"
     },
     {
-      "column": "match_id",
-      "definition": "每場比賽的唯一識別碼，用於區分不同場次。"
+      "column": "rally",
+      "description": "該局內的回合編號",
+      "data_type": "integer",
+      "value_range": "從1開始，每局重新計數",
+      "granularity": "rally",
+      "scope": "局內（set內）",
+      "grouping_key": ["match_id", "set", "rally"],
+      "important_note": "rally編號在每局會重置，因此跨局分析時必須配合match_id和set使用",
+      "correct_usage": "計算總回合數：df.groupby(['match_id', 'set', 'rally']).ngroups",
+      "wrong_usage": "df['rally'].nunique() ← 會因重複編號而低估"
     },
     {
       "column": "rally_id",
-      "definition": "每個回合在全部數據集中的唯一識別碼。"
+      "description": "回合在全數據集中的唯一識別碼",
+      "data_type": "string/integer",
+      "granularity": "rally",
+      "scope": "全局",
+      "usage": "需要全局唯一回合ID時使用，可直接用於計數而無需分組"
+    },
+    {
+      "column": "ball_round",
+      "description": "該回合內的擊球順序",
+      "data_type": "integer",
+      "value_range": "從1開始，每個rally重新計數",
+      "granularity": "shot",
+      "usage": "分析回合內的擊球模式、回合長度"
+    },
+    {
+      "column": "player_score",
+      "description": "Kento MOMOTA的當前分數",
+      "data_type": "integer",
+      "value_range": "0-30（含延分）",
+      "granularity": "shot",
+      "related_to": ["opponent_score", "score_status"]
+    },
+    {
+      "column": "opponent_score",
+      "description": "CHOU Tien Chen的當前分數",
+      "data_type": "integer",
+      "value_range": "0-30（含延分）",
+      "granularity": "shot",
+      "related_to": ["player_score", "score_status"]
+    },
+    {
+      "column": "score_status",
+      "description": "分數差距",
+      "data_type": "integer",
+      "calculation": "player_score - opponent_score",
+      "value_range": "負值表示落後，正值表示領先",
+      "usage": "分析不同分數差距下的表現"
+    },
+    {
+      "column": "player",
+      "description": "當前擊球的球員姓名",
+      "data_type": "string",
+      "value_range": ["Kento MOMOTA", "CHOU Tien Chen"],
+      "granularity": "shot",
+      "important_note": "必須使用完整姓名，不可縮寫（如'CHOU'或'MOMOTA'會找不到資料）"
+    },
+    {
+      "column": "server",
+      "description": "發球狀態標記",
+      "data_type": "integer",
+      "value_mapping": {
+        "1": "player發球",
+        "2": "對打中",
+        "3": "該回合結束"
+      },
+      "usage": "識別回合的不同階段，篩選發球或對打數據"
+    },
+    {
+      "column": "type",
+      "description": "當前這一拍的球種名稱（中文字串）",
+      "data_type": "string",
+      "value_range": ["發短球", "發長球", "長球", "殺球", "切球", "挑球", "平球", "網前球", "推撲球", "接殺防守", "接不到"],
+      "granularity": "shot",
+      "usage": "使用中文名稱篩選球種，適合單一球種分析",
+      "note": "此欄位為中文字串，如需按球員統計球種分布請使用player_type（數字代碼更適合分組統計）",
+      "example": "篩選所有殺球：df[df['type']=='殺球']"
+    },
+    {
+      "column": "player_type",
+      "description": "指定球員（player欄位）這一拍打出的球種代碼（數字）",
+      "data_type": "float",
+      "value_range": "1.0-11.0 (可能含NaN)",
+      "value_mapping": "參照shot_types定義（1=發短球, 2=發長球, 3=長球, 4=殺球, 5=切球, 6=挑球, 7=平球, 8=網前球, 9=推撲球, 10=接殺防守, 11=接不到）",
+      "granularity": "shot",
+      "usage": "按球員分析球種使用習慣、戰術偏好，使用數字代碼便於統計分組",
+      "important_note": "當需要統計「各球員的殺球次數」或比較球員球種使用時，應使用此欄位",
+      "correct_usage": "統計各球員殺球次數：df[df['player_type']==4].groupby('player').size() 或 df[df['player_type']==4]['player'].value_counts()",
+      "wrong_usage": "不建議：df[df['type']=='殺球']['player'].value_counts() ← 雖可行但type是字串，player_type數字代碼更適合分組統計",
+      "related_to": ["player", "type", "opponent_type"]
+    },
+    {
+      "column": "opponent_type",
+      "description": "對手上一拍的球種",
+      "data_type": "integer",
+      "value_range": "1-11",
+      "value_mapping": "參照shot_types定義",
+      "granularity": "shot",
+      "usage": "分析接球策略、回球選擇",
+      "temporal": "時間上為前一拍"
+    },
+    {
+      "column": "hit_x",
+      "description": "擊球位置的X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["hit_y", "hit_area"]
+    },
+    {
+      "column": "hit_y",
+      "description": "擊球位置的Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["hit_x", "hit_area"]
+    },
+    {
+      "column": "hit_area",
+      "description": "擊球位置所屬區域編號",
+      "data_type": "integer",
+      "value_range": "1-32",
+      "granularity": "shot",
+      "area_definition": "參照area_definitions",
+      "calculation": "由hit_x和hit_y計算得出",
+      "usage": "區域化分析擊球分布"
+    },
+    {
+      "column": "landing_x",
+      "description": "落點的X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["landing_y", "landing_area"],
+      "usage": "分析球的落點分布、攻擊方向"
+    },
+    {
+      "column": "landing_y",
+      "description": "落點的Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["landing_x", "landing_area"]
+    },
+    {
+      "column": "landing_area",
+      "description": "落點所屬區域編號",
+      "data_type": "integer",
+      "value_range": "1-32",
+      "granularity": "shot",
+      "area_definition": "參照area_definitions",
+      "calculation": "由landing_x和landing_y計算得出",
+      "usage": "區域化分析落點分布、戰術模式"
+    },
+    {
+      "column": "player_location_x",
+      "description": "球員當前位置X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["player_location_y", "player_location_area"]
+    },
+    {
+      "column": "player_location_y",
+      "description": "球員當前位置Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["player_location_x", "player_location_area"]
+    },
+    {
+      "column": "player_location_area",
+      "description": "球員當前位置所屬區域",
+      "data_type": "integer",
+      "value_range": "1-32",
+      "granularity": "shot",
+      "area_definition": "參照area_definitions"
+    },
+    {
+      "column": "player_move_x",
+      "description": "球員下一步移動目標X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "temporal": "預測性資料",
+      "related_to": ["player_move_y", "player_move_area"]
+    },
+    {
+      "column": "player_move_y",
+      "description": "球員下一步移動目標Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "temporal": "預測性資料",
+      "related_to": ["player_move_x", "player_move_area"]
+    },
+    {
+      "column": "player_move_area",
+      "description": "球員移動後的區域代碼",
+      "data_type": "integer",
+      "value_range": "1-32",
+      "granularity": "shot",
+      "area_definition": "參照area_definitions"
+    },
+    {
+      "column": "moving_x",
+      "description": "球員移動後的實際X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["moving_y"]
+    },
+    {
+      "column": "moving_y",
+      "description": "球員移動後的實際Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["moving_x"]
+    },
+    {
+      "column": "opponent_location_x",
+      "description": "對手當前位置X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["opponent_location_y", "opponent_location_area"]
+    },
+    {
+      "column": "opponent_location_y",
+      "description": "對手當前位置Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "related_to": ["opponent_location_x", "opponent_location_area"]
+    },
+    {
+      "column": "opponent_location_area",
+      "description": "對手當前位置所屬區域",
+      "data_type": "integer",
+      "value_range": "1-32",
+      "granularity": "shot",
+      "area_definition": "參照area_definitions"
+    },
+    {
+      "column": "opponent_move_x",
+      "description": "對手下一步移動目標X座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "temporal": "預測性資料"
+    },
+    {
+      "column": "opponent_move_y",
+      "description": "對手下一步移動目標Y座標",
+      "data_type": "float",
+      "coordinate_system": "球場座標系",
+      "granularity": "shot",
+      "temporal": "預測性資料"
+    },
+    {
+      "column": "ball_distance",
+      "description": "球員位置與擊球位置的距離",
+      "data_type": "float",
+      "calculation": "player_location與hit位置的歐式距離",
+      "granularity": "shot",
+      "usage": "分析球員的移動範圍、防守能力"
+    },
+    {
+      "column": "ball_distance_x",
+      "description": "球員X座標與擊球X座標的差距",
+      "data_type": "float",
+      "calculation": "player_location_x - hit_x",
+      "granularity": "shot",
+      "usage": "分析水平方向的移動距離"
+    },
+    {
+      "column": "ball_distance_y",
+      "description": "球員Y座標與擊球Y座標的差距",
+      "data_type": "float",
+      "calculation": "player_location_y - hit_y",
+      "granularity": "shot",
+      "usage": "分析垂直方向的移動距離"
+    },
+    {
+      "column": "getpoint_player",
+      "description": "該回合的得分者",
+      "data_type": "string",
+      "value_range": ["Kento MOMOTA", "CHOU Tien Chen"],
+      "granularity": "rally",
+      "scope": "僅在每個rally的最後一拍記錄",
+      "important_note": "每個rally只有最後一拍會有此值，其他拍為空",
+      "grouping_key": ["match_id", "set", "rally"],
+      "correct_usage": "計算勝率時，先用groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()取得每個rally的得分者",
+      "wrong_usage": "直接計算df[df['getpoint_player']=='某球員']會遺漏rally的重複計數問題"
+    },
+    {
+      "column": "win_reason",
+      "description": "得分方式",
+      "data_type": "string",
+      "granularity": "rally",
+      "scope": "僅在回合結束時記錄",
+      "perspective": "贏球方的得分手段",
+      "filter_condition": "getpoint_player.notna() & win_reason.notna()",
+      "usage": "分析某球員的得分模式，篩選條件：df[(df['getpoint_player']=='球員名') & (df['win_reason'].notna())]"
+    },
+    {
+      "column": "lose_reason",
+      "description": "失分原因",
+      "data_type": "string",
+      "granularity": "rally",
+      "scope": "僅在回合結束時記錄",
+      "perspective": "輸球方的失誤原因",
+      "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
+      "important_note": "此欄位記錄的是輸球方的失誤，而非贏球方的原因",
+      "correct_usage": "查詢CHOU的失誤原因：df[(df['getpoint_player']!='CHOU Tien Chen') & (df['lose_reason'].notna())]",
+      "wrong_usage": "df[(df['getpoint_player']=='CHOU Tien Chen') & (df['lose_reason'].notna())] ← 這會查到CHOU贏球時對手的失誤"
     }
   ],
   "area_definitions": {
+    "description": "球場區域劃分（32個區域）",
+    "coordinate_format": "top_left_coord: [x, y], bottom_right_coord: [x, y]",
     "row1": [
       { "top_left_coord": [50,150], "bottom_right_coord": [104,204], "label": 1 },
       { "top_left_coord": [104,150], "bottom_right_coord": [177.5,204], "label": 2 },
@@ -202,5 +411,56 @@
       { "top_left_coord": [0,0], "bottom_right_coord": [50,204], "label": 31 },
       { "top_left_coord": [50,0], "bottom_right_coord": [177.5,150], "label": 32 }
     ]
+  },
+  "analysis_guidelines": {
+    "rally_counting": {
+      "issue": "rally編號在每局重置，直接計數會低估",
+      "correct_method": "df.groupby(['match_id', 'set', 'rally']).ngroups",
+      "wrong_method": "df['rally'].nunique()"
+    },
+    "win_rate_calculation": {
+      "step1": "取得每個rally的得分者：rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
+      "step2": "計算該球員贏的次數：wins = (rally_winners == '球員名').sum()",
+      "step3": "計算總回合數：total = len(rally_winners)",
+      "step4": "計算勝率：win_rate = wins / total"
+    },
+    "player_name_usage": {
+      "rule": "必須使用完整球員姓名",
+      "correct": ["Kento MOMOTA", "CHOU Tien Chen"],
+      "wrong": ["CHOU", "MOMOTA", "Kento", "Tien Chen"]
+    },
+    "shot_type_analysis": {
+      "purpose": "分析特定球員的球種使用（如殺球、切球等）",
+      "data_format": "type欄位為中文字串（如'殺球'），player_type欄位為數字代碼（如4.0）",
+      "step1": "確認球種代碼：從shot_types查詢（例如殺球=4）",
+      "step2": "使用player_type欄位（數字）進行分組統計",
+      "correct": "統計各球員殺球次數：df[df['player_type']==4].groupby('player').size() 或 df[df['player_type']==4]['player'].value_counts()",
+      "alternative": "也可使用：df[df['type']=='殺球']['player'].value_counts() ← 但player_type數字代碼更適合統計",
+      "note": "當問題涉及「各球員的某種球次數比較」時，優先使用player_type數字代碼進行篩選和統計"
+    },
+    "lose_reason_filter": {
+      "purpose": "查詢某球員的失誤原因",
+      "correct": "df[(df['getpoint_player'] != '球員名') & (df['lose_reason'].notna())]",
+      "explanation": "lose_reason記錄的是輸球方的失誤，所以要篩選getpoint_player不等於該球員的情況"
+    },
+    "win_reason_filter": {
+      "purpose": "查詢某球員的得分方式",
+      "correct": "df[(df['getpoint_player'] == '球員名') & (df['win_reason'].notna())]"
+    },
+    "match_score_query": {
+      "purpose": "查詢比賽的最終比分",
+      "context": "羽球比賽為三戰兩勝制，每局21分，需分別查詢各局比分並統計局數",
+      "data_limitation": "⚠️ 重要：資料中最後一分（決勝分）沒有記錄。記錄的是倒數第二球的比分，因此贏家的分數需要+1才是真實比分",
+      "step1": "找出第一場比賽ID：first_match_id = df['match_id'].min()（資料中最小的match_id）",
+      "step2": "篩選該場比賽：match_data = df[df['match_id']==first_match_id]",
+      "step3": "確認該比賽有哪些局：sorted(match_data['set'].unique())",
+      "step4": "對每一局，找出最後一筆有分數的記錄",
+      "step5": "判斷贏家並調整分數：贏家分數+1，因為最後一分沒記錄",
+      "step6": "用print()輸出各局比分，然後再繪製圖表",
+      "correct": "完整範例見下方",
+      "example_code": "first_match_id = df['match_id'].min()\nmatch_data = df[df['match_id']==first_match_id]\nfor s in sorted(match_data['set'].unique()):\n    final = match_data[(match_data['set']==s) & (match_data['player_score'].notna())].iloc[-1]\n    p_score = int(final['player_score'])\n    o_score = int(final['opponent_score'])\n    # 贏家+1分（因為最後決勝分沒記錄）\n    if p_score > o_score:\n        p_score += 1\n    else:\n        o_score += 1\n    print(f'第{s}局: {p_score}-{o_score}')",
+      "important_note": "必須先確認第一場比賽的match_id，不要假設是0或1，使用df['match_id'].min()來取得。記得贏家分數要+1！",
+      "visualization": "建議先用print()輸出各局比分數字（贏家+1後），再繪製長條圖比較"
+    }
   }
 }

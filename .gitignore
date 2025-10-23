@@ -89,3 +89,5 @@ desktop.ini
 # Environment variables
 .env
 .env.example
+
+test_questions.md

@@ -49,7 +49,7 @@ def get_data_schema(df):
 @st.cache_data
 def load_column_definitions(filepath):
     """
-    載入並格式化欄位定義
+    載入並格式化欄位定義（支援新的結構化格式）
 
     Args:
         filepath: 欄位定義 JSON 檔案路徑
@@ -61,16 +61,137 @@ def load_column_definitions(filepath):
         with open(filepath, "r", encoding="utf-8") as f:
             full_definitions = json.load(f)
 
+        # 建立格式化輸出
+        output_parts = []
+
+        # 1. 添加 metadata 資訊
+        if "metadata" in full_definitions:
+            metadata = full_definitions["metadata"]
+            output_parts.append("## 比賽資料結構")
+            output_parts.append(f"- 比賽形式：{metadata.get('match_structure', {}).get('format', '')}")
+            output_parts.append(f"- 計分方式：{metadata.get('match_structure', {}).get('set_scoring', '')}")
+            output_parts.append(f"- 球員：{', '.join(metadata.get('players', []))}")
+            if 'data_recording_note' in metadata:
+                output_parts.append(f"\n{metadata['data_recording_note']}")
+            output_parts.append("")
+
+        # 2. 添加球種定義
+        if "shot_types" in full_definitions:
+            output_parts.append("## 球種代碼對照表")
+            shot_types = full_definitions["shot_types"]
+            for code, info in shot_types.items():
+                output_parts.append(f"- {code}: {info['name']} ({info['english']})")
+            output_parts.append("")
+
+        # 3. 添加欄位定義（結構化格式）
+        output_parts.append("## 欄位定義")
         column_definitions = full_definitions.get("data_columns", [])
-        if isinstance(column_definitions, list) and all(
-            isinstance(item, dict) and 'column' in item and 'definition' in item
-            for item in column_definitions
-        ):
-            return "\n".join(
-                [f"- `{item['column']}`: {item['definition']}" for item in column_definitions]
-            )
-        else:
-            return "錯誤：'column_definition.json' 的 'data_columns' 格式不符合預期。"
+        for item in column_definitions:
+            col_name = item.get('column', '')
+            desc = item.get('description', '')
+
+            # 基本資訊
+            output_parts.append(f"\n### `{col_name}`")
+            output_parts.append(f"**說明**：{desc}")
+
+            # 資料類型與值域
+            if 'data_type' in item:
+                output_parts.append(f"- **資料類型**：{item['data_type']}")
+            if 'value_range' in item:
+                val_range = item['value_range']
+                if isinstance(val_range, list):
+                    output_parts.append(f"- **可能值**：{', '.join(val_range)}")
+                else:
+                    output_parts.append(f"- **值域**：{val_range}")
+
+            # 粒度層級
+            if 'granularity' in item:
+                output_parts.append(f"- **粒度**：{item['granularity']}")
+
+            # 計算方式
+            if 'calculation' in item:
+                output_parts.append(f"- **計算方式**：{item['calculation']}")
+
+            # 關聯欄位
+            if 'related_to' in item and item['related_to']:
+                related = ', '.join([f'`{r}`' for r in item['related_to']])
+                output_parts.append(f"- **關聯欄位**：{related}")
+
+            # 使用情境
+            if 'usage' in item:
+                output_parts.append(f"- **用途**：{item['usage']}")
+
+            # 重要提醒
+            if 'important_note' in item:
+                output_parts.append(f"- ⚠️ **重要**：{item['important_note']}")
+
+            # 正確用法
+            if 'correct_usage' in item:
+                output_parts.append(f"- ✅ **正確用法**：`{item['correct_usage']}`")
+
+            # 錯誤用法
+            if 'wrong_usage' in item:
+                output_parts.append(f"- ❌ **錯誤用法**：`{item['wrong_usage']}`")
+
+        # 4. 添加分析指南
+        if "analysis_guidelines" in full_definitions:
+            output_parts.append("\n## 分析指南")
+            guidelines = full_definitions["analysis_guidelines"]
+
+            for guide_name, guide_info in guidelines.items():
+                # 轉換 snake_case 為中文標題
+                title_map = {
+                    "rally_counting": "回合計數",
+                    "win_rate_calculation": "勝率計算",
+                    "player_name_usage": "球員名稱使用",
+                    "shot_type_analysis": "球種分析",
+                    "lose_reason_filter": "失誤原因篩選",
+                    "win_reason_filter": "得分方式篩選",
+                    "match_score_query": "比賽比分查詢"
+                }
+                title = title_map.get(guide_name, guide_name)
+                output_parts.append(f"\n### {title}")
+
+                for key, value in guide_info.items():
+                    if key == "issue":
+                        output_parts.append(f"- **問題**：{value}")
+                    elif key == "context":
+                        output_parts.append(f"- **情境**：{value}")
+                    elif key == "data_limitation":
+                        output_parts.append(f"- {value}")
+                    elif key == "correct_method" or key == "correct":
+                        if isinstance(value, list):
+                            output_parts.append(f"- ✅ **正確**：{', '.join(value)}")
+                        else:
+                            output_parts.append(f"- ✅ **正確方法**：`{value}`")
+                    elif key == "wrong_method" or key == "wrong":
+                        if isinstance(value, list):
+                            output_parts.append(f"- ❌ **錯誤**：{', '.join(value)}")
+                        else:
+                            output_parts.append(f"- ❌ **錯誤方法**：`{value}`")
+                    elif key.startswith("step"):
+                        output_parts.append(f"- **{key.upper()}**：{value}")
+                    elif key == "purpose":
+                        output_parts.append(f"- **目的**：{value}")
+                    elif key == "explanation":
+                        output_parts.append(f"- **說明**：{value}")
+                    elif key == "rule":
+                        output_parts.append(f"- **規則**：{value}")
+                    elif key == "example_code":
+                        output_parts.append(f"- **程式碼範例**：```python\n{value}\n```")
+                    elif key == "important_note":
+                        output_parts.append(f"- ⚠️ **重要提醒**：{value}")
+                    elif key == "visualization":
+                        output_parts.append(f"- **視覺化建議**：{value}")
+                    elif key == "note":
+                        output_parts.append(f"- **備註**：{value}")
+                    elif key == "data_format":
+                        output_parts.append(f"- **資料格式**：{value}")
+                    elif key == "alternative":
+                        output_parts.append(f"- **替代方案**：{value}")
+
+        return "\n".join(output_parts)
+
     except FileNotFoundError:
         return "錯誤：找不到 'column_definition.json' 檔案。"
     except json.JSONDecodeError:

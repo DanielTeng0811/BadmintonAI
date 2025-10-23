@@ -165,14 +165,22 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
         with st.chat_message("assistant"):
             with st.spinner("AI 數據分析師正在思考中..."):
                 try:
-                    # 步驟 1: 第一次 AI 呼叫
+                    # 步驟 1: 第一次 AI 呼叫（加入對話歷史）
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
+
+                    # 建立完整的對話歷史（包含 system + 所有歷史訊息）
+                    conversation_messages = [{"role": "system", "content": system_prompt}]
+
+                    # 加入所有歷史對話（但排除圖表資訊，只保留文字）
+                    for msg in st.session_state.messages:
+                        conversation_messages.append({
+                            "role": msg["role"],
+                            "content": msg["content"]
+                        })
+
                     response = client.chat.completions.create(
                         model=model_choice,
-                        messages=[
-                            {"role": "system", "content": system_prompt},
-                            {"role": "user", "content": prompt}
-                        ],
+                        messages=conversation_messages,
                     )
                     ai_response_text = response.choices[0].message.content
                     
@@ -213,13 +221,14 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 請扮演專業數據分析師，根據此表格，用繁體中文撰寫一段簡短精闢的數據洞察。
                                 直接提供結論，不要複述問題或程式碼。
                                 """
+                                # 不要加入對話歷史，只專注於當前的表格分析
                                 insight_response = client.chat.completions.create(
                                     model=model_choice,
                                     messages=[
-                                        {"role": "system", "content": "你是一位專業的數據分析師，專門從數據表格中解讀出有價值的洞察。"},
+                                        {"role": "system", "content": "你是一位專業的數據分析師，專門從數據表格中解讀出有價值的洞察。請只分析提供的表格數據，用繁體中文簡潔說明重點。"},
                                         {"role": "user", "content": insight_prompt}
                                     ],
-                                    temperature=0.5,
+                                    temperature=0.3,  # 降低溫度，讓回答更一致
                                 )
                                 summary_text = insight_response.choices[0].message.content
                             except Exception as e:
