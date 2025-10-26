@@ -164,7 +164,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "參照area_definitions",
+      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions",
       "calculation": "由hit_x和hit_y計算得出",
       "usage": "區域化分析擊球分布"
     },
@@ -191,7 +191,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "參照area_definitions",
+      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions",
       "calculation": "由landing_x和landing_y計算得出",
       "usage": "區域化分析落點分布、戰術模式"
     },
@@ -217,7 +217,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "參照area_definitions"
+      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
     },
     {
       "column": "player_move_x",
@@ -243,7 +243,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "參照area_definitions"
+      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
     },
     {
       "column": "moving_x",
@@ -283,7 +283,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "參照area_definitions"
+      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
     },
     {
       "column": "opponent_move_x",
