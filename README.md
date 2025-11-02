@@ -1,3 +1,13 @@
+# 如何執行此系統
+1. 下載requirements.txt所有套件 (pip install -r requirements.txt)
+2. 去Gemini官網申請免費的API key (或設定OPENAI_API_KEY="你的GPT的key" 也可)
+3. 設定自己的.env檔 (GEMINI_API_KEY="自己的API key")
+4. 執行steamlit run fronot_page.py
+5. 系統中有"清空對話" "儲存所有對話"的按鈕
+
+# 目前只是系統的初版，可能會有少數問題無法回答，正在優化中~
+
+
 # BadmintonAI
 
 羽球個人化 Dashboard 專題 — 研究計畫
