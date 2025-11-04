@@ -10,7 +10,7 @@ import streamlit as st
 
 
 # 檔案路徑常數
-DATA_FILE = "all_dataset.csv"
+DATA_FILE = "processed_data.csv"
 COLUMN_DEFINITION_FILE = "column_definition.json"
 
 
@@ -33,17 +33,48 @@ def load_data(filepath):
 @st.cache_data
 def get_data_schema(df):
     """
-    從 DataFrame 獲取欄位型態資訊
+    從 DataFrame 獲取欄位型態資訊。
+    如果欄位的唯一值數量 <= 20，則額外列出這些唯一值。
 
     Args:
         df: pandas DataFrame
 
     Returns:
-        str: DataFrame 的結構資訊（欄位名稱、型態等）
+        str: DataFrame 的結構資訊（欄位名稱、型態、唯一值等）
     """
+    # 1. 像之前一樣，先獲取 df.info() 的基本資訊
     buffer = io.StringIO()
     df.info(buf=buffer)
-    return buffer.getvalue()
+    schema_info = buffer.getvalue()
+    
+    # 2. 準備一個列表來存放額外的唯一值資訊
+    unique_values_info = []
+    
+    # 3. 遍歷 (loop) 每一欄
+    for col in df.columns:
+        # 4. 計算唯一值的數量 (使用 .nunique())
+        #    注意：dropna=True 預設只計算非空值，這通常是我們想要的
+        num_unique = df[col].nunique() 
+        
+        # 5. 檢查條件：唯一值數量是否 <= 20 
+        if num_unique <= 20:
+            # 6. 如果是，獲取這些唯一值
+            #    使用 .unique() 來獲取實際的值
+            unique_vals = df[col].unique()
+            
+            # 將 numpy 陣列轉換為 Python 列表 (list) 以便於格式化
+            # (這一步可選，但能讓輸出更乾淨，特別是處理 NaN 或 NaT 時)
+            unique_vals_list = list(unique_vals) 
+            
+            # 7. 格式化輸出
+            unique_values_info.append(f"\n### 欄位 '{col}' (唯一值 <= 20 個):")
+            unique_values_info.append(f"{unique_vals_list}")
+
+    # 8. 將 df.info() 的結果 和 額外的唯一值資訊 組合起來
+    #    使用 .join() 將所有唯一值資訊串接起來
+    final_output = schema_info + "\n" + "="*50 + "\n[唯一值資訊 (<= 20 個)]" + "\n" + "="*50 + "".join(unique_values_info)
+    
+    return final_output
 
 
 @st.cache_data
@@ -108,6 +139,9 @@ def load_column_definitions(filepath):
             if 'granularity' in item:
                 output_parts.append(f"- **粒度**：{item['granularity']}")
 
+            #空間分布
+            if 'area_definition' in item:
+                output_parts.append(f"- **場地區塊分布**：{item['area_definition']}")
             # 計算方式
             if 'calculation' in item:
                 output_parts.append(f"- **計算方式**：{item['calculation']}")

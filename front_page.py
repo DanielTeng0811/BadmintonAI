@@ -41,7 +41,7 @@ with st.sidebar:
     )
 
     if api_mode == "Gemini":
-        model_choice = st.selectbox("選擇模型", ["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
+        model_choice = st.selectbox("選擇模型",["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0) # "gemini-2.0-flash" 可能不存在, 改為 1.5-flash
     else:
         model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
 
@@ -128,13 +128,72 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("AI 數據分析師正在思考中..."):
+            # --- [修改]：使用 st.status 來顯示多步驟進程 ---
+            with st.status("AI 數據分析師正在處理中...") as status:
                 try:
+                    # --- [NEW STEP 0️⃣: 轉化使用者問題] ---
+                    status.update(label="Step 1/4: 正在釐清您的問題...")
+                    
+                    enhancement_system_prompt = f"""
+                    你是一個輔助系統，你的任務是將使用者的簡短數據分析問題，轉化為一個更清晰、更完整、更具體的數據分析任務描述。
+                    這個描述將被交給另一個 AI (Python 程式碼生成器) 來執行。
+                    
+                    你必須考慮以下的資料庫 schema：
+                    {data_schema_info}
+                    
+                    你的輸出**只能**包含轉化後的繁體中文問題敘述，不要有任何前言、後語或解釋。
+
+                    範例 1:
+                    使用者輸入：誰是失誤王？
+                    你輸出：請統計 'player' 欄位中 'type' 為 'error' (失誤) 的次數，並找出誰的失誤次數最高，並將結果儲存在一個變數中。
+                    
+                    範例 2:
+                    使用者輸入：球員 A 的圓餅圖
+                    你輸出：請分析 'player' 欄位為 'A' 的所有擊球，並使用圓餅圖顯示 'type' (球種) 的分佈比例。
+                    
+                    範例 3:
+                    使用者輸入：落點
+                    你輸出：請統計 'landing_zone' (落點) 欄位中每個區域出現的次數，並用長條圖顯示結果。
+                    """
+                    
+                    enhancement_response = client.chat.completions.create(
+                        model=model_choice,
+                        messages=[
+                            {"role": "system", "content": enhancement_system_prompt},
+                            {"role": "user", "content": prompt} # 使用原始 prompt
+                        ],
+                        temperature=0.2
+                    )
+                    enhanced_prompt = enhancement_response.choices[0].message.content.strip()
+                    # --- [NEW STEP 0️⃣ 結束] ---
+                    print(enhanced_prompt)
                     # Step 1️⃣: 生成分析程式碼
+                    status.update(label="Step 2/4: 正在生成分析程式碼...")
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
+                    # --- 將 system_prompt 寫入 txt 檔案 ---
+                    file_name = "system_prompt.txt"  # 您希望的檔案名稱
+                                
+                    try:
+                        # 'w' 代表寫入模式 (write)
+                        # encoding='utf-8' 確保能正確處理中文字符
+                        with open(file_name, 'w', encoding='utf-8') as f:
+                            f.write(system_prompt)
+                        
+                        print(f"成功將 system_prompt 寫入檔案: {file_name}")
+
+                    except Exception as e:
+                        print(f"寫入檔案時發生錯誤: {e}")
+                    # --- [修改]：建立 conversation，用 enhanced_prompt 替換最後一則 user 訊息 ---
                     conversation = [{"role": "system", "content": system_prompt}]
-                    for m in st.session_state.messages:
-                        conversation.append({"role": m["role"], "content": m["content"]})
+                    # 加入除了最後一則訊息之外的所有歷史
+                    if len(st.session_state.messages) > 1:
+                        for m in st.session_state.messages[:-1]:
+                            if m.get("content"): # 確保 content 存在
+                                conversation.append({"role": m["role"], "content": m["content"]})
+                    
+                    # 最後一則 user 訊息使用強化後的版本
+                    conversation.append({"role": "user", "content": enhanced_prompt})
+                    # --- [修改結束] ---
 
                     response = client.chat.completions.create(
                         model=model_choice, messages=conversation
@@ -149,6 +208,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         code_to_execute = ai_response[start:end].strip()
 
                     # Step 2️⃣: 執行程式 (核心修改處 1)
+                    status.update(label="Step 3/4: 正在執行程式碼並繪製圖表...")
                     final_fig = None
                     summary_info = {} # 改用字典來儲存所有小型變數
                     if code_to_execute:
@@ -171,7 +231,6 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             elif hasattr(val, '__len__') and not isinstance(val, str) and len(val) < 20:
                                 summary_info[name] = val
                         # --- 修改結束 ---
-
 
                     # Step 3️⃣: 確保一定有摘要資訊 (核心修改處 2)
                     if not summary_info: # 改為檢查字典是否為空
@@ -199,62 +258,66 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         st.warning("⚠️ AI 沒有輸出圖表。")
 
                     # Step 5️⃣: 一定生成數據洞察 (核心修改處 3)
+                    status.update(label="Step 4/4: 正在撰寫數據洞察...")
                     summary_text = ""
                     st.markdown("### 📊 數據洞察")
-                    with st.spinner("AI 正在撰寫洞察..."):
-                        try:
-                            # --- 修改開始 ---
-                            # 將 summary_info 字典格式化為給 AI 的 prompt 字串
-                            analysis_context_str = ""
-                            if not summary_info:
-                                analysis_context_str = "AI 程式碼未產生任何可供分析的摘要變數。"
-                            else:
-                                analysis_context_str += "程式碼執行後，擷取出以下核心變數與其值：\n\n"
-                                for name, val in summary_info.items():
-                                    analysis_context_str += f"### 變數 `{name}` (型別: `{type(val).__name__}`)\n"
-                                    
-                                    # 對 DataFrame 和 Series 特別使用 markdown 格式化
-                                    if isinstance(val, (pd.DataFrame, pd.Series)):
-                                        analysis_context_str += f"```markdown\n{val.to_markdown()}\n```\n\n"
-                                    else:
-                                        analysis_context_str += f"```\n{str(val)}\n```\n\n"
-                            with open("analysis_context_output.txt", "w", encoding="utf-8") as f:
-                                f.write(analysis_context_str)
-                            # 建立新的 insight prompt
-                            insight_prompt = f"""
-                            你是一位專業的羽球數據分析師。
-                            使用者的原始問題是：「{prompt}」
+                    
+                    try:
+                        # --- 修改開始 ---
+                        # 將 summary_info 字典格式化為給 AI 的 prompt 字串
+                        analysis_context_str = ""
+                        if not summary_info:
+                            analysis_context_str = "AI 程式碼未產生任何可供分析的摘要變數。"
+                        else:
+                            analysis_context_str += "程式碼執行後，擷取出以下核心變數與其值：\n\n"
+                            for name, val in summary_info.items():
+                                analysis_context_str += f"### 變數 `{name}` (型別: `{type(val).__name__}`)\n"
+                                
+                                # 對 DataFrame 和 Series 特別使用 markdown 格式化
+                                if isinstance(val, (pd.DataFrame, pd.Series)):
+                                    analysis_context_str += f"```markdown\n{val.to_markdown()}\n```\n\n"
+                                else:
+                                    analysis_context_str += f"```\n{str(val)}\n```\n\n"
+                        
+                        # (除錯用)
+                        # with open("analysis_context_output.txt", "w", encoding="utf-8") as f:
+                        #     f.write(analysis_context_str)
                             
-                            根據這個問題，AI 產生並執行了一段 Python 程式碼，程式碼執行後產生的核心數據變數如下。
+                        # 建立新的 insight prompt
+                        insight_prompt = f"""
+                        你是一位專業的羽球數據分析師。
+                        使用者的原始問題是：「{prompt}」
+                        
+                        根據這個問題，AI 產生並執行了一段 Python 程式碼，程式碼執行後產生的核心數據變數如下。
 
-                            --- 核心數據變數 ---
-                            {analysis_context_str}
-                            --- 核心數據變數結束 ---
+                        --- 核心數據變數 ---
+                        {analysis_context_str}
+                        --- 核心數據變數結束 ---
 
-                            請你基於「使用者問題」和上述所有「核心數據變數」，用繁體中文撰寫一份精簡、條理分明的數據洞察報告。
-                            報告應包含以下部分：
-                            1.  **直接回答**：直接且明確地回答使用者的問題。
-                            2.  **關鍵發現**：從數據中提煉出 1 到 3 個最關鍵的觀察或趨勢，並說明是根據哪些變數得出的結論。
-                            3.  **總結**：用一句話總結分析結果。
+                        請你基於「使用者問題」和上述所有「核心數據變數」，用繁體中文撰寫一份精簡、條理分明的數據洞察報告。
+                        報告應包含以下部分：
+                        1.  **直接回答**：直接且明確地回答使用者的問題。
+                        2.  **關鍵發現**：從數據中提煉出 1 到 3 個最關鍵的觀察或趨勢，並說明是根據哪些變數得出的結論。
+                        3.  **總結**：用一句話總結分析結果。
 
-                            請避免重複描述數據內容，專注於提供有價值的見解。
-                            """
-                            # --- 修改結束 ---
-                            
-                            insight = client.chat.completions.create(
-                                model=model_choice,
-                                messages=[
-                                    {"role": "system", "content": "你是一位專業羽球數據分析師，請針對使用者問題與核心數據結果，撰寫精準洞察。"},
-                                    {"role": "user", "content": insight_prompt},
-                                ],
-                                temperature=0.4,
-                            )
-                            summary_text = insight.choices[0].message.content
-                            st.markdown(summary_text)
+                        請避免重複描述數據內容，專注於提供有價值的見解。
+                        """
+                        # --- 修改結束 ---
+                        
+                        insight = client.chat.completions.create(
+                            model=model_choice,
+                            messages=[
+                                {"role": "system", "content": "你是一位專業羽球數據分析師，請針對使用者問題與核心數據結果，撰寫精準洞察。"},
+                                {"role": "user", "content": insight_prompt},
+                            ],
+                            temperature=0.4,
+                        )
+                        summary_text = insight.choices[0].message.content
+                        st.markdown(summary_text)
 
-                        except Exception as e:
-                            summary_text = f"*(無法生成洞察: {e})*"
-                            st.warning(summary_text)
+                    except Exception as e:
+                        summary_text = f"*(無法生成洞察: {e})*"
+                        st.warning(summary_text)
 
                     # Step 6️⃣: 儲存至歷史
                     code_block_for_history = f"```python\n{code_to_execute}\n```" if code_to_execute else ""
@@ -271,7 +334,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         "figure": final_fig,
                     })
 
+                    # --- [修改]：更新 status 為完成 ---
+                    status.update(label="分析完成！", state="complete")
+
                 except Exception as e:
+                    # --- [修改]：更新 status 為錯誤 ---
+                    status.update(label="分析失敗", state="error")
                     st.error(f"❌ 錯誤: {e}")
                     st.session_state.messages.append({
                         "role": "assistant", "content": str(e), "figure": None
