@@ -42,7 +42,6 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 ```python
 import platform
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 
 # 根據作業系統設定中文字體
 system = platform.system()
@@ -51,8 +50,8 @@ if system == 'Darwin':  # macOS
 elif system == 'Windows':
     plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'sans-serif']
 else:  # Linux (Streamlit Cloud)
-    # 使用 Noto Sans CJK 字體系列（支援繁體中文）
-    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'Noto Sans CJK SC', 'DejaVu Sans', 'sans-serif']
+    # 使用 WenQuanYi Zen Hei 字體（穩定支援中文）
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'DejaVu Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 ```
 
@@ -87,7 +86,6 @@ plt.rcParams['axes.unicode_minus'] = False
 ```python
 import platform
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 import pandas as pd
 
 # 字體設定
@@ -97,7 +95,7 @@ if system == 'Darwin':
 elif system == 'Windows':
     plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'sans-serif']
 else:  # Linux (Streamlit Cloud)
-    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'Noto Sans CJK SC', 'DejaVu Sans', 'sans-serif']
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'DejaVu Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 
 # 資料處理
