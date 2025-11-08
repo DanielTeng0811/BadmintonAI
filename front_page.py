@@ -7,9 +7,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 import zipfile
 
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-
 # 自訂模組
 from config.prompts import create_system_prompt
 from utils.data_loader import load_all_data
