@@ -1,2 +1,5 @@
 fonts-noto-cjk
 fonts-noto-cjk-extra
+fonts-noto-sans-cjk
+fonts-noto-sans-cjk-extra
+fontconfig
