@@ -7,26 +7,8 @@ from datetime import datetime
 from dotenv import load_dotenv
 import zipfile
 
-# Matplotlib 字體設定（必須在最前面）
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-
-# 強制重建字體快取（解決 Streamlit Cloud 中文顯示問題）
-try:
-    fm._rebuild()
-except:
-    pass
-
-# 設定中文字體
-plt.rcParams['font.sans-serif'] = [
-    'Noto Sans CJK TC',
-    'Noto Sans TC',
-    'Noto Sans CJK SC',
-    'Noto Sans SC',
-    'DejaVu Sans',
-    'sans-serif'
-]
-plt.rcParams['axes.unicode_minus'] = False
 
 # 自訂模組
 from config.prompts import create_system_prompt
