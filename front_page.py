@@ -22,6 +22,29 @@ st.set_page_config(
     layout="wide"
 )
 
+# --- 輔助函數：安全讀取 API Key ---
+def get_api_key(key_name):
+    """
+    從環境變數或 Streamlit Secrets 安全讀取 API Key。
+    優先順序：
+    1. 環境變數 (.env 檔案) - 本地開發時使用
+    2. Streamlit Secrets - 雲端部署時使用
+    """
+    # 優先從 .env 環境變數讀取
+    env_value = os.getenv(key_name, "")
+    if env_value:
+        return env_value
+
+    # 如果環境變數沒有，嘗試從 Streamlit Secrets 讀取
+    try:
+        if hasattr(st, 'secrets') and st.secrets:
+            return st.secrets.get(key_name, "")
+    except Exception:
+        # 本地開發環境沒有 secrets.toml 是正常的
+        pass
+
+    return ""
+
 # --- 資料載入 ---
 df, data_schema_info, column_definitions_info = load_all_data()
 
@@ -34,10 +57,15 @@ with st.sidebar:
     st.header("⚙️ API 設定")
     api_mode = st.selectbox("API 模式", ["Gemini", "OpenAI 官方", "交大伺服器"], index=0)
     api_key_env_var = "GEMINI_API_KEY" if api_mode == "Gemini" else "OPENAI_API_KEY"
+
+    # 使用 get_api_key 函數安全讀取 API Key
+    default_api_key = get_api_key(api_key_env_var)
+
     api_key_input = st.text_input(
         f"{api_mode} API Key",
-        value=os.getenv(api_key_env_var, ""),
-        type="password"
+        value=default_api_key,
+        type="password",
+        help="💡 本地開發：從 .env 讀取 | 雲端部署：從 Streamlit Secrets 讀取"
     )
 
     if api_mode == "Gemini":
