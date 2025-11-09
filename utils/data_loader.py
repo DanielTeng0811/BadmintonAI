@@ -7,7 +7,7 @@ import pandas as pd
 import json
 import io
 import streamlit as st
-
+import numpy as np
 
 # 檔案路徑常數
 DATA_FILE = "processed_data.csv"
@@ -34,48 +34,66 @@ def load_data(filepath):
 def get_data_schema(df):
     """
     從 DataFrame 獲取欄位型態資訊。
-    如果欄位的唯一值數量 <= 20，則額外列出這些唯一值。
+    額外功能：
+    - 若欄位唯一值 <= 20，列出所有唯一值。
+    - 若欄位為數值型（int/float），列出最小值與最大值。
 
     Args:
         df: pandas DataFrame
 
     Returns:
-        str: DataFrame 的結構資訊（欄位名稱、型態、唯一值等）
+        str: DataFrame 的結構資訊（欄位名稱、型態、唯一值、數值範圍等）
     """
-    # 1. 像之前一樣，先獲取 df.info() 的基本資訊
+    # 1. 取得 df.info() 的基本資訊
     buffer = io.StringIO()
     df.info(buf=buffer)
     schema_info = buffer.getvalue()
-    
-    # 2. 準備一個列表來存放額外的唯一值資訊
-    unique_values_info = []
-    
-    # 3. 遍歷 (loop) 每一欄
+
+    # 2. 儲存額外欄位分析資訊
+    extra_info = []
+
+    # 3. 逐欄分析
     for col in df.columns:
-        # 4. 計算唯一值的數量 (使用 .nunique())
-        #    注意：dropna=True 預設只計算非空值，這通常是我們想要的
-        num_unique = df[col].nunique() 
-        
-        # 5. 檢查條件：唯一值數量是否 <= 20 
+        series = df[col]
+        dtype = series.dtype
+
+        # --- 數值欄位統計 ---
+        if np.issubdtype(dtype, np.number):  # 判斷是否為數值型
+            col_min = series.min(skipna=True)
+            col_max = series.max(skipna=True)
+            extra_info.append(f"\n### 欄位 '{col}' 數值範圍:")
+            extra_info.append(f"最小值 = {col_min}, 最大值 = {col_max}")
+
+        # --- 唯一值資訊 ---
+        num_unique = series.nunique()
         if num_unique <= 20:
-            # 6. 如果是，獲取這些唯一值
-            #    使用 .unique() 來獲取實際的值
-            unique_vals = df[col].unique()
-            
-            # 將 numpy 陣列轉換為 Python 列表 (list) 以便於格式化
-            # (這一步可選，但能讓輸出更乾淨，特別是處理 NaN 或 NaT 時)
-            unique_vals_list = list(unique_vals) 
-            
-            # 7. 格式化輸出
-            unique_values_info.append(f"\n### 欄位 '{col}' (唯一值 <= 20 個):")
-            unique_values_info.append(f"{unique_vals_list}")
+            unique_vals = series.unique()
+            unique_vals_list = list(unique_vals)
+            extra_info.append(f"\n### 欄位 '{col}' (唯一值 <= 20 個):")
+            extra_info.append(f"{unique_vals_list}")
 
-    # 8. 將 df.info() 的結果 和 額外的唯一值資訊 組合起來
-    #    使用 .join() 將所有唯一值資訊串接起來
-    final_output = schema_info + "\n" + "="*50 + "\n[唯一值資訊 (<= 20 個)]" + "\n" + "="*50 + "".join(unique_values_info)
-    
+    # 4. 新增固定的場地編號對應資訊
+    court_mapping_info = (
+        "\n" + "="*60
+        + "\n[場地編號對應 (參考用)]"
+        + "\n" + "="*60
+        + "\n前排: 1-4, 27, 28, 31, 32"
+        + "\n中排: 5-16, 26, 30"
+        + "\n後排: 17-25, 29"
+    )
+
+    # 5. 合併輸出內容 (已修正)
+    final_output = (
+        schema_info
+        + court_mapping_info  # 插入場地資訊
+        + "\n" + "="*60  # <-- 修正：移除了多餘的 's'
+        + "\n[欄位額外資訊 (動態分析)]" # 修改標題以區分
+        + "\n" + "="*60
+        + "".join(extra_info)
+    )
+
     return final_output
-
+#  加入"場地編號對應: 前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29
 
 @st.cache_data
 def load_column_definitions(filepath):

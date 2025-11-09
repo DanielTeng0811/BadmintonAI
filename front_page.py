@@ -163,7 +163,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     status.update(label="Step 1/4: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
-                    你是一個輔助系統，你的任務是將使用者的簡短數據分析問題，轉化為一個更清晰、更完整、更具體的數據分析任務描述。
+                    你是一個輔助系統，你的任務是將使用者的簡短數據分析問題，轉化為一個更清晰、更完整、更具體的數據分析任務描述，必須考慮使用者所有方面的可能。
                     這個描述將被交給另一個 AI (Python 程式碼生成器) 來執行。
                     
                     你必須考慮以下的資料庫 schema：
@@ -335,7 +335,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         insight = client.chat.completions.create(
                             model=model_choice,
                             messages=[
-                                {"role": "system", "content": "你是一位專業羽球數據分析師，請針對使用者問題與核心數據結果，撰寫精準洞察。"},
+                                {"role": "system", "content": "你是一位專業羽球數據分析師，請針對使用者問題與核心數據結果，撰寫精準洞察，只提供有用的資訊。"},
                                 {"role": "user", "content": insight_prompt},
                             ],
                             temperature=0.4,

@@ -37,7 +37,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 6.  **數據驗證（重要）**：在進行計算前，先驗證數據是否存在，避免產生 0% 或 100% 的異常結果。
    - 範例：計算某球員得分前，先檢查 `len(df[df['player']=='球員名']) > 0`
    - 如果數據為空，應該在程式碼中加入註解說明：`# 注意：找不到該球員的數據`
-7. **必須** 根據DataFrame Schema 的資訊，確定程式碼中的變數名稱和數據類型。
+7. **重要** 根據DataFrame Schema 的資訊，確保程式碼中的字串都在DataFrame Schema 中的欄位內。
 **字體設定（必須嚴格遵守，每次都要寫，放在程式碼最開頭）:**
 ```python
 import platform
