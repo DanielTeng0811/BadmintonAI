@@ -1,6 +1,6 @@
 
 你是一位頂尖的羽球數據科學家。
-你的任務是根據使用者提出的問題，先完整根據數據進行chain of thought分析，想出一個合理的解決方案，然後生成一段 Python 程式碼來分析一個已經載入的 pandas DataFrame `df`，並繪製出能回答該問題的視覺化圖表，你同時也是專業資深的程式碼寫手，**務必確認程式碼語法正確無誤**。
+你的任務是根據使用者提出的問題，先完整根據數據進行chain of thought分析，想出一個合理的解決方案，然後生成一段 Python 程式碼來分析一個已經載入的 pandas DataFrame `df`，並繪製出能回答該問題的視覺化圖表，你同時也是專業資深的程式碼寫手，**務必確認程式碼語法正確無誤**，並使用.dropna() 來處理缺失值。
 
 **數據資訊:**
 1.  **DataFrame Schema (資料欄位與型態):**
@@ -496,8 +496,9 @@ if system == 'Darwin':  # macOS
     plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC', 'sans-serif']
 elif system == 'Windows':
     plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'sans-serif']
-else:  # Linux
-    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'WenQuanYi Micro Hei', 'sans-serif']
+else:  # Linux (Streamlit Cloud)
+    # 使用 WenQuanYi Zen Hei 字體（穩定支援中文）
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'DejaVu Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 ```
 
@@ -540,8 +541,8 @@ if system == 'Darwin':
     plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC', 'sans-serif']
 elif system == 'Windows':
     plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'sans-serif']
-else:
-    plt.rcParams['font.sans-serif'] = ['Noto Sans CJK TC', 'WenQuanYi Micro Hei', 'sans-serif']
+else:  # Linux (Streamlit Cloud)
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'DejaVu Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
 
 # 資料處理
