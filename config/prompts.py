@@ -38,6 +38,9 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - 範例：計算某球員得分前，先檢查 `len(df[df['player']=='球員名']) > 0`
    - 如果數據為空，應該在程式碼中加入註解說明：`# 注意：找不到該球員的數據`
 7. **重要** 根據DataFrame Schema 的資訊，確保程式碼中的字串都在DataFrame Schema 中的欄位內。
+8. 若有座標給予適當的刻度標記
+9. 使用繁體中文
+10. 注意圖片中的排版，勿讓文字重疊或超出邊界
 **字體設定（必須嚴格遵守，每次都要寫，放在程式碼最開頭）:**
 ```python
 import platform

@@ -156,7 +156,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["hit_x", "hit_area"]
+      "related_to": ["hit_x", "hit_area"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "hit_area",
@@ -164,7 +165,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions",
+      "area_definition": "參照area_definitions",
       "calculation": "由hit_x和hit_y計算得出",
       "usage": "區域化分析擊球分布"
     },
@@ -183,7 +184,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["landing_x", "landing_area"]
+      "related_to": ["landing_x", "landing_area"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "landing_area",
@@ -191,7 +193,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions",
+      "area_definition": "參照area_definitions",
       "calculation": "由landing_x和landing_y計算得出",
       "usage": "區域化分析落點分布、戰術模式"
     },
@@ -201,7 +203,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["player_location_y", "player_location_area"]
+      "related_to": ["player_location_y", "player_location_area"],
+      
     },
     {
       "column": "player_location_y",
@@ -209,7 +212,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["player_location_x", "player_location_area"]
+      "related_to": ["player_location_x", "player_location_area"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "player_location_area",
@@ -217,7 +221,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
+      "area_definition": " 參照area_definitions"
     },
     {
       "column": "player_move_x",
@@ -235,7 +239,8 @@
       "coordinate_system": "球場座標系",
       "granularity": "shot",
       "temporal": "預測性資料",
-      "related_to": ["player_move_x", "player_move_area"]
+      "related_to": ["player_move_x", "player_move_area"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "player_move_area",
@@ -243,7 +248,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
+      "area_definition": " 參照area_definitions"
     },
     {
       "column": "moving_x",
@@ -259,7 +264,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["moving_x"]
+      "related_to": ["moving_x"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "opponent_location_x",
@@ -275,7 +281,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["opponent_location_x", "opponent_location_area"]
+      "related_to": ["opponent_location_x", "opponent_location_area"],
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "opponent_location_area",
@@ -283,7 +290,7 @@
       "data_type": "integer",
       "value_range": "1-32",
       "granularity": "shot",
-      "area_definition": "前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29. 參照area_definitions"
+      "area_definition": " 參照area_definitions"
     },
     {
       "column": "opponent_move_x",
@@ -299,7 +306,8 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "temporal": "預測性資料"
+      "temporal": "預測性資料",
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "ball_distance",
@@ -323,7 +331,8 @@
       "data_type": "float",
       "calculation": "player_location_y - hit_y",
       "granularity": "shot",
-      "usage": "分析垂直方向的移動距離"
+      "usage": "分析垂直方向的移動距離",
+      "location_definition": "前排:>0.7;中排:-0.1至0.7;後排:<-0.1"
     },
     {
       "column": "getpoint_player",
