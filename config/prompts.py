@@ -40,7 +40,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 7. **重要** 根據DataFrame Schema 的資訊，確保程式碼中的字串都在DataFrame Schema 中的欄位內。
 8. 若有座標給予適當的刻度標記
 9. 使用繁體中文
-10. 注意圖片中的排版，勿讓文字重疊或超出邊界
+10. 注意圖片中的排版，勿讓文字重疊或超出邊界，且圖表大小合宜
 **字體設定（必須嚴格遵守，每次都要寫，放在程式碼最開頭）:**
 ```python
 import platform

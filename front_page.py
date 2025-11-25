@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 import io
+import sys
+from contextlib import redirect_stdout
 import platform
 import pandas as pd
 from datetime import datetime
@@ -97,11 +99,15 @@ with st.sidebar:
                 # 在儲存時，將程式碼區塊保留
                 markdown_content += f"### {role_emoji} {role_title}\n{content_to_save.strip()}\n\n"
                 
-                if message.get("figure") is not None:
+                figures = message.get("figures", [])
+                if not figures and message.get("figure"):
+                    figures = [message["figure"]]
+
+                for fig in figures:
                     chart_counter += 1
                     chart_filename = f"chart_{chart_counter}.png"
                     img_buffer = io.BytesIO()
-                    message["figure"].savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                    fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
                     img_buffer.seek(0)
                     zip_f.writestr(chart_filename, img_buffer.getvalue())
                     markdown_content += f"![產生的圖表 {chart_counter}]({chart_filename})\n\n"
@@ -129,17 +135,21 @@ if "messages" not in st.session_state:
 for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        if "figure" in message and message["figure"] is not None:
-            st.pyplot(message["figure"])
+        figures = message.get("figures", [])
+        if not figures and message.get("figure"):
+            figures = [message["figure"]]
+
+        for fig_idx, fig in enumerate(figures):
+            st.pyplot(fig)
             buf = io.BytesIO()
-            message["figure"].savefig(buf, format='png', dpi=300, bbox_inches='tight')
+            fig.savefig(buf, format='png', dpi=300, bbox_inches='tight')
             buf.seek(0)
             st.download_button(
-                label="📥 下載圖表",
+                label=f"📥 下載圖表 {fig_idx + 1}",
                 data=buf,
-                file_name=f"羽球分析_{idx}_{datetime.now().strftime('%Y%m%d')}.png",
+                file_name=f"羽球分析_{idx}_{fig_idx}_{datetime.now().strftime('%Y%m%d')}.png",
                 mime="image/png",
-                key=f"download_history_{idx}",
+                key=f"download_history_{idx}_{fig_idx}",
             )
 
 # --- 主對話流程 ---
@@ -220,11 +230,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     # --- [Step 2: 執行程式 (Runtime Error Fix Loop)] ---
                     status.update(label="Step 3/5: 正在執行程式碼...")
                     
-                    final_fig = None
+                    final_figs = []
                     summary_info = {}
                     exec_globals = {} # 初始化環境變數
                     
                     if code_to_execute:
+                        execution_output = ""
                         max_retries = 3
                         retry_count = 0
                         success = False
@@ -247,7 +258,10 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     "plt": plt,
                                     "sns": sns 
                                 }
-                                exec(code_to_execute, exec_globals)
+                                f = io.StringIO()
+                                with redirect_stdout(f):
+                                    exec(code_to_execute, exec_globals)
+                                execution_output = f.getvalue()
                                 success = True
                                 break 
                             except Exception as e:
@@ -272,6 +286,14 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                         # --- 提取變數 (供下一步邏輯檢查使用) ---
                         ignore_list = ['df', 'pd', 'st', 'platform', 'io', 'fig', 'np', 'plt', 'sns']
+                        
+                        # 檢查生成的圖表數量
+                        created_figs = [plt.figure(n) for n in plt.get_fignums()]
+                        if not created_figs and "fig" in exec_globals:
+                             created_figs = [exec_globals["fig"]]
+                        
+                        summary_info["_generated_figures_count"] = len(created_figs)
+
                         for name, val in exec_globals.items():
                             if name.startswith('_') or name in ignore_list: continue
                             
@@ -314,7 +336,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         
                         **嚴格判斷標準:**
                         - ❌ **如果變數顯示 `Empty DataFrame`、`0 rows` 或 `[]` (空列表):** 代表篩選條件太嚴苛、名字拼錯，或是分析邏輯不適用於該資料子集。這會導致圖表空白。**必須視為失敗 (FAIL)**。
-                        - ❌ **如果沒有產生 `fig` 變數:** 視為失敗。
+                        - ❌ **如果 `_generated_figures_count` 為 0:** 代表沒有產生任何圖表，視為失敗。
                         - ✅ 只有當資料存在 (rows > 0) 且邏輯正確回答問題時，才回傳 PASS。
                         
                         **輸出格式 (二選一):**
@@ -351,7 +373,10 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     "plt": plt,
                                     "sns": sns 
                                 }
-                                exec(new_code, exec_globals)
+                                f = io.StringIO()
+                                with redirect_stdout(f):
+                                    exec(new_code, exec_globals)
+                                execution_output = f.getvalue()
                                 
                                 code_to_execute = new_code 
                                 success = True 
@@ -370,7 +395,11 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 print(f"Logic refinement failed: {logic_fix_error}")
                                 pass
 
-                        final_fig = exec_globals.get("fig", None)
+                        final_figs = [plt.figure(n) for n in plt.get_fignums()]
+                        if not final_figs:
+                             fig_var = exec_globals.get("fig", None)
+                             if fig_var:
+                                 final_figs = [fig_var]
 
                     # --- [Step 3: 確保一定有摘要資訊] ---
                     if not summary_info:
@@ -380,20 +409,26 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     # --- [Step 4: 顯示分析內容] ---
                     if code_to_execute:
-                        with st.expander("🧾 查看 AI 生成的程式碼 (最終版)", expanded=False):
+                        with st.expander("🧾 查看 AI 生成的程式碼 (最終版) 與 執行輸出", expanded=False):
                             st.code(code_to_execute, language="python")
+                            if execution_output:
+                                st.divider()
+                                st.markdown("### 執行輸出 (Output)")
+                                st.text(execution_output)
 
-                    if final_fig:
-                        st.pyplot(final_fig)
-                        buf = io.BytesIO()
-                        final_fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
-                        buf.seek(0)
-                        st.download_button(
-                            "📥 下載圖表",
-                            data=buf,
-                            file_name=f"羽球分析_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png",
-                            mime="image/png",
-                        )
+                    if final_figs:
+                        for i, fig in enumerate(final_figs):
+                            st.pyplot(fig)
+                            buf = io.BytesIO()
+                            fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
+                            buf.seek(0)
+                            st.download_button(
+                                f"📥 下載圖表 {i+1}",
+                                data=buf,
+                                file_name=f"羽球分析_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.png",
+                                mime="image/png",
+                                key=f"download_new_{i}"
+                            )
                     else:
                         st.warning("⚠️ AI 沒有輸出圖表 (可能是資料篩選後為空，建議檢查球員名稱是否正確)。")
 
@@ -456,7 +491,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": final_content_for_history.strip(),
-                        "figure": final_fig,
+                        "figures": final_figs,
                     })
 
                     status.update(label="分析完成！", state="complete")

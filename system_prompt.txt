@@ -406,7 +406,6 @@ memory usage: 1.9+ MB
 - **資料類型**：string
 - **粒度**：rally
 - ⚠️ **重要**：此欄位記錄的是輸球方的失誤，而非贏球方的原因
-- ✅ **正確用法**：`查詢CHOU的失誤原因：df[(df['getpoint_player']!='CHOU Tien Chen') & (df['lose_reason'].notna())]`
 - ❌ **錯誤用法**：`df[(df['getpoint_player']=='CHOU Tien Chen') & (df['lose_reason'].notna())] ← 這會查到CHOU贏球時對手的失誤`
 
 ## 分析指南
