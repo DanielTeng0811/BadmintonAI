@@ -330,14 +330,16 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         ```
                         4. 程式執行後的關鍵變數結果 (Variable State):
                         {reflection_context}
+                        5. 程式執行輸出 (Stdout):
+                        {execution_output}
                         
                         **任務 (Critical Logic Check):**
                         請仔細檢查「變數結果」是否顯示**資料為空**或**邏輯錯誤**。
                         
                         **嚴格判斷標準:**
                         - ❌ **如果變數顯示 `Empty DataFrame`、`0 rows` 或 `[]` (空列表):** 代表篩選條件太嚴苛、名字拼錯，或是分析邏輯不適用於該資料子集。這會導致圖表空白。**必須視為失敗 (FAIL)**。
-                        - ❌ **如果 `_generated_figures_count` 為 0:** 代表沒有產生任何圖表，視為失敗。
-                        - ✅ 只有當資料存在 (rows > 0) 且邏輯正確回答問題時，才回傳 PASS。
+                        - ❌ **如果 `_generated_figures_count` 為 0 且 `execution_output` 為空:** 代表沒有產生圖表也沒有輸出任何文字結果，視為失敗。
+                        - ✅ 只要資料存在 (rows > 0) 且 (產生了圖表 OR 輸出了文字結果)，邏輯正確回答問題時，回傳 PASS。
                         
                         **輸出格式 (二選一):**
                         1. 如果結果合理、資料非空且正確，請**僅輸出**字串: "PASS"
@@ -409,12 +411,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     # --- [Step 4: 顯示分析內容] ---
                     if code_to_execute:
-                        with st.expander("🧾 查看 AI 生成的程式碼 (最終版) 與 執行輸出", expanded=False):
+                        with st.expander("🧾 查看 AI 生成的程式碼 (最終版)", expanded=False):
                             st.code(code_to_execute, language="python")
-                            if execution_output:
-                                st.divider()
-                                st.markdown("### 執行輸出 (Output)")
-                                st.text(execution_output)
 
                     if final_figs:
                         for i, fig in enumerate(final_figs):
@@ -429,18 +427,28 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 mime="image/png",
                                 key=f"download_new_{i}"
                             )
-                    else:
-                        st.warning("⚠️ AI 沒有輸出圖表 (可能是資料篩選後為空，建議檢查球員名稱是否正確)。")
+                    elif not execution_output:
+                        st.warning("⚠️ AI 沒有輸出圖表也沒有文字輸出 (可能是資料篩選後為空，建議檢查球員名稱是否正確)。")
 
                     # --- [Step 5: 生成數據洞察] ---
                     status.update(label="Step 5/5: 正在撰寫數據洞察...")
                     summary_text = ""
                     st.markdown("### 📊 數據洞察")
                     
+                    if execution_output:
+                        st.markdown("#### 📋 程式執行結果")
+                        st.code(execution_output, language="text")
+                        st.divider()
+
                     try:
                         analysis_context_str = ""
+                        
+                        # 加入執行輸出 (stdout) 到分析上下文
+                        if execution_output:
+                            analysis_context_str += f"--- 程式執行輸出 (Stdout) ---\n{execution_output}\n\n"
+
                         if not summary_info:
-                            analysis_context_str = "AI 程式碼未產生任何可供分析的摘要變數。"
+                            analysis_context_str += "AI 程式碼未產生任何可供分析的摘要變數。"
                         else:
                             analysis_context_str += "程式碼執行後，擷取出以下核心變數與其值：\n\n"
                             for name, val in summary_info.items():
@@ -451,7 +459,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     analysis_context_str += f"```\n{str(val)}\n```\n\n"
                         
                         insight_prompt = f"""
-                        你是一位專業的羽球數據分析師。
+                        你是一位擁有豐富經驗的專業羽球教練，同時也是精通數據分析的戰術大師。
                         使用者的原始問題是：「{prompt}」
                         
                         根據這個問題，AI 產生並執行了一段 Python 程式碼，程式碼執行後產生的核心數據變數如下。
@@ -460,14 +468,18 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         {analysis_context_str}
                         --- 核心數據變數結束 ---
 
-                        請你基於「使用者問題」和上述所有「核心數據變數」，用繁體中文直接、精簡、明確地回答使用者的問題，並提供有價值的數據洞察。
-                        請避免重複描述數據內容，專注於提供有價值的見解。
+                        請你基於「使用者問題」和上述所有「核心數據變數」，用繁體中文回答使用者的問題。
+                        
+                        **回答風格要求：**
+                        1.  **教練口吻**：使用專業但易懂的羽球術語，語氣要像教練在場邊指導球員一樣，既有數據支撐，又有戰術深度。
+                        2.  **專業洞察**：不要只唸數字，要解釋數字背後的戰術意義。
+                        3.  **精簡明確**：直接切入重點，提供具體的戰術分析。
                         """
                         
                         insight = client.chat.completions.create(
                             model=model_choice,
                             messages=[
-                                {"role": "system", "content": "你是一位專業羽球數據分析師，請針對使用者問題與核心數據結果，撰寫精準洞察，只提供有用的資訊。"},
+                                {"role": "system", "content": "你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。"},
                                 {"role": "user", "content": insight_prompt},
                             ],
                             temperature=0.4,
