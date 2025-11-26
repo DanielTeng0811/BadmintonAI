@@ -203,8 +203,7 @@
       "data_type": "float",
       "coordinate_system": "球場座標系",
       "granularity": "shot",
-      "related_to": ["player_location_y", "player_location_area"],
-      
+      "related_to": ["player_location_y", "player_location_area"]
     },
     {
       "column": "player_location_y",

@@ -74,6 +74,11 @@ with st.sidebar:
         model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
 
     st.divider()
+
+    # 多輪問答開關
+    enable_clarification = st.checkbox("啟用多輪問答（問題不明確時會主動詢問）", value=False)
+
+    st.divider()
     st.markdown("#### 範例問題")
     st.info("""
     - 球員 A 的各球種分佈是怎麼樣的？請用圓餅圖呈現。
@@ -131,6 +136,14 @@ client = initialize_client(api_mode, api_key_input)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+# 初始化多輪問答狀態
+if "awaiting_clarification" not in st.session_state:
+    st.session_state.awaiting_clarification = False
+if "clarification_data" not in st.session_state:
+    st.session_state.clarification_data = None
+if "original_prompt" not in st.session_state:
+    st.session_state.original_prompt = ""
+
 # 顯示歷史
 for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
@@ -159,7 +172,35 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
     elif not api_key_input:
         st.error("⚠️ 請輸入 API Key。")
     else:
-        st.session_state.messages.append({"role": "user", "content": prompt})
+        # === 處理澄清回應 ===
+        skip_clarification = False
+        if st.session_state.awaiting_clarification:
+            # 使用者已經選擇了選項或提供補充說明
+            user_answer = prompt.strip()
+            clarification_data = st.session_state.clarification_data
+
+            # 檢查是否是選項編號
+            if user_answer.isdigit() and clarification_data:
+                option_index = int(user_answer) - 1
+                if 0 <= option_index < len(clarification_data.get('options', [])):
+                    user_answer = clarification_data['options'][option_index]
+
+            # 組合完整問題
+            full_prompt = f"{st.session_state.original_prompt}\n補充說明: {user_answer}"
+
+            # 記錄使用者的補充回應
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
+            # 重置澄清狀態
+            st.session_state.awaiting_clarification = False
+            st.session_state.clarification_data = None
+
+            # 使用完整問題進行分析
+            prompt = full_prompt
+            skip_clarification = True
+        else:
+            st.session_state.messages.append({"role": "user", "content": prompt})
+
         with st.chat_message("user"):
             st.markdown(prompt)
 
@@ -167,8 +208,95 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
             # 使用 st.status 來顯示多步驟進程
             with st.status("AI 數據分析師正在處理中...") as status:
                 try:
-                    # --- [Step 0: 轉化使用者問題] ---
-                    status.update(label="Step 1/5: 正在釐清您的問題...")
+                    # --- [Step 0: 問題檢查與澄清] ---
+                    if not skip_clarification and enable_clarification:
+                        status.update(label="Step 0/6: 檢查問題是否需要澄清...")
+
+                        import json
+                        clarification_check_prompt = f"""
+                        你是一個問題檢查助手。請判斷使用者的問題是否**足夠明確**可以直接進行數據分析。
+
+                        使用者問題: "{prompt}"
+
+                        可用的資料欄位:
+                        {data_schema_info}
+
+                        **判斷標準:**
+                        - 如果問題缺少關鍵資訊（例如：沒指定球員名稱、時間範圍模糊、統計方式不明確、比較對象不清楚）
+                        - 如果問題有多種合理解讀方式
+                        - 如果使用者使用了代名詞（例如「他」、「這個」、「那場比賽」）但上下文不清楚
+
+                        則需要澄清。
+
+                        **輸出格式（二選一）:**
+                        1. 如果問題已經足夠明確，只輸出: CLEAR
+                        2. 如果需要澄清，輸出 JSON 格式（不要包含任何其他文字）:
+                        {{
+                        "need_clarification": true,
+                        "question": "請問您想要...",
+                        "options": ["選項1的完整描述", "選項2的完整描述", "選項3的完整描述"]
+                        }}
+                        """
+
+                        clarification_response = client.chat.completions.create(
+                            model=model_choice,
+                            messages=[{"role": "user", "content": clarification_check_prompt}],
+                            temperature=0.3
+                        )
+                        clarification_content = clarification_response.choices[0].message.content.strip()
+
+                        # 檢查是否需要澄清
+                        if "CLEAR" not in clarification_content:
+                            try:
+                                # 提取 JSON
+                                json_str = clarification_content
+                                if "```json" in clarification_content:
+                                    start = clarification_content.find("```json") + 7
+                                    end = clarification_content.find("```", start)
+                                    json_str = clarification_content[start:end].strip()
+                                elif "```" in clarification_content:
+                                    start = clarification_content.find("```") + 3
+                                    end = clarification_content.find("```", start)
+                                    json_str = clarification_content[start:end].strip()
+
+                                clarification_data = json.loads(json_str)
+
+                                if clarification_data.get("need_clarification"):
+                                    # 設定澄清狀態
+                                    st.session_state.awaiting_clarification = True
+                                    st.session_state.clarification_data = clarification_data
+                                    st.session_state.original_prompt = prompt
+
+                                    # 顯示澄清問題
+                                    st.markdown(f"### 🤔 {clarification_data['question']}")
+                                    st.info("請在下方輸入框中選擇以下選項之一（輸入選項編號或完整描述），或直接輸入您的補充說明：")
+
+                                    options_text = ""
+                                    for i, option in enumerate(clarification_data['options'], 1):
+                                        option_line = f"**{i}.** {option}"
+                                        st.markdown(option_line)
+                                        options_text += f"{i}. {option}\n"
+
+                                    # 儲存助手回應到歷史
+                                    clarification_msg = f"### 🤔 {clarification_data['question']}\n\n"
+                                    clarification_msg += "請選擇以下選項之一，或直接提供補充說明：\n\n"
+                                    clarification_msg += options_text
+
+                                    st.session_state.messages.append({
+                                        "role": "assistant",
+                                        "content": clarification_msg,
+                                        "figures": []
+                                    })
+
+                                    status.update(label="等待您的補充資訊...", state="complete")
+                                    st.stop()
+
+                            except json.JSONDecodeError:
+                                # JSON 解析失敗，繼續正常流程
+                                pass
+
+                    # --- [Step 1: 轉化使用者問題] ---
+                    status.update(label="Step 1/6: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
                     你是一個輔助系統，你的任務是將使用者的簡短數據分析問題，轉化為一個更清晰、更完整、更具體的數據分析任務描述，必須考慮使用者所有方面的可能，及數據中所有欄位的關聯性。
@@ -191,8 +319,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     enhanced_prompt = enhancement_response.choices[0].message.content.strip()
                     print(f"Enhanced Prompt: {enhanced_prompt}")
 
-                    # --- [Step 1: 生成分析程式碼] ---
-                    status.update(label="Step 2/5: 正在生成分析程式碼...")
+                    # --- [Step 2: 生成分析程式碼] ---
+                    status.update(label="Step 2/6: 正在生成分析程式碼...")
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
                     
                     # [修改點]：注入通用且穩健的視覺化指導原則，而非強制特定方法
@@ -210,7 +338,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     conversation = [{"role": "system", "content": system_prompt}]
                     if len(st.session_state.messages) > 1:
                         for m in st.session_state.messages[:-1]:
-                            if m.get("content"):
+                            # 跳過澄清相關的對話（包含 🤔 emoji 的訊息）
+                            if m.get("content") and "🤔" not in m.get("content", ""):
                                 conversation.append({"role": m["role"], "content": m["content"]})
                     
                     conversation.append({"role": "user", "content": enhanced_prompt})
@@ -227,8 +356,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         end = ai_response.rfind("```")
                         code_to_execute = ai_response[start:end].strip()
 
-                    # --- [Step 2: 執行程式 (Runtime Error Fix Loop)] ---
-                    status.update(label="Step 3/5: 正在執行程式碼...")
+                    # --- [Step 3: 執行程式 (Runtime Error Fix Loop)] ---
+                    status.update(label="Step 3/6: 正在執行程式碼...")
                     
                     final_figs = []
                     summary_info = {}
@@ -267,7 +396,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             except Exception as e:
                                 retry_count += 1
                                 last_error = e
-                                status.update(label=f"Step 3/5: 程式執行錯誤，AI 正在修復語法 (嘗試 {retry_count}/{max_retries})...", state="running")
+                                status.update(label=f"Step 3/6: 程式執行錯誤，AI 正在修復語法 (嘗試 {retry_count}/{max_retries})...", state="running")
                                 
                                 conversation.append({"role": "assistant", "content": f"```python\n{code_to_execute}\n```"})
                                 error_feedback = f"執行上述程式碼時發生錯誤: {str(e)}。請修正錯誤並重新輸出完整程式碼 (包含必要的 import)。"
@@ -309,8 +438,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             elif hasattr(val, '__len__') and len(val) < 20:
                                 summary_info[name] = val
 
-                        # --- [Step 2.5: 邏輯反饋與修正 (Logic Reflection Loop)] ---
-                        status.update(label="Step 4/5: AI 正在檢查分析結果的邏輯性...")
+                        # --- [Step 4: 邏輯反饋與修正 (Logic Reflection Loop)] ---
+                        status.update(label="Step 4/6: AI 正在檢查分析結果的邏輯性...")
                         
                         reflection_context = ""
                         for name, val in summary_info.items():
@@ -356,7 +485,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                         if "PASS" not in reflection_content and "```python" in reflection_content:
                             # 觸發邏輯修正
-                            status.update(label="Step 4/5: AI 發現資料為空或邏輯瑕疵，正在修正程式碼...", state="running")
+                            status.update(label="Step 4/6: AI 發現資料為空或邏輯瑕疵，正在修正程式碼...", state="running")
                             print(">>> Logic Refinement Triggered (Empty Data or Logic Error)")
                             
                             start = reflection_content.find("```python") + len("```python\n")
@@ -403,13 +532,13 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                              if fig_var:
                                  final_figs = [fig_var]
 
-                    # --- [Step 3: 確保一定有摘要資訊] ---
+                    # --- [Step 5: 確保一定有摘要資訊] ---
                     if not summary_info:
                         summary_info = {
                             "提示": "AI 未輸出可供分析的統計變數，請根據圖表與提問邏輯生成洞察。"
                         }
 
-                    # --- [Step 4: 顯示分析內容] ---
+                    # --- [Step 5: 顯示分析內容] ---
                     if code_to_execute:
                         with st.expander("🧾 查看 AI 生成的程式碼 (最終版)", expanded=False):
                             st.code(code_to_execute, language="python")
@@ -430,8 +559,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     elif not execution_output:
                         st.warning("⚠️ AI 沒有輸出圖表也沒有文字輸出 (可能是資料篩選後為空，建議檢查球員名稱是否正確)。")
 
-                    # --- [Step 5: 生成數據洞察] ---
-                    status.update(label="Step 5/5: 正在撰寫數據洞察...")
+                    # --- [Step 6: 生成數據洞察] ---
+                    status.update(label="Step 5/6: 正在撰寫數據洞察...")
                     summary_text = ""
                     st.markdown("### 📊 數據洞察")
                     
@@ -491,7 +620,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         summary_text = f"*(無法生成洞察: {e})*"
                         st.warning(summary_text)
 
-                    # --- [Step 6: 儲存至歷史] ---
+                    # --- [Step 7: 儲存至歷史] ---
                     code_block_for_history = f"```python\n{code_to_execute}\n```" if code_to_execute else ""
                     final_content_for_history = (
                         f"{code_block_for_history}\n\n"
