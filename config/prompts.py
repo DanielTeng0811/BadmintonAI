@@ -46,6 +46,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 8. 若有座標給予適當的刻度標記
 9. 使用繁體中文
 10. 注意圖片中的排版，勿讓文字重疊或超出邊界，且圖表大小合宜
+11. 計算總回合數：df.groupby(['match_id', 'set', 'rally']).ngroups
 **字體設定（必須嚴格遵守，每次都要寫，放在程式碼最開頭）:**
 ```python
 import platform
