@@ -145,19 +145,20 @@
     },
     {
       "column": "landing_area",
-      "description": "球的落點區域編號 (1-32)，即為下顆球對方的擊球點區域編號"
+      "description": "球的落點區域編號 (1-32)(即為下顆球對方的擊球點區域編號)"
     },
     {
       "column": "player_location_x",
-      "description": "球員在擊球瞬間，身體重心所在的 X 座標。"
+      "description": "球員所在的 X 座標。"
     },
     {
       "column": "player_location_y",
-      "description": "球員在擊球瞬間，身體重心所在的 Y 座標。"
+      "description": "球員所在的 Y 座標。"
     },
     {
       "column": "player_location_area",
-      "description": "球員擊球區域。球員在擊球瞬間，身體重心所在的區域代碼"
+      "description": "球員所在的站位區域。",
+      "usage": "當分析球員在(某個場地資訊)時使用"
     },
     {
       "column": "player_move_x",

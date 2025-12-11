@@ -56,6 +56,27 @@ def load_court_info():
 
 court_place_info = load_court_info()
 
+# --- 輔助函數：紀錄 LLM 互動 ---
+def log_llm_interaction(step_name, messages, response_content):
+    """
+    將 LLM 的輸入與輸出紀錄到檔案中，方便除錯。
+    """
+    log_file = "llm_debug_log.txt"
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(f"\n{'='*30}\n")
+        f.write(f"[{timestamp}] Step: {step_name}\n")
+        f.write(f"{'-'*30}\n")
+        f.write("[Input Messages]:\n")
+        for msg in messages:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            f.write(f"  <{role.upper()}>\n{content}\n")
+        
+        f.write(f"\n[Output Response]:\n{response_content}\n")
+        f.write(f"{'='*30}\n")
+
 # --- 資料載入 ---
 df, data_schema_info, column_definitions_info = load_all_data()
 
@@ -240,12 +261,14 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         }}
                         """
 
+                        messages_0 = [{"role": "user", "content": clarification_check_prompt}]
                         clarification_response = client.chat.completions.create(
                             model=model_choice,
-                            messages=[{"role": "user", "content": clarification_check_prompt}],
+                            messages=messages_0,
                             temperature=0.3
                         )
                         clarification_content = clarification_response.choices[0].message.content.strip()
+                        log_llm_interaction("Step 0: Clarification Check", messages_0, clarification_content)
 
                         # 檢查是否需要澄清
                         if "CLEAR" not in clarification_content:
@@ -315,17 +338,19 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     }}
                     """
                     
-                    enhancement_response = client.chat.completions.create(
-                        model=model_choice,
-                        messages=[
+                    messages_1 = [
                             {"role": "system", "content": enhancement_system_prompt},
                             {"role": "user", "content": prompt}
-                        ],
+                        ]
+                    enhancement_response = client.chat.completions.create(
+                        model=model_choice,
+                        messages=messages_1,
                         temperature=0.2
                     )
                     
                     # 解析回應
                     raw_content = enhancement_response.choices[0].message.content.strip()
+                    log_llm_interaction("Step 1: Enhancement", messages_1, raw_content)
                     enhanced_prompt = raw_content
                     needs_court_info = False
 
@@ -383,6 +408,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         model=model_choice, messages=conversation
                     )
                     ai_response = response.choices[0].message.content
+                    log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
 
                     # 取出 Python code
                     code_to_execute = None
@@ -439,6 +465,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 
                                 correction_response = client.chat.completions.create(model=model_choice, messages=conversation)
                                 ai_correction = correction_response.choices[0].message.content
+                                log_llm_interaction(f"Step 3: Error Fix (Retry {retry_count})", conversation, ai_correction)
                                 
                                 if "```python" in ai_correction:
                                     start = ai_correction.find("```python") + len("```python\n")
@@ -500,12 +527,14 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         回覆: "PASS" 或 修正後的程式碼 (含 ```python)。
                         """
                         
+                        messages_4 = [{"role": "user", "content": reflection_prompt}]
                         reflection_response = client.chat.completions.create(
                             model=model_choice,
-                            messages=[{"role": "user", "content": reflection_prompt}],
+                            messages=messages_4,
                             temperature=0.1
                         )
                         reflection_content = reflection_response.choices[0].message.content.strip()
+                        log_llm_interaction("Step 4: Logic Reflection", messages_4, reflection_content)
 
                         if "PASS" not in reflection_content and "```python" in reflection_content:
                             # 觸發邏輯修正
@@ -625,15 +654,18 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字。
                         """
                         
-                        insight = client.chat.completions.create(
-                            model=model_choice,
-                            messages=[
+                        
+                        messages_6 = [
                                 {"role": "system", "content": "你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。"},
                                 {"role": "user", "content": insight_prompt},
-                            ],
+                            ]
+                        insight = client.chat.completions.create(
+                            model=model_choice,
+                            messages=messages_6,
                             temperature=0.4,
                         )
                         summary_text = insight.choices[0].message.content
+                        log_llm_interaction("Step 6: Insight Generation", messages_6, summary_text)
                         st.markdown(summary_text)
 
                     except Exception as e:
