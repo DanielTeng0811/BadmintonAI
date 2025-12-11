@@ -214,27 +214,18 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                         import json
                         clarification_check_prompt = f"""
-                        你是一個問題檢查助手。請判斷使用者的問題是否**足夠明確**可以直接進行數據分析。
-
-                        使用者問題: "{prompt}"
-
-                        可用的資料欄位:
-                        {data_schema_info}
-
-                        **判斷標準:**
-                        - 如果問題缺少關鍵資訊（例如：沒指定球員名稱、時間範圍模糊、統計方式不明確、比較對象不清楚）
-                        - 如果問題有多種合理解讀方式
-                        - 如果使用者使用了代名詞（例如「他」、「這個」、「那場比賽」）但上下文不清楚
-
-                        則需要澄清。
-
-                        **輸出格式（二選一）:**
-                        1. 如果問題已經足夠明確，只輸出: CLEAR
-                        2. 如果需要澄清，輸出 JSON 格式（不要包含任何其他文字）:
+                        檢查問題是否明確 (含球員/時間/比較對象)。
+                        問題: "{prompt}"
+                        欄位: {data_schema_info}
+                        若不明確/有歧義/代名詞不清，需澄清。
+                        
+                        輸出:
+                        1. 明確: CLEAR
+                        2. 需澄清 JSON:
                         {{
                         "need_clarification": true,
-                        "question": "請問您想要...",
-                        "options": ["選項1的完整描述", "選項2的完整描述", "選項3的完整描述"]
+                        "question": "請問您要...",
+                        "options": ["選項1...", "選項2..."]
                         }}
                         """
 
@@ -299,13 +290,9 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     status.update(label="Step 1/6: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
-                    你是一個輔助系統，你的任務是將使用者的簡短數據分析問題，轉化為一個更清晰、更完整、更具體的數據分析問題，必須考慮使用者所有方面的可能，及數據中所有欄位的關聯性。
-                    這個描述將被交給另一個 AI (Python 程式碼生成器) 來執行。
-                    
-                    你必須考慮以下的資料庫 schema：
-                    {data_schema_info}
-                    
-                    你的輸出**只能**包含轉化後精簡的繁體中文問題敘述，不要有任何前言、後語或解釋。
+                    將使用者簡短問題轉化為完整、具體的數據分析問題，考慮資料庫 Schema。
+                    Schema: {data_schema_info}
+                    輸出: 僅轉化後的繁體中文問題敘述。
                     """
                     
                     enhancement_response = client.chat.completions.create(
@@ -325,14 +312,10 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     
                     # [修改點]：注入通用且穩健的視覺化指導原則，而非強制特定方法
                     system_prompt += """
-                    \n**數據分析與視覺化最佳實踐 (Analysis & Visualization Best Practices):**
-                    1. **資料型態意識 (Data Type Awareness)**:
-                       - 在彙整或繪圖前，請確認欄位是「連續數值 (Float)」還是「離散類別 (Category/Int)」。
-                       - 若是對「連續座標 (Float)」進行分析 (如落點、跑動位置)，**嚴禁**直接使用 `groupby` 計算次數，因為座標幾乎不會完全重複，這會導致圖表空白或座標軸崩潰。
-                    2. **座標軸可讀性 (Label Readability)**:
-                       - 避免將大量浮點數直接作為軸標籤。
-                    3. **資料量檢查 (Data Integrity)**:
-                       - 在繪圖前，務必檢查篩選後的 DataFrame 是否為空 (`if len(filtered_df) > 0: ...`)。
+                    \n**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
                     """
 
                     conversation = [{"role": "system", "content": system_prompt}]
@@ -449,31 +432,20 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             reflection_context = "(無特定輸出變數，這通常表示沒有計算出任何數據)"
 
                         reflection_prompt = f"""
-                        你是一個嚴格的程式碼審查員 (QA)。
-                        
-                        1. 使用者原始問題: "{prompt}"
-                        2. 強化後的問題描述: "{enhanced_prompt}"
-                        3. 目前生成的程式碼:
+                        QA Check:
+                        1. 問題: "{prompt}" (強化: "{enhanced_prompt}")
+                        2. 程式:
                         ```python
                         {code_to_execute}
                         ```
-                        4. 程式執行後的關鍵變數結果 (Variable State):
-                        {reflection_context}
-                        5. 程式執行輸出 (Stdout):
-                        {execution_output}
+                        3. 結果 (Stdout): {execution_output}
+                        4. 變數: {reflection_context}
                         
-                        **任務 (Critical Logic Check):**
-                        請仔細檢查「變數結果」是否顯示**資料為空**或**邏輯錯誤**。
+                        判斷:
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL
+                        - ✅ 資料非空且有輸出/圖表 -> PASS
                         
-                        **嚴格判斷標準:**
-                        - ❌ **如果變數顯示 `Empty DataFrame`、`0 rows` 或 `[]` (空列表):** 代表篩選條件太嚴苛、名字拼錯，或是分析邏輯不適用於該資料子集。這會導致圖表空白。**必須視為失敗 (FAIL)**。
-                        - ❌ **如果 `_generated_figures_count` 為 0 且 `execution_output` 為空:** 代表沒有產生圖表也沒有輸出任何文字結果，視為失敗。
-                        - ✅ 只要資料存在 (rows > 0) 且 (產生了圖表 OR 輸出了文字結果)，邏輯正確回答問題時，回傳 PASS。
-                        
-                        **輸出格式 (二選一):**
-                        1. 如果結果合理、資料非空且正確，請**僅輸出**字串: "PASS"
-                        2. 如果發現 `Empty DataFrame` 或其他邏輯問題，請輸出**修正後的完整 Python 程式碼** (必須包含 ```python 區塊)。
-                           (例如：嘗試使用 `str.contains` 進行模糊搜尋，放寬篩選條件，或改用更適合該資料量的圖表)。
+                        回覆: "PASS" 或 修正後的程式碼 (含 ```python)。
                         """
                         
                         reflection_response = client.chat.completions.create(
@@ -588,21 +560,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     analysis_context_str += f"```\n{str(val)}\n```\n\n"
                         
                         insight_prompt = f"""
-                        你是一位擁有豐富經驗的專業羽球教練，同時也是精通數據分析的戰術大師。
-                        使用者的原始問題是：「{prompt}」
-                        
-                        根據這個問題，AI 產生並執行了一段 Python 程式碼，程式碼執行後產生的核心數據變數如下。
-
-                        --- 核心數據變數 ---
+                        你是羽球教練。
+                        問題: "{prompt}"
+                        數據:
                         {analysis_context_str}
-                        --- 核心數據變數結束 ---
 
-                        請你基於「使用者問題」和上述所有「核心數據變數」，用繁體中文精簡回答使用者的問題。
-                        
-                        **回答風格要求：**
-                        1.  **教練口吻**：使用專業但易懂的羽球術語，語氣要像教練在場邊指導球員一樣，既有數據支撐，又有戰術深度。
-                        2.  **專業洞察**：不要只唸數字，要解釋數字背後的戰術意義。
-                        3.  **精簡明確**：直接切入重點，提供具體的戰術分析。
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字。
                         """
                         
                         insight = client.chat.completions.create(

@@ -129,7 +129,10 @@ def load_column_definitions(filepath):
             output_parts.append("## 球種代碼對照表")
             shot_types = full_definitions["shot_types"]
             for code, info in shot_types.items():
-                output_parts.append(f"- {code}: {info['name']} ({info['english']})")
+                if 'english' in info:
+                    output_parts.append(f"- {code}: {info['name']} ({info['english']})")
+                else:
+                    output_parts.append(f"- {code}: {info['name']}")
             output_parts.append("")
 
         # 3. 添加欄位定義（結構化格式）
