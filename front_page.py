@@ -45,6 +45,17 @@ def get_api_key(key_name):
 
     return ""
 
+# --- 輔助函數：讀取場地定義 ---
+@st.cache_data
+def load_court_info():
+    try:
+        with open("court_place.txt", "r", encoding="utf-8") as f:
+            return f.read()
+    except:
+        return ""
+
+court_place_info = load_court_info()
+
 # --- 資料載入 ---
 df, data_schema_info, column_definitions_info = load_all_data()
 
@@ -55,7 +66,7 @@ st.markdown("#### 透過自然語言，直接生成數據分析圖表")
 # 側邊欄
 with st.sidebar:
     st.header("⚙️ API 設定")
-    api_mode = st.selectbox("API 模式", ["Gemini", "OpenAI 官方", "交大伺服器"], index=0)
+    api_mode = st.selectbox("API 模式", ["Gemini", "OpenAI 官方", "交大伺服器"], index=1)
     api_key_env_var = "GEMINI_API_KEY" if api_mode == "Gemini" else "OPENAI_API_KEY"
 
     # 使用 get_api_key 函數安全讀取 API Key
@@ -290,9 +301,18 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     status.update(label="Step 1/6: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
-                    將使用者簡短問題轉化為完整、具體的數據分析問題，考慮資料庫 Schema。
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題 (繁體中文)。
+                    2. 判斷問題是否涉及「場地位置」、「座標」、「區域」、「落點分析」或「跑動路線」。
+
                     Schema: {data_schema_info}
-                    輸出: 僅轉化後的繁體中文問題敘述。
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {{
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }}
                     """
                     
                     enhancement_response = client.chat.completions.create(
@@ -303,13 +323,45 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         ],
                         temperature=0.2
                     )
-                    enhanced_prompt = enhancement_response.choices[0].message.content.strip()
+                    
+                    # 解析回應
+                    raw_content = enhancement_response.choices[0].message.content.strip()
+                    enhanced_prompt = raw_content
+                    needs_court_info = False
+
+                    try:
+                        import json
+                        # 嘗試移除 Markdown 標記
+                        json_str = raw_content
+                        if "```json" in raw_content:
+                            start = raw_content.find("```json") + 7
+                            end = raw_content.rfind("```")
+                            json_str = raw_content[start:end].strip()
+                        elif "```" in raw_content:
+                            start = raw_content.find("```") + 3
+                            end = raw_content.rfind("```")
+                            json_str = raw_content[start:end].strip()
+                        
+                        parsed = json.loads(json_str)
+                        enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
+                        needs_court_info = parsed.get("needs_court_info", False)
+                    except:
+                        print(f"Enhancement JSON parse failed, using raw text. Content: {raw_content[:50]}...")
+                        # Fallback: 如果解析失敗，假設不需要場地資訊，或者如果關鍵字出現則設為True
+                        if any(k in prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
+                            needs_court_info = True
+
                     print(f"Enhanced Prompt: {enhanced_prompt}")
+                    print(f"Needs Court Info: {needs_court_info}")
 
                     # --- [Step 2: 生成分析程式碼] ---
                     status.update(label="Step 2/6: 正在生成分析程式碼...")
                     system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
                     
+                    # 動態注入場地資訊
+                    if needs_court_info and court_place_info:
+                        system_prompt += f"\n\n**場地位置參考資訊 (Court Grid Definitions):**\n{court_place_info}\n"
+
                     # [修改點]：注入通用且穩健的視覺化指導原則，而非強制特定方法
                     system_prompt += """
                     \n**最佳實踐:**
@@ -564,7 +616,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         問題: "{prompt}"
                         數據:
                         {analysis_context_str}
+                        """
 
+                        if needs_court_info and court_place_info:
+                            insight_prompt += f"\n場地定義參考:\n{court_place_info}\n"
+
+                        insight_prompt += """
                         用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字。
                         """
                         

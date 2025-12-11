@@ -49,8 +49,7 @@
   "data_columns": [
     {
       "column": "match_id",
-      "description": "比賽唯一識別碼",
-      "usage": "區分不同場次"
+      "description": "比賽 ID。用來區分不同的比賽場次。"
     },
     {
       "column": "set",
@@ -59,43 +58,37 @@
     },
     {
       "column": "rally",
-      "description": "該局內回合編號(每局重置)",
+      "description": "從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。",
       "scope": "局內",
       "important_note": "跨局分析需配 match_id, set",
       "correct_usage": "總回合: df.groupby(['match_id', 'set', 'rally']).ngroups"
     },
     {
       "column": "rally_id",
-      "description": "全局唯一回合ID",
-      "usage": "可直接計數無需分組"
+      "description": "整個數據集中唯一的回合 ID"
     },
     {
       "column": "ball_round",
-      "description": "回合內擊球順序(從1開始)",
-      "usage": "分析回合長度"
+      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。"
     },
     {
       "column": "player_score",
-      "description": "Kento MOMOTA 分數",
-      "value_range": "0-30"
+      "description": "該match的第一個發球者，他的得分",
+      "value_range": "0-35"
     },
     {
       "column": "opponent_score",
-      "description": "CHOU Tien Chen 分數",
-      "value_range": "0-30"
+      "description": "該match的第一個發球者，他的對手得分",
+      "value_range": "0-35"
     },
     {
       "column": "score_status",
-      "description": "分數差距 (player - opponent)",
+      "description": "分數差距 (player score - opponent score)",
       "value_range": "正=領先, 負=落後"
     },
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "value_range": [
-        "Kento MOMOTA",
-        "CHOU Tien Chen"
-      ],
       "important_note": "須用全名"
     },
     {
@@ -132,84 +125,102 @@
     },
     {
       "column": "hit_x",
-      "description": "擊球X座標"
+      "description": "擊球點X座標"
     },
     {
       "column": "hit_y",
-      "description": "擊球Y座標",
-      "note": "前排:>0.7; 中排:-0.1~0.7; 後排:<-0.1"
+      "description": "擊球點Y座標"
     },
     {
       "column": "hit_area",
-      "description": "擊球區域編號 (1-32)"
+      "description": "擊球點所在區域編號 (1-32)"
     },
     {
       "column": "landing_x",
-      "description": "落點X座標"
+      "description": "球的落點X座標，可視為下顆球對方的擊球點X座標"
     },
     {
       "column": "landing_y",
-      "description": "落點Y座標",
-      "note": "前排:>0.7; 中排:-0.1~0.7; 後排:<-0.1"
+      "description": "球的落點Y座標，可視為下顆球對方的擊球點Y座標"
     },
     {
       "column": "landing_area",
-      "description": "落點區域編號 (1-32)"
+      "description": "球的落點區域編號 (1-32)，即為下顆球對方的擊球點區域編號"
     },
     {
       "column": "player_location_x",
-      "description": "球員位置X"
+      "description": "球員在擊球瞬間，身體重心所在的 X 座標。"
     },
     {
       "column": "player_location_y",
-      "description": "球員位置Y"
+      "description": "球員在擊球瞬間，身體重心所在的 Y 座標。"
+    },
+    {
+      "column": "player_location_area",
+      "description": "球員擊球區域。球員在擊球瞬間，身體重心所在的區域代碼"
     },
     {
       "column": "player_move_x",
-      "description": "球員移動目標X (預測)"
+      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)"
     },
     {
       "column": "player_move_y",
-      "description": "球員移動目標Y (預測)"
+      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)"
     },
     {
       "column": "moving_x",
-      "description": "球員移動後實際X"
+      "description": "球員擊完這一球後，移動到的X座標。"
     },
     {
       "column": "moving_y",
-      "description": "球員移動後實際Y"
+      "description": "球員擊完這一球後，移動到的Y座標。"
+    },
+    {
+      "column": "player_moving_area",
+      "description": "球員擊完這一球後，移動到的區域代碼"
     },
     {
       "column": "opponent_location_x",
-      "description": "對手位置X"
+      "description": "對手所站的位置X座標"
     },
     {
       "column": "opponent_location_y",
-      "description": "對手位置Y"
+      "description": "對手所站的位置Y座標"
+    },
+    {
+      "column": "opponent_location_area",
+      "description": "對手擊球區域。對手所站的位置區域代碼"
+    },
+    {
+      "column": "opponent_move_x",
+      "description": "對手擊球點到移動位置的X座標位移量。"
+    },
+    {
+      "column": "opponent_move_y",
+      "description": "對手擊球點到移動位置的Y座標位移量。"
     },
     {
       "column": "ball_distance",
-      "description": "球員與擊球點距離"
+      "description": "飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。"
     },
     {
       "column": "getpoint_player",
       "description": "該回合得分者",
-      "scope": "僅在rally最後一拍",
+      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL",
       "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()"
     },
     {
       "column": "win_reason",
-      "description": "得分方式 (贏家觀點)",
-      "scope": "回合結束時",
+      "description": "該球若player得分，則win_reason為得分原因",
+      "scope": "回合結束時(若player得分)有原因，其他設為NULL",
       "filter_condition": "getpoint_player.notna() & win_reason.notna()"
     },
     {
       "column": "lose_reason",
-      "description": "失分原因 (輸家觀點)",
-      "scope": "回合結束時",
+      "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL",
+      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL",
       "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
-      "important_note": "記錄的是輸球方失誤"
+      "important_note": "記錄的是player失誤原因"
     }
   ],
   "analysis_guidelines": {
@@ -223,20 +234,12 @@
       "step3": "win_rate = wins / len(rally_winners)"
     },
     "player_name_usage": {
-      "rule": "須用完整姓名",
-      "correct": [
-        "Kento MOMOTA",
-        "CHOU Tien Chen"
-      ]
+      "rule": "須用完整姓名"
     },
     "shot_type_analysis": {
       "purpose": "球種統計",
       "correct": "用 player_type (數字) 分組",
       "note": "type=字串, player_type=代碼"
-    },
-    "lose_reason_filter": {
-      "purpose": "查失誤原因",
-      "correct": "df[(df['getpoint_player'] != '球員') & (df['lose_reason'].notna())]"
     },
     "match_score_query": {
       "context": "三戰兩勝, 21分制",

@@ -73,19 +73,19 @@ def get_data_schema(df):
             extra_info.append(f"{unique_vals_list}")
 
     # 4. 新增固定的場地編號對應資訊
-    court_mapping_info = (
-        "\n" + "="*60
-        + "\n[場地前中後場對應]"
-        + "\n" + "="*60
-        + "\n前場: y座標>0.7"
-        + "\n中場: y座標在-0.1到0.7之間"
-        + "\n後場: y座標<-0.1"
-    )
+    # court_mapping_info = (
+    #     "\n" + "="*60
+    #     + "\n[場地前中後場對應]"
+    #     + "\n" + "="*60
+    #     + "\n前場: y座標>0.7"
+    #     + "\n中場: y座標在-0.1到0.7之間"
+    #     + "\n後場: y座標<-0.1"
+    # )
 
     # 5. 合併輸出內容 (已修正)
     final_output = (
         schema_info
-        + court_mapping_info # 插入場地資訊
+        #+ court_mapping_info # 插入場地資訊
         + "\n" + "="*60  # <-- 修正：移除了多餘的 's'
         + "\n[欄位額外資訊 (動態分析)]" # 修改標題以區分
         + "\n" + "="*60
