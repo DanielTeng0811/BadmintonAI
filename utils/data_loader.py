@@ -142,7 +142,9 @@ def load_column_definitions(filepath):
             desc = item.get('description', '')
 
             # 基本資訊
-            output_parts.append(f"\n### `{col_name}`")
+            if 'warning' in item:
+                output_parts.append(f"⚠️ **{item['warning']}**")
+            output_parts.append(f"### `{col_name}`")
             output_parts.append(f"**說明**：{desc}")
 
             # 關鍵字
@@ -204,6 +206,7 @@ def load_column_definitions(filepath):
             for guide_name, guide_info in guidelines.items():
                 title_map = {
                     "rally_counting": "回合計數",
+                    "core_principles": "💎 核心資料原則 (CORE DATA PRINCIPLES)",
                     "win_rate_calculation": "勝率計算",
                     "player_name_usage": "球員名稱使用",
                     "shot_type_analysis": "球種分析",
@@ -254,6 +257,10 @@ def load_column_definitions(filepath):
                         output_parts.append(f"- **資料格式**：{value}")
                     elif key == "alternative":
                         output_parts.append(f"- **替代方案**：{value}")
+                    elif key.startswith("principle"):
+                        output_parts.append(f"- 💎 **{key.upper()}**：{value}")
+                    elif key == "correct_implementation":
+                        output_parts.append(f"- ✅ **正確實作**：`{value}`")
 
         return "\n".join(output_parts)
 

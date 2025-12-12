@@ -71,15 +71,15 @@
     },
     {
       "column": "player_score",
-      "description": "該match的第一個發球者，他的得分",
-      "value_range": "0-35",
-      "usage": "df[df['match_id'] == 'match_id'].iloc[0]['player']，可對應到df[df['match_id'] == 'match_id']['player_score']是誰的得分"
+      "description": "Kento MOMOTA的當前局內分數",
+      "value_range": "0-30(含延分)",
+      "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
     },
     {
       "column": "opponent_score",
-      "description": "該match的第一個發球者，他的對手得分",
-      "value_range": "0-35",
-      "usage": "df[df['match_id'] == 'match_id'].iloc[1]['player']，可對應到df[df['match_id'] == 'match_id']['opponent_score']是誰的得分"
+      "description": "CHOU Tien Chen的當前局內分數",
+      "value_range": "0-30(含延分)",
+      "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
     },
     {
       "column": "score_status",
@@ -234,6 +234,11 @@
     }
   ],
   "analysis_guidelines": {
+    "core_principles": {
+      "principle_1": "Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.",
+      "principle_2": "The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.",
+      "correct_implementation": "rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()"
+    },
     "rally_counting": {
       "issue": "rally編號每局重置",
       "correct": "df.groupby(['match_id', 'set', 'rally']).ngroups"
