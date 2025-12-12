@@ -646,6 +646,16 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         問題: "{prompt}"
                         數據:
                         {analysis_context_str}
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
                         """
 
                         if needs_court_info and court_place_info:

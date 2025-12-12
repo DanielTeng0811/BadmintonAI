@@ -107,16 +107,16 @@
         "殺球",
         "切球",
         "...參照shot_types"
-      ],
-      "note": "統計球種建議用 player_type (數字)"
+      ]
     },
     {
       "column": "player_type",
       "description": "球員擊球球種代碼",
       "data_type": "float",
       "value_mapping": "1-11 (見shot_types)",
-      "usage": "適合分組統計球種，可使用type替代",
-      "correct_usage": "df[df['player_type']==4].groupby('player').size()"
+      "usage": "適合分組統計球種",
+      "correct_usage": "df[df['player_type']==4].groupby('player').size()",
+      "note": "使用type更佳"
     },
     {
       "column": "opponent_type",
@@ -259,8 +259,8 @@
     "continuous_shot_query": {
       "purpose": "連續對打紀錄",
       "example": "周天成使用殺球後，對手使用那些球種回擊",
-      "correct_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['player_type'] == 4)  opponent_return_types = df['player_type'].iloc[kento_smash.index + 1].dropna()",
-      "wrong_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['player_type'] == 4)  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()"
+      "correct_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()",
+      "wrong_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()"
     }
   }
 }
