@@ -115,7 +115,7 @@
       "description": "球員擊球球種代碼",
       "data_type": "float",
       "value_mapping": "1-11 (見shot_types)",
-      "usage": "適合分組統計球種",
+      "usage": "適合分組統計球種，可使用type替代",
       "correct_usage": "df[df['player_type']==4].groupby('player').size()"
     },
     {
@@ -133,7 +133,7 @@
     },
     {
       "column": "hit_area",
-      "description": "擊球點所在區域編號 (1-32)",
+      "description": "擊球點所在區域代碼 (1-32)",
       "keyword": "球員擊球點"
     },
     {
@@ -146,7 +146,7 @@
     },
     {
       "column": "landing_area",
-      "description": "球的落點區域編號 (1-32)(即為下顆球對方的擊球點區域編號)",
+      "description": "球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)",
       "keyword": "球的落點"
     },
     {
@@ -255,6 +255,11 @@
       "context": "三戰兩勝, 21分制",
       "data_limitation": "最後一分沒記，贏家需+1",
       "correct": "找出每局最後一筆 player_score/opponent_score，贏家分數+1"
+    },
+    "continuous_shot_query": {
+      "purpose": "連續對打紀錄",
+      "note": "使用shift(-1)可以取得下一個球的資訊",
+      "example": "玩家使用切球後，對手使用那些球種回擊: df['player_type'].shift(-1)[df['player_type'] == 5].unique()"
     }
   }
 }

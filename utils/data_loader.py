@@ -145,7 +145,7 @@ def load_column_definitions(filepath):
             output_parts.append(f"\n### `{col_name}`")
             output_parts.append(f"**說明**：{desc}")
 
-            # 關鍵字 (New)
+            # 關鍵字
             if 'keyword' in item:
                 output_parts.append(f"- **關鍵字**：{item['keyword']}")
 
@@ -159,25 +159,34 @@ def load_column_definitions(filepath):
                 else:
                     output_parts.append(f"- **值域**：{val_range}")
 
-            # 粒度層級
-            if 'granularity' in item:
-                output_parts.append(f"- **粒度**：{item['granularity']}")
+            # 數值對應 (New)
+            if 'value_mapping' in item:
+                vm = item['value_mapping']
+                if isinstance(vm, dict):
+                    vm_str = ", ".join([f"{k}={v}" for k,v in vm.items()])
+                    output_parts.append(f"- **數值對應**：{vm_str}")
+                else:
+                    output_parts.append(f"- **數值對應**：{vm}")
 
-            #空間分布
-            if 'area_definition' in item:
-                output_parts.append(f"- **場地區塊分布**：{item['area_definition']}")
+            # 範圍 Scope (New)
+            if 'scope' in item:
+                output_parts.append(f"- **範圍**：{item['scope']}")
+
             # 計算方式
             if 'calculation' in item:
                 output_parts.append(f"- **計算方式**：{item['calculation']}")
 
-            # 關聯欄位
-            if 'related_to' in item and item['related_to']:
-                related = ', '.join([f'`{r}`' for r in item['related_to']])
-                output_parts.append(f"- **關聯欄位**：{related}")
+            # 篩選條件 (New)
+            if 'filter_condition' in item:
+                 output_parts.append(f"- **篩選條件**：`{item['filter_condition']}`")
 
             # 使用情境
             if 'usage' in item:
                 output_parts.append(f"- **用途**：{item['usage']}")
+
+            # 備註 (New)
+            if 'note' in item:
+                output_parts.append(f"- **備註**：{item['note']}")
 
             # 重要提醒
             if 'important_note' in item:
@@ -187,17 +196,12 @@ def load_column_definitions(filepath):
             if 'correct_usage' in item:
                 output_parts.append(f"- ✅ **正確用法**：`{item['correct_usage']}`")
 
-            # 錯誤用法
-            if 'wrong_usage' in item:
-                output_parts.append(f"- ❌ **錯誤用法**：`{item['wrong_usage']}`")
-
         # 4. 添加分析指南
         if "analysis_guidelines" in full_definitions:
             output_parts.append("\n## 分析指南")
             guidelines = full_definitions["analysis_guidelines"]
 
             for guide_name, guide_info in guidelines.items():
-                # 轉換 snake_case 為中文標題
                 title_map = {
                     "rally_counting": "回合計數",
                     "win_rate_calculation": "勝率計算",
@@ -205,7 +209,8 @@ def load_column_definitions(filepath):
                     "shot_type_analysis": "球種分析",
                     "lose_reason_filter": "失誤原因篩選",
                     "win_reason_filter": "得分方式篩選",
-                    "match_score_query": "比賽比分查詢"
+                    "match_score_query": "比賽比分查詢",
+                    "continuous_shot_query": "連續對打查詢"
                 }
                 title = title_map.get(guide_name, guide_name)
                 output_parts.append(f"\n### {title}")
@@ -237,6 +242,8 @@ def load_column_definitions(filepath):
                         output_parts.append(f"- **規則**：{value}")
                     elif key == "example_code":
                         output_parts.append(f"- **程式碼範例**：```python\n{value}\n```")
+                    elif key == "example":
+                        output_parts.append(f"- **範例**：{value}")
                     elif key == "important_note":
                         output_parts.append(f"- ⚠️ **重要提醒**：{value}")
                     elif key == "visualization":
