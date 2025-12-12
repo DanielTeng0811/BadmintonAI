@@ -51,6 +51,7 @@ def load_court_info():
     try:
         with open("court_place.txt", "r", encoding="utf-8") as f:
             return f.read()
+        print("Court info loaded successfully")
     except:
         return ""
 
