@@ -116,7 +116,7 @@
       "value_mapping": "1-11 (見shot_types)",
       "usage": "適合分組統計球種",
       "correct_usage": "df[df['player_type']==4].groupby('player').size()",
-      "note": "使用type更佳"
+      "note": "為type轉換來的，直接使用type更佳"
     },
     {
       "column": "opponent_type",

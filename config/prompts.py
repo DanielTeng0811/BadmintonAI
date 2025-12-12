@@ -27,6 +27,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 6. 用繁體中文。
 7. 使用dropna()處理遺失值 
 8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
 
 **數據:**
 Schema:

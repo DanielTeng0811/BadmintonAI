@@ -524,7 +524,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         判斷:
                         - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
                         - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
-                            - **圓餅圖 (Pie Check)**: 有極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，避免圖表無法閱讀。
+                            - **圓餅圖 (Pie Check)**: 有極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
                             - **長條圖 (Bar Check)**: 若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
                         - ✅ 資料非空且有輸出/圖表清晰 -> PASS
                         
