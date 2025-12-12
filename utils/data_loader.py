@@ -222,12 +222,12 @@ def load_column_definitions(filepath):
                         output_parts.append(f"- **情境**：{value}")
                     elif key == "data_limitation":
                         output_parts.append(f"- {value}")
-                    elif key == "correct_method" or key == "correct":
+                    elif key == "correct_method" or key == "correct" or key == "correct_usage":
                         if isinstance(value, list):
                             output_parts.append(f"- ✅ **正確**：{', '.join(value)}")
                         else:
                             output_parts.append(f"- ✅ **正確方法**：`{value}`")
-                    elif key == "wrong_method" or key == "wrong":
+                    elif key == "wrong_method" or key == "wrong" or key == "wrong_usage":
                         if isinstance(value, list):
                             output_parts.append(f"- ❌ **錯誤**：{', '.join(value)}")
                         else:

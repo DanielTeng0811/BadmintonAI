@@ -89,7 +89,7 @@
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "important_note": "須用全名"
+      "important_note": "每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')"
     },
     {
       "column": "server",
@@ -258,8 +258,9 @@
     },
     "continuous_shot_query": {
       "purpose": "連續對打紀錄",
-      "note": "使用shift(-1)可以取得下一個球的資訊",
-      "example": "玩家使用切球後，對手使用那些球種回擊: df['player_type'].shift(-1)[df['player_type'] == 5].unique()"
+      "example": "周天成使用殺球後，對手使用那些球種回擊",
+      "correct_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['player_type'] == 4)  opponent_return_types = df['player_type'].iloc[kento_smash.index + 1].dropna()",
+      "wrong_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['player_type'] == 4)  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()"
     }
   }
 }
