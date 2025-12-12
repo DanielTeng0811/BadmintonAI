@@ -522,10 +522,36 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         4. 變數: {reflection_context}
                         
                         判斷:
-                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL
-                        - ✅ 資料非空且有輸出/圖表 -> PASS
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 有極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，避免圖表無法閱讀。
+                            - **長條圖 (Bar Check)**: 若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
                         
-                        回覆: "PASS" 或 修正後的程式碼 (含 ```python)。
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                          * 修正過多類別時 (如 < 3% 合併為其他)，請參考以下安全寫法 (請視問題調整變數與邏輯):
+                          * 修正過多類別時 (如 < 3% 合併為其他)，請參考以下安全寫法 (請視問題調整變數與邏輯):
+                          ```python
+                          # 假設: df_plot 為繪圖用的 DataFrame
+                          # label_col = 分類欄位 (如: 球種, 落點區域) -> 這是 X 軸
+                          # value_col = 數值欄位 (如: 次數, 得分) -> 這是 Y 軸或圓餅數值
+                          
+                          # 1. 確保分類欄位為字串型態 (避免 FutureWarning)
+                          df_plot['label_col'] = df_plot['label_col'].astype(str)
+                          
+                          # 2. 計算門檻
+                          total_value = df_plot['value_col'].sum()
+                          threshold = total_value * 0.05 # 依需求調整比例
+                          
+                          # 3. 找出小類別 (注意: 判斷的是數值，修改的是分類名稱!)
+                          small_mask = df_plot['value_col'] < threshold
+                          df_plot.loc[small_mask, 'label_col'] = '其他'
+                          
+                          # 4. 重新 Groupby 加總 (CRITICAL: 必須重新聚合，否則"其他"會重複)
+                          df_final = df_plot.groupby('label_col', as_index=False)['value_col'].sum()
+                          ```
                         """
                         
                         messages_4 = [{"role": "user", "content": reflection_prompt}]
@@ -578,7 +604,20 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                         
                             except Exception as logic_fix_error:
                                 print(f"Logic refinement failed: {logic_fix_error}")
-                                pass
+                                st.warning(f"⚠️ 嘗試優化圖表顯示時發生錯誤 ({logic_fix_error})，將顯示原始結果。")
+                                # Fallback: 重新執行原始程式碼以恢復圖表
+                                try:
+                                    plt.close('all')
+                                    exec_globals = {
+                                        "pd": pd, "df": df.copy(), "st": st, "platform": platform, 
+                                        "io": io, "plt": plt, "sns": sns
+                                    }
+                                    f = io.StringIO()
+                                    with redirect_stdout(f):
+                                        exec(code_to_execute, exec_globals)
+                                    execution_output = f.getvalue()
+                                except:
+                                    pass
 
                         final_figs = [plt.figure(n) for n in plt.get_fignums()]
                         if not final_figs:

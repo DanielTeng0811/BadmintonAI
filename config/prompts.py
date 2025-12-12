@@ -26,7 +26,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 5. 類別用名稱。Schema 字串需精確。
 6. 用繁體中文。
 7. 使用dropna()處理遺失值 
-8. 注意圖的排版，勿過多的數值資訊在圖中
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
 
 **數據:**
 Schema:
