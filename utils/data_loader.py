@@ -87,7 +87,7 @@ def get_data_schema(df):
         schema_info
         #+ court_mapping_info # 插入場地資訊
         + "\n" + "="*60  # <-- 修正：移除了多餘的 's'
-        + "\n[欄位額外資訊 (動態分析)]" # 修改標題以區分
+        + "\n[欄位額外資訊 (動態分析)]" # 修改l標題以區分
         + "\n" + "="*60
         + "".join(extra_info)
     )
@@ -119,7 +119,6 @@ def load_column_definitions(filepath):
             output_parts.append("## 比賽資料結構")
             output_parts.append(f"- 比賽形式：{metadata.get('match_structure', {}).get('format', '')}")
             output_parts.append(f"- 計分方式：{metadata.get('match_structure', {}).get('set_scoring', '')}")
-            output_parts.append(f"- 球員：{', '.join(metadata.get('players', []))}")
             if 'data_recording_note' in metadata:
                 output_parts.append(f"\n{metadata['data_recording_note']}")
             output_parts.append("")
@@ -145,6 +144,10 @@ def load_column_definitions(filepath):
             # 基本資訊
             output_parts.append(f"\n### `{col_name}`")
             output_parts.append(f"**說明**：{desc}")
+
+            # 關鍵字 (New)
+            if 'keyword' in item:
+                output_parts.append(f"- **關鍵字**：{item['keyword']}")
 
             # 資料類型與值域
             if 'data_type' in item:

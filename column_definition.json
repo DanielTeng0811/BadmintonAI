@@ -1,10 +1,6 @@
 {
   "metadata": {
     "description": "羽球比賽數據欄位定義",
-    "players": [
-      "Kento MOMOTA",
-      "CHOU Tien Chen"
-    ],
     "match_structure": {
       "format": "三戰兩勝制",
       "set_scoring": "21分制"
@@ -49,7 +45,8 @@
   "data_columns": [
     {
       "column": "match_id",
-      "description": "比賽 ID。用來區分不同的比賽場次。"
+      "description": "比賽 ID。用來區分不同的比賽場次。",
+      "keyword": "場次"
     },
     {
       "column": "set",
@@ -69,17 +66,20 @@
     },
     {
       "column": "ball_round",
-      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。"
+      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。",
+      "usage": "回合中拍與拍的比較或回球數"
     },
     {
       "column": "player_score",
       "description": "該match的第一個發球者，他的得分",
-      "value_range": "0-35"
+      "value_range": "0-35",
+      "usage": "df[df['match_id'] == 'match_id'].iloc[0]['player']，可對應到df[df['match_id'] == 'match_id']['player_score']是誰的得分"
     },
     {
       "column": "opponent_score",
       "description": "該match的第一個發球者，他的對手得分",
-      "value_range": "0-35"
+      "value_range": "0-35",
+      "usage": "df[df['match_id'] == 'match_id'].iloc[1]['player']，可對應到df[df['match_id'] == 'match_id']['opponent_score']是誰的得分"
     },
     {
       "column": "score_status",
@@ -133,7 +133,8 @@
     },
     {
       "column": "hit_area",
-      "description": "擊球點所在區域編號 (1-32)"
+      "description": "擊球點所在區域編號 (1-32)",
+      "keyword": "球員擊球點"
     },
     {
       "column": "landing_x",
@@ -145,7 +146,8 @@
     },
     {
       "column": "landing_area",
-      "description": "球的落點區域編號 (1-32)(即為下顆球對方的擊球點區域編號)"
+      "description": "球的落點區域編號 (1-32)(即為下顆球對方的擊球點區域編號)",
+      "keyword": "球的落點"
     },
     {
       "column": "player_location_x",
@@ -158,15 +160,17 @@
     {
       "column": "player_location_area",
       "description": "球員所在的站位區域。",
-      "usage": "當分析球員在(某個場地資訊)時使用"
+      "keyword": "球員站位"
     },
     {
       "column": "player_move_x",
-      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)"
+      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)",
+      "keyword": "球員移動量"
     },
     {
       "column": "player_move_y",
-      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)"
+      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)",
+      "keyword": "球員移動量"
     },
     {
       "column": "moving_x",
@@ -178,7 +182,8 @@
     },
     {
       "column": "player_moving_area",
-      "description": "球員擊完這一球後，移動到的區域代碼"
+      "description": "球員擊完這一球後，移動到的區域代碼",
+      "keyword": "回位"
     },
     {
       "column": "opponent_location_x",
@@ -190,19 +195,23 @@
     },
     {
       "column": "opponent_location_area",
-      "description": "對手擊球區域。對手所站的位置區域代碼"
+      "description": "對手擊球區域。對手所站的位置區域代碼",
+      "keyword": "對手站位"
     },
     {
       "column": "opponent_move_x",
-      "description": "對手擊球點到移動位置的X座標位移量。"
+      "description": "對手擊球點到移動位置的X座標位移量。",
+      "keyword": "對手移動量"
     },
     {
       "column": "opponent_move_y",
-      "description": "對手擊球點到移動位置的Y座標位移量。"
+      "description": "對手擊球點到移動位置的Y座標位移量。",
+      "keyword": "對手移動量"
     },
     {
       "column": "ball_distance",
-      "description": "飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。"
+      "description": "飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。",
+      "keyword": "打擊的遠度"
     },
     {
       "column": "getpoint_player",
