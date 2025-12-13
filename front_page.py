@@ -333,16 +333,14 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     status.update(label="Step 1/6: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
-                    你是資料分析輔助系統。請分析使用者問題。
+                    你是資料分析輔助系統。請一步步思考分析使用者問題。
                     任務：
                     1. 將簡短問題轉化為完整、具體的數據分析問題。
-                    2. 判斷問題是否需要場地位置資訊。
-
-                    Schema: {data_schema_info}
+                    2. 判斷問題在多數情況下是否需要場地位置資訊。
 
                     輸出 JSON 格式 (不要 Markdown):
                     {{
-                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "enhanced_prompt": "完整的問題",
                         "needs_court_info": true/false
                     }}
                     """
@@ -552,7 +550,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         - 🐛 潛在邏輯問題 (Bug Check):
                             - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
                             - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
-                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [統計與聚合邏輯]: (groupby + sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
                             - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
                             - [上下文]: 結果是否真正回答了問題?
                             - [其他]: 任何潛在的邏輯陷阱?

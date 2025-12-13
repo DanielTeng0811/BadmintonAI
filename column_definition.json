@@ -160,7 +160,8 @@
     {
       "column": "player_location_area",
       "description": "球員所在的站位區域。",
-      "keyword": "球員站位"
+      "keyword": "球員站位",
+      "usage": "例如:球員在前場時..."
     },
     {
       "column": "player_move_x",
@@ -196,7 +197,8 @@
     {
       "column": "opponent_location_area",
       "description": "對手擊球區域。對手所站的位置區域代碼",
-      "keyword": "對手站位"
+      "keyword": "對手站位",
+      "usage": "例如:對手在前場時..."
     },
     {
       "column": "opponent_move_x",
@@ -216,20 +218,20 @@
     {
       "column": "getpoint_player",
       "description": "該回合得分者",
-      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL",
+      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得失分球",
       "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
-      "note": "與player搭配可看得分球是誰打的"
+      "note": "df['player'] == 'player_A' &df['getpoint_player'] =='player_A'，代表是player_A打擊造成自己得分"
     },
     {
       "column": "win_reason",
       "description": "該球若player得分，則win_reason為得分原因",
-      "scope": "回合結束時(若player得分)有原因，其他設為NULL",
+      "scope": "回合結束時(若player得分)有原因，其他設為NULL代表擊球過程非得失分球",
       "filter_condition": "getpoint_player.notna() & win_reason.notna()"
     },
     {
       "column": "lose_reason",
       "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL",
-      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL",
+      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL代表擊球過程非得失分球",
       "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
       "important_note": "記錄的是player失誤原因"
     }
