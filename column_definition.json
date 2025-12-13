@@ -243,6 +243,12 @@
       "issue": "rally編號每局重置",
       "correct": "df.groupby(['match_id', 'set', 'rally']).ngroups"
     },
+    "winning_type_classification": {
+      "principle": "Active vs Passive Winning",
+      "active_winner": "Player won AND Player hit the last shot. Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
+      "passive_winner": "Player won BUT Opponent hit the last shot (Opponent Error). Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`",
+      "note": "For 'Active Winners' or 'Hitting Points', use the Active Winner condition."
+    },
     "win_rate_calculation": {
       "step1": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
       "step2": "wins = (rally_winners == '球員').sum()",

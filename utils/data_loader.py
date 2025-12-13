@@ -206,6 +206,7 @@ def load_column_definitions(filepath):
             for guide_name, guide_info in guidelines.items():
                 title_map = {
                     "rally_counting": "回合計數",
+                    "winning_type_classification": "得分手段分類 (主動 vs 受迫)",
                     "core_principles": "💎 核心資料原則 (CORE DATA PRINCIPLES)",
                     "win_rate_calculation": "勝率計算",
                     "player_name_usage": "球員名稱使用",

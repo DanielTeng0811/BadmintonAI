@@ -522,38 +522,41 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         4. 變數: {reflection_context}
                         
                         判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - 是否不小心合併了"數值型"資料 (如 Score, Rally Length)? 必須修正。
+                            - 是否誤用 `max()` 來算總分? 必須修正
+                            - 是否使用錯誤的欄位 (如 `player` vs `getpoint_player`?)
+                            - IMPORTANT: 是否使用其他錯誤的邏輯
                         - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
                         - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
-                            - **圓餅圖 (Pie Check)**: 有極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
-                            - **長條圖 (Bar Check)**: 若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
                         - ✅ 資料非空且有輸出/圖表清晰 -> PASS
                         
                         回覆: 
                         - 若 PASS: 僅回覆 "PASS"
                         - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
-                          * 修正過多類別時 (如 < 3% 合併為其他)，請參考以下安全寫法 (請視問題調整變數與邏輯):
-                          * 修正過多類別時 (如 < 3% 合併為其他)，請參考以下安全寫法 (請視問題調整變數與邏輯):
-                          ```python
-                          # 假設: df_plot 為繪圖用的 DataFrame
-                          # label_col = 分類欄位 (如: 球種, 落點區域) -> 這是 X 軸
-                          # value_col = 數值欄位 (如: 次數, 得分) -> 這是 Y 軸或圓餅數值
-                          
-                          # 1. 確保分類欄位為字串型態 (避免 FutureWarning)
-                          df_plot['label_col'] = df_plot['label_col'].astype(str)
-                          
-                          # 2. 計算門檻
-                          total_value = df_plot['value_col'].sum()
-                          threshold = total_value * 0.05 # 依需求調整比例
-                          
-                          # 3. 找出小類別 (注意: 判斷的是數值，修改的是分類名稱!)
-                          small_mask = df_plot['value_col'] < threshold
-                          df_plot.loc[small_mask, 'label_col'] = '其他'
-                          
-                          # 4. 重新 Groupby 加總 (CRITICAL: 必須重新聚合，否則"其他"會重複)
-                          df_final = df_plot.groupby('label_col', as_index=False)['value_col'].sum()
-                          ```
+                         
                         """
-                        
+                        #  ```python
+                        #   # 假設: df_plot 為繪圖用的 DataFrame
+                        #   # label_col = 分類欄位 (如: 球種, 落點區域) -> 這是 X 軸
+                        #   # value_col = 數值欄位 (如: 次數, 得分) -> 這是 Y 軸或圓餅數值
+                          
+                        #   # 1. 確保分類欄位為字串型態 (避免 FutureWarning)
+                        #   df_plot['label_col'] = df_plot['label_col'].astype(str)
+                          
+                        #   # 2. 計算門檻
+                        #   total_value = df_plot['value_col'].sum()
+                        #   threshold = total_value * 0.05 # 依需求調整比例
+                          
+                        #   # 3. 找出小類別 (注意: 判斷的是數值，修改的是分類名稱!)
+                        #   small_mask = df_plot['value_col'] < threshold
+                        #   df_plot.loc[small_mask, 'label_col'] = '其他'
+                          
+                        #   # 4. 重新 Groupby 加總 (CRITICAL: 必須重新聚合，否則"其他"會重複)
+                        #   df_final = df_plot.groupby('label_col', as_index=False)['value_col'].sum()
+                        #   ```
                         messages_4 = [{"role": "user", "content": reflection_prompt}]
                         reflection_response = client.chat.completions.create(
                             model=model_choice,
