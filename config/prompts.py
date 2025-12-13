@@ -29,6 +29,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
 9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
 10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
 
 **數據:**
 Schema:

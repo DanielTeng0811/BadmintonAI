@@ -199,6 +199,9 @@ for idx, message in enumerate(st.session_state.messages):
             )
 
 # --- 主對話流程 ---
+# 添加歷史紀錄開關
+use_history = st.toggle("🔗 接續前文 (Track History)", value=False, help="開啟後，AI 將參考最近的對話紀錄來回答問題。")
+
 if prompt := st.chat_input("請輸入你的數據分析問題..."):
     if df is None:
         st.error("❌ 找不到 'all_dataset.csv'。")
@@ -232,7 +235,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
             prompt = full_prompt
             skip_clarification = True
         else:
-            st.session_state.messages.append({"role": "user", "content": prompt})
+            # 儲存問題與追蹤狀態
+            st.session_state.messages.append({
+                "role": "user", 
+                "content": prompt,
+                "tracked": use_history # 儲存當前是否開啟追蹤
+            })
 
         with st.chat_message("user"):
             st.markdown(prompt)
@@ -397,12 +405,22 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     """
 
                     conversation = [{"role": "system", "content": system_prompt}]
-                    if len(st.session_state.messages) > 1:
-                        # 1. 先收集所有有效的歷史訊息 (排除當前最新的一則 & 排除澄清對話)
+                    
+                    # [修改點]：根據 toggle 決定是否加入歷史訊息
+                    if use_history and len(st.session_state.messages) > 1:
+                        # 1. 先收集所有有效的歷史訊息
+                        # 邏輯: 倒序遍歷，遇到 "tracked=False" 的訊息則立即停止 (Chain Breaking)
                         valid_history = []
-                        for m in st.session_state.messages[:-1]:
-                             if m.get("content") and "🤔" not in m.get("content", ""):
-                                valid_history.append({"role": m["role"], "content": m["content"]})
+                        
+                        # 從倒數第二則訊息開始往回看 (排除當前最新訊息)
+                        for m in reversed(st.session_state.messages[:-1]):
+                            # 如果遇到沒有開啟追蹤的訊息，視為斷點，停止收集更早的歷史
+                            if not m.get("tracked", True): # 舊訊息預設 True (或視需求改 False)
+                                break
+                                
+                            if m.get("content") and "🤔" not in m.get("content", ""):
+                                # 插入到最前面以保持時間順序
+                                valid_history.insert(0, {"role": m["role"], "content": m["content"]})
                         
                         # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
                         recent_history = valid_history[-8:]
@@ -528,12 +546,16 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         3. 結果 (Stdout): {execution_output}
                         4. 變數: {reflection_context}
                         
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
                         判斷:
                         - 🐛 潛在邏輯問題 (Bug Check):
-                            - 是否不小心合併了"數值型"資料 (如 Score, Rally Length)? 必須修正。
-                            - 是否誤用 `max()` 來算總分? 必須修正
-                            - 是否使用錯誤的欄位 (如 `player` vs `getpoint_player`?)
-                            - IMPORTANT: 是否使用其他錯誤的邏輯
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
                         - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
                         - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
                             - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
@@ -643,6 +665,10 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     # --- [Step 5: 顯示分析內容] ---
                     if code_to_execute:
+                        # [Step 1 結果展示]
+                        with st.expander("🧠 查看 AI 優化後的提問邏輯 (Step 1)", expanded=False):
+                            st.markdown(f"**優化導引 (Enhanced Prompt):**\n{enhanced_prompt}")
+
                         with st.expander("🧾 查看 AI 生成的程式碼 (最終版)", expanded=False):
                             st.code(code_to_execute, language="python")
 
