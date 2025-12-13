@@ -9531,3 +9531,3635 @@ DataFrame/Series with 8 rows
 
 其他球種如「長球」（player_type 3.0）和「網前球」（player_type 8.0）雖然也有使用，但得分效率相對較低，分別只有2次和4次的勝利。因此，周天成應持續強化殺球的技術，並在比賽中尋找更多機會來執行這一戰術，以最大化得分潛力。
 ==============================
+
+==============================
+[2025-12-13 14:53:38] Step: Step 1: Enhancement
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題。
+                    2. 判斷問題是否需要場地位置資訊。
+
+                    Schema: <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }
+                    
+  <USER>
+周天成最常使用哪個球種直接得分
+
+[Output Response]:
+{
+    "enhanced_prompt": "請分析周天成在比賽中最常使用的球種，並計算他直接得分的次數，以找出他最常使用的球種。需要根據數據中的 'getpoint_player' 和 'type' 欄位進行分析。",
+    "needs_court_info": false
+}
+==============================
+
+==============================
+[2025-12-13 14:53:50] Step: Step 2: Code Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
+
+**規則:**
+1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
+2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+3. 勿讀檔 (`df` 已存在)。
+4. 計算前驗證數據 (如 `len(df) > 0`)。
+5. 類別用名稱。Schema 字串需精確。
+6. 用繁體中文。
+7. 使用dropna()處理遺失值 
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
+10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+**數據:**
+Schema:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+定義:
+## 比賽資料結構
+- 比賽形式：三戰兩勝制
+- 計分方式：21分制
+
+⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。
+
+## 球種代碼對照表
+- 1: 發短球
+- 2: 發長球
+- 3: 長球
+- 4: 殺球
+- 5: 切球
+- 6: 挑球
+- 7: 平球
+- 8: 網前球
+- 9: 推撲球
+- 10: 接殺防守
+- 11: 接不到
+
+## 欄位定義
+### `match_id`
+**說明**：比賽 ID。用來區分不同的比賽場次。
+- **關鍵字**：場次
+### `set`
+**說明**：局數
+- **值域**：1-3
+### `rally`
+**說明**：從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。
+- **範圍**：局內
+- ⚠️ **重要**：跨局分析需配 match_id, set
+- ✅ **正確用法**：`總回合: df.groupby(['match_id', 'set', 'rally']).ngroups`
+### `rally_id`
+**說明**：整個數據集中唯一的回合 ID
+### `ball_round`
+**說明**：這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+- **用途**：回合中拍與拍的比較或回球數
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `player_score`
+**說明**：Kento MOMOTA的當前局內分數
+- **值域**：0-30(含延分)
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `opponent_score`
+**說明**：CHOU Tien Chen的當前局內分數
+- **值域**：0-30(含延分)
+### `score_status`
+**說明**：分數差距 (player score - opponent score)
+- **值域**：正=領先, 負=落後
+### `player`
+**說明**：擊球球員姓名
+- ⚠️ **重要**：每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')
+### `server`
+**說明**：發球狀態
+- **數值對應**：1=player發球, 2=對打中, 3=該回合結束
+### `type`
+**說明**：球種名稱(中文)
+- **可能值**：殺球, 切球, ...參照shot_types
+### `player_type`
+**說明**：球員擊球球種代碼
+- **資料類型**：float
+- **數值對應**：1-11 (見shot_types)
+- **用途**：適合分組統計球種
+- **備註**：為type轉換來的，直接使用type更佳
+- ✅ **正確用法**：`df[df['player_type']==4].groupby('player').size()`
+### `opponent_type`
+**說明**：對手上一拍球種代碼
+- **數值對應**：1-11 (見shot_types)
+### `hit_x`
+**說明**：擊球點X座標
+### `hit_y`
+**說明**：擊球點Y座標
+### `hit_area`
+**說明**：擊球點所在區域代碼 (1-32)
+- **關鍵字**：球員擊球點
+### `landing_x`
+**說明**：球的落點X座標，可視為下顆球對方的擊球點X座標
+### `landing_y`
+**說明**：球的落點Y座標，可視為下顆球對方的擊球點Y座標
+### `landing_area`
+**說明**：球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)
+- **關鍵字**：球的落點
+### `player_location_x`
+**說明**：球員所在的 X 座標。
+### `player_location_y`
+**說明**：球員所在的 Y 座標。
+### `player_location_area`
+**說明**：球員所在的站位區域。
+- **關鍵字**：球員站位
+### `player_move_x`
+**說明**：擊球點到移動位置的X座標位移量。(moving_x-hit_x)
+- **關鍵字**：球員移動量
+### `player_move_y`
+**說明**：擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
+- **關鍵字**：球員移動量
+### `moving_x`
+**說明**：球員擊完這一球後，移動到的X座標。
+### `moving_y`
+**說明**：球員擊完這一球後，移動到的Y座標。
+### `player_moving_area`
+**說明**：球員擊完這一球後，移動到的區域代碼
+- **關鍵字**：回位
+### `opponent_location_x`
+**說明**：對手所站的位置X座標
+### `opponent_location_y`
+**說明**：對手所站的位置Y座標
+### `opponent_location_area`
+**說明**：對手擊球區域。對手所站的位置區域代碼
+- **關鍵字**：對手站位
+### `opponent_move_x`
+**說明**：對手擊球點到移動位置的X座標位移量。
+- **關鍵字**：對手移動量
+### `opponent_move_y`
+**說明**：對手擊球點到移動位置的Y座標位移量。
+- **關鍵字**：對手移動量
+### `ball_distance`
+**說明**：飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
+- **關鍵字**：打擊的遠度
+### `getpoint_player`
+**說明**：該回合得分者
+- **範圍**：僅在rally最後一拍(得失分拍)有值，其他設為NULL
+- ✅ **正確用法**：`groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()`
+### `win_reason`
+**說明**：該球若player得分，則win_reason為得分原因
+- **範圍**：回合結束時(若player得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & win_reason.notna()`
+### `lose_reason`
+**說明**：該球若opponent得分，則lose_reason為失分原因，其他為NULL
+- **範圍**：回合結束時(若opponent得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & lose_reason.notna()`
+- ⚠️ **重要**：記錄的是player失誤原因
+
+## 分析指南
+
+### 💎 核心資料原則 (CORE DATA PRINCIPLES)
+- 💎 **PRINCIPLE_1**：Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.
+- 💎 **PRINCIPLE_2**：The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.
+- ✅ **正確實作**：`rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()`
+
+### 回合計數
+- **問題**：rally編號每局重置
+- ✅ **正確方法**：`df.groupby(['match_id', 'set', 'rally']).ngroups`
+
+### 得分手段分類 (主動 vs 受迫)
+- 💎 **PRINCIPLE**：Active vs Passive Winning
+- **備註**：For 'Active Winners' or 'Hitting Points', use the Active Winner condition.
+
+### 勝率計算
+- **STEP1**：groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()
+- **STEP2**：wins = (rally_winners == '球員').sum()
+- **STEP3**：win_rate = wins / len(rally_winners)
+
+### 球員名稱使用
+- **規則**：須用完整姓名
+
+### 球種分析
+- **目的**：球種統計
+- ✅ **正確方法**：`用 player_type (數字) 分組`
+- **備註**：type=字串, player_type=代碼
+
+### 比賽比分查詢
+- **情境**：三戰兩勝, 21分制
+- 最後一分沒記，贏家需+1
+- ✅ **正確方法**：`找出每局最後一筆 player_score/opponent_score，贏家分數+1`
+
+### 連續對打查詢
+- **目的**：連續對打紀錄
+- **範例**：周天成使用殺球後，對手使用那些球種回擊
+- ✅ **正確方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()`
+- ❌ **錯誤方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()`
+
+**字體設定 (程式碼開頭必填):**
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**圖表:**
+- `fig, ax = plt.subplots(figsize=(12, 7))`
+- 標題 `fontsize=16`，軸 `12`。
+- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
+- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
+- 必用 `plt.tight_layout()`。
+
+**回覆:**
+- 對象不明: 反問 (不寫 Code)。
+- 明確: 文字說明 + Code。
+- 詢問數值: Code 需 `print()` 結果。
+
+                    
+**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+                    
+  <USER>
+請分析周天成在比賽中最常使用的球種，並計算他直接得分的次數，以找出他最常使用的球種。需要根據數據中的 'getpoint_player' 和 'type' 欄位進行分析。
+
+[Output Response]:
+要分析周天成在比賽中最常使用的球種並計算他直接得分的次數，可以按照以下步驟進行：
+
+1. **過濾出周天成的得分紀錄**：我們需要從`getpoint_player`欄位中篩選出周天成的紀錄。
+2. **計算每種球種的得分次數**：接著，根據`type`欄位統計周天成得分的次數，找出最常使用的球種。
+
+以下是執行這些步驟的Python程式碼：
+
+```python
+import platform
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame df 存在且大於0
+if len(df) > 0:
+    # 選取周天成得分的紀錄
+    chou_points = df[df['getpoint_player'] == 'CHOU Tien Chen']
+
+    # 計算每個球種的得分次數
+    shot_counts = chou_points['type'].value_counts()
+
+    # 找出最常用的球種
+    most_used_shot = shot_counts.idxmax()
+    most_used_shot_count = shot_counts.max()
+
+    # 輸出結果
+    print(f"周天成最常使用的球種是: {most_used_shot}, 總得分次數: {most_used_shot_count}")
+
+    # 畫圖
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    shot_counts.plot(kind='bar', ax=ax, color='steelblue')
+    ax.set_title('周天成得分的球種分佈', fontsize=16)
+    ax.set_xlabel('球種', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    plt.xticks(rotation=45)
+    
+    plt.tight_layout()
+else:
+    print("資料为空，無法進行分析。")
+```
+
+### 程式碼解說
+- 我們首先檢查數據框`df`是否存在數據。
+- 接著，篩選出周天成的得分紀錄，然后統計所有球種的得分次數。
+- 找出得分次數最多的球種及其次數，並使用`print`輸出結果。
+- 畫出條形圖展示每個球種的得分次數分佈，以便更直觀地理解周天成的球種使用情況。
+
+執行此程式碼後，您將獲得周天成在比賽中最常使用的球種及其對應的得分次數。
+==============================
+
+==============================
+[2025-12-13 14:53:51] Step: Step 4: Logic Reflection
+------------------------------
+[Input Messages]:
+  <USER>
+
+                        QA Check:
+                        1. 問題: "周天成最常使用哪個球種直接得分" (強化: "請分析周天成在比賽中最常使用的球種，並計算他直接得分的次數，以找出他最常使用的球種。需要根據數據中的 'getpoint_player' 和 'type' 欄位進行分析。")
+                        2. 程式:
+                        ```python
+                        import platform
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame df 存在且大於0
+if len(df) > 0:
+    # 選取周天成得分的紀錄
+    chou_points = df[df['getpoint_player'] == 'CHOU Tien Chen']
+
+    # 計算每個球種的得分次數
+    shot_counts = chou_points['type'].value_counts()
+
+    # 找出最常用的球種
+    most_used_shot = shot_counts.idxmax()
+    most_used_shot_count = shot_counts.max()
+
+    # 輸出結果
+    print(f"周天成最常使用的球種是: {most_used_shot}, 總得分次數: {most_used_shot_count}")
+
+    # 畫圖
+    fig, ax = plt.subplots(figsize=(12, 7))
+
+    shot_counts.plot(kind='bar', ax=ax, color='steelblue')
+    ax.set_title('周天成得分的球種分佈', fontsize=16)
+    ax.set_xlabel('球種', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    plt.xticks(rotation=45)
+    
+    plt.tight_layout()
+else:
+    print("資料为空，無法進行分析。")
+                        ```
+                        3. 結果 (Stdout): 周天成最常使用的球種是: 殺球, 總得分次數: 78
+
+                        4. 變數: _generated_figures_count: 1
+s: Windows
+chou_points: DataFrame/Series with 196 rows
+shot_counts: DataFrame/Series with 9 rows
+most_used_shot: 殺球
+
+                        
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
+                        判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                         
+                        
+
+[Output Response]:
+PASS
+==============================
+
+==============================
+[2025-12-13 14:53:56] Step: Step 6: Insight Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
+  <USER>
+
+                        你是羽球教練。
+                        問題: "周天成最常使用哪個球種直接得分"
+                        數據:
+                        --- 程式執行輸出 (Stdout) ---
+周天成最常使用的球種是: 殺球, 總得分次數: 78
+
+
+程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `_generated_figures_count` (型別: `int`)
+```
+1
+```
+
+### 變數 `s` (型別: `str`)
+```
+Windows
+```
+
+### 變數 `chou_points` (型別: `str`)
+```
+DataFrame/Series with 196 rows
+```
+
+### 變數 `shot_counts` (型別: `str`)
+```
+DataFrame/Series with 9 rows
+```
+
+### 變數 `most_used_shot` (型別: `str`)
+```
+殺球
+```
+
+
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
+                        
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        
+
+[Output Response]:
+周天成在比賽中最常使用的得分手段是殺球，這一技術累積了78次得分。這表明他在進攻時相當依賴於強力的殺球，顯示出他對於進攻時機的敏銳判斷與執行力。殺球的高頻率使用不僅能有效壓制對手，也能增加他在關鍵分數上的得分機會。
+
+從戰術角度來看，建議周天成在比賽中持續強化殺球的準確性與變化，並適時結合其他球種（如切球或挑球），以增加對手的預測難度，進一步提升得分效率。這樣的多樣化攻擊策略將使他在賽場上更具威脅。
+==============================
+
+==============================
+[2025-12-13 14:57:38] Step: Step 1: Enhancement
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題。
+                    2. 判斷問題是否需要場地位置資訊。
+
+                    Schema: <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }
+                    
+  <USER>
+周天成最常使用哪個球種直接得分
+
+[Output Response]:
+{
+    "enhanced_prompt": "請分析周天成在比賽中最常使用的球種，並計算他通過這些球種直接得分的次數，以找出他最常使用的得分球種。",
+    "needs_court_info": false
+}
+==============================
+
+==============================
+[2025-12-13 14:57:51] Step: Step 2: Code Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
+
+**規則:**
+1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
+2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+3. 勿讀檔 (`df` 已存在)。
+4. 計算前驗證數據 (如 `len(df) > 0`)。
+5. 類別用名稱。Schema 字串需精確。
+6. 用繁體中文。
+7. 使用dropna()處理遺失值 
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
+10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+**數據:**
+Schema:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+定義:
+## 比賽資料結構
+- 比賽形式：三戰兩勝制
+- 計分方式：21分制
+
+⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。
+
+## 球種代碼對照表
+- 1: 發短球
+- 2: 發長球
+- 3: 長球
+- 4: 殺球
+- 5: 切球
+- 6: 挑球
+- 7: 平球
+- 8: 網前球
+- 9: 推撲球
+- 10: 接殺防守
+- 11: 接不到
+
+## 欄位定義
+### `match_id`
+**說明**：比賽 ID。用來區分不同的比賽場次。
+- **關鍵字**：場次
+### `set`
+**說明**：局數
+- **值域**：1-3
+### `rally`
+**說明**：從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。
+- **範圍**：局內
+- ⚠️ **重要**：跨局分析需配 match_id, set
+- ✅ **正確用法**：`總回合: df.groupby(['match_id', 'set', 'rally']).ngroups`
+### `rally_id`
+**說明**：整個數據集中唯一的回合 ID
+### `ball_round`
+**說明**：這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+- **用途**：回合中拍與拍的比較或回球數
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `player_score`
+**說明**：Kento MOMOTA的當前局內分數
+- **值域**：0-30(含延分)
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `opponent_score`
+**說明**：CHOU Tien Chen的當前局內分數
+- **值域**：0-30(含延分)
+### `score_status`
+**說明**：分數差距 (player score - opponent score)
+- **值域**：正=領先, 負=落後
+### `player`
+**說明**：擊球球員姓名
+- ⚠️ **重要**：每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')
+### `server`
+**說明**：發球狀態
+- **數值對應**：1=player發球, 2=對打中, 3=該回合結束
+### `type`
+**說明**：球種名稱(中文)
+- **可能值**：殺球, 切球, ...參照shot_types
+### `player_type`
+**說明**：球員擊球球種代碼
+- **資料類型**：float
+- **數值對應**：1-11 (見shot_types)
+- **用途**：適合分組統計球種
+- **備註**：為type轉換來的，直接使用type更佳
+- ✅ **正確用法**：`df[df['player_type']==4].groupby('player').size()`
+### `opponent_type`
+**說明**：對手上一拍球種代碼
+- **數值對應**：1-11 (見shot_types)
+### `hit_x`
+**說明**：擊球點X座標
+### `hit_y`
+**說明**：擊球點Y座標
+### `hit_area`
+**說明**：擊球點所在區域代碼 (1-32)
+- **關鍵字**：球員擊球點
+### `landing_x`
+**說明**：球的落點X座標，可視為下顆球對方的擊球點X座標
+### `landing_y`
+**說明**：球的落點Y座標，可視為下顆球對方的擊球點Y座標
+### `landing_area`
+**說明**：球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)
+- **關鍵字**：球的落點
+### `player_location_x`
+**說明**：球員所在的 X 座標。
+### `player_location_y`
+**說明**：球員所在的 Y 座標。
+### `player_location_area`
+**說明**：球員所在的站位區域。
+- **關鍵字**：球員站位
+### `player_move_x`
+**說明**：擊球點到移動位置的X座標位移量。(moving_x-hit_x)
+- **關鍵字**：球員移動量
+### `player_move_y`
+**說明**：擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
+- **關鍵字**：球員移動量
+### `moving_x`
+**說明**：球員擊完這一球後，移動到的X座標。
+### `moving_y`
+**說明**：球員擊完這一球後，移動到的Y座標。
+### `player_moving_area`
+**說明**：球員擊完這一球後，移動到的區域代碼
+- **關鍵字**：回位
+### `opponent_location_x`
+**說明**：對手所站的位置X座標
+### `opponent_location_y`
+**說明**：對手所站的位置Y座標
+### `opponent_location_area`
+**說明**：對手擊球區域。對手所站的位置區域代碼
+- **關鍵字**：對手站位
+### `opponent_move_x`
+**說明**：對手擊球點到移動位置的X座標位移量。
+- **關鍵字**：對手移動量
+### `opponent_move_y`
+**說明**：對手擊球點到移動位置的Y座標位移量。
+- **關鍵字**：對手移動量
+### `ball_distance`
+**說明**：飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
+- **關鍵字**：打擊的遠度
+### `getpoint_player`
+**說明**：該回合得分者
+- **範圍**：僅在rally最後一拍(得失分拍)有值，其他設為NULL
+- ✅ **正確用法**：`groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()`
+### `win_reason`
+**說明**：該球若player得分，則win_reason為得分原因
+- **範圍**：回合結束時(若player得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & win_reason.notna()`
+### `lose_reason`
+**說明**：該球若opponent得分，則lose_reason為失分原因，其他為NULL
+- **範圍**：回合結束時(若opponent得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & lose_reason.notna()`
+- ⚠️ **重要**：記錄的是player失誤原因
+
+## 分析指南
+
+### 💎 核心資料原則 (CORE DATA PRINCIPLES)
+- 💎 **PRINCIPLE_1**：Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.
+- 💎 **PRINCIPLE_2**：The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.
+- ✅ **正確實作**：`rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()`
+
+### 回合計數
+- **問題**：rally編號每局重置
+- ✅ **正確方法**：`df.groupby(['match_id', 'set', 'rally']).ngroups`
+
+### 得分手段分類 (主動 vs 受迫)
+- 💎 **PRINCIPLE**：Active vs Passive Winning
+- **備註**：For 'Active Winners' or 'Hitting Points', use the Active Winner condition.
+
+### 勝率計算
+- **STEP1**：groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()
+- **STEP2**：wins = (rally_winners == '球員').sum()
+- **STEP3**：win_rate = wins / len(rally_winners)
+
+### 球員名稱使用
+- **規則**：須用完整姓名
+
+### 球種分析
+- **目的**：球種統計
+- ✅ **正確方法**：`用 player_type (數字) 分組`
+- **備註**：type=字串, player_type=代碼
+
+### 比賽比分查詢
+- **情境**：三戰兩勝, 21分制
+- 最後一分沒記，贏家需+1
+- ✅ **正確方法**：`找出每局最後一筆 player_score/opponent_score，贏家分數+1`
+
+### 連續對打查詢
+- **目的**：連續對打紀錄
+- **範例**：周天成使用殺球後，對手使用那些球種回擊
+- ✅ **正確方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()`
+- ❌ **錯誤方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()`
+
+**字體設定 (程式碼開頭必填):**
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**圖表:**
+- `fig, ax = plt.subplots(figsize=(12, 7))`
+- 標題 `fontsize=16`，軸 `12`。
+- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
+- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
+- 必用 `plt.tight_layout()`。
+
+**回覆:**
+- 對象不明: 反問 (不寫 Code)。
+- 明確: 文字說明 + Code。
+- 詢問數值: Code 需 `print()` 結果。
+
+                    
+**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+                    
+  <USER>
+請分析周天成在比賽中最常使用的球種，並計算他通過這些球種直接得分的次數，以找出他最常使用的得分球種。
+
+[Output Response]:
+要分析周天成在比賽中最常使用的球種並計算他通過這些球種直接得分的次數，我們可以遵循以下步驟：
+
+1. 篩選出周天成的所有回合（`player` 為 'CHOU Tien Chen'）。
+2. 找出每個球種的使用次數以及他使用不同球種的得分次數。
+3. 將數據進行匯總，計算得分次數。
+4. 根據得分次數排序，找出他最常使用的得分球種。
+
+下面是實現這些步驟的 Python 程式碼：
+
+```python
+import platform
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查數據是否存在
+if len(df) > 0:
+    # 篩選出周天成的回合
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+    
+    # 計算每個球種的使用次數及得分次數
+    shot_types_stats = chou_data.groupby('player_type').agg(
+        shot_count=('player_type', 'size'),
+        score_count=('getpoint_player', lambda x: x.notna().sum())
+    )
+
+    # 將 player_type 轉換為對應的球種名稱
+    shot_types_stats.index = shot_types_stats.index.map({
+        1: '發短球', 2: '發長球', 3: '長球', 4: '殺球', 
+        5: '切球', 6: '挑球', 7: '平球', 8: '網前球', 
+        9: '推撲球', 10: '接殺防守', 11: '接不到'
+    })
+
+    # 顯示統計信息
+    print(shot_types_stats)
+
+    # 根據得分次數進行排序
+    sorted_shot_types = shot_types_stats.sort_values(by='score_count', ascending=False)
+
+    # 繪製棒狀圖
+    fig, ax = plt.subplots(figsize=(12, 7))
+    sorted_shot_types['score_count'].plot(kind='bar', ax=ax, color='steelblue')
+
+    ax.set_title('周天成各球種得分次數', fontsize=16)
+    ax.set_xlabel('球種', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    ax.set_xticklabels(sorted_shot_types.index, rotation=45)
+    
+    plt.tight_layout()
+else:
+    print("數據框為空，無法進行分析。")
+```
+
+### 解析說明：
+- **資料篩選**：使用 `df[df['player'] == 'CHOU Tien Chen']` 選取周天成的比賽數據。
+- **計算與聚合**：使用 `groupby()` 和 `agg()` 方法計算每個球種的使用次數與得分次數。
+- **圖表繪製**：根據得分次數排序並使用棒狀圖將結果可視化。
+
+### 重要提示：
+- 以上程式碼中將`player_type`對應到球種名稱，便於參考。
+- 若需查看結果，使用 `print(shot_types_stats)`輸出統計信息。
+==============================
+
+==============================
+[2025-12-13 14:58:02] Step: Step 4: Logic Reflection
+------------------------------
+[Input Messages]:
+  <USER>
+
+                        QA Check:
+                        1. 問題: "周天成最常使用哪個球種直接得分" (強化: "請分析周天成在比賽中最常使用的球種，並計算他通過這些球種直接得分的次數，以找出他最常使用的得分球種。")
+                        2. 程式:
+                        ```python
+                        import platform
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查數據是否存在
+if len(df) > 0:
+    # 篩選出周天成的回合
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+    
+    # 計算每個球種的使用次數及得分次數
+    shot_types_stats = chou_data.groupby('player_type').agg(
+        shot_count=('player_type', 'size'),
+        score_count=('getpoint_player', lambda x: x.notna().sum())
+    )
+
+    # 將 player_type 轉換為對應的球種名稱
+    shot_types_stats.index = shot_types_stats.index.map({
+        1: '發短球', 2: '發長球', 3: '長球', 4: '殺球', 
+        5: '切球', 6: '挑球', 7: '平球', 8: '網前球', 
+        9: '推撲球', 10: '接殺防守', 11: '接不到'
+    })
+
+    # 顯示統計信息
+    print(shot_types_stats)
+
+    # 根據得分次數進行排序
+    sorted_shot_types = shot_types_stats.sort_values(by='score_count', ascending=False)
+
+    # 繪製棒狀圖
+    fig, ax = plt.subplots(figsize=(12, 7))
+    sorted_shot_types['score_count'].plot(kind='bar', ax=ax, color='steelblue')
+
+    ax.set_title('周天成各球種得分次數', fontsize=16)
+    ax.set_xlabel('球種', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    ax.set_xticklabels(sorted_shot_types.index, rotation=45)
+    
+    plt.tight_layout()
+else:
+    print("數據框為空，無法進行分析。")
+                        ```
+                        3. 結果 (Stdout):              shot_count  score_count
+player_type                         
+發短球                 147            0
+發長球                  34            0
+長球                  264            2
+殺球                  282           64
+切球                  207            5
+挑球                  255            2
+平球                  103            7
+網前球                 580           42
+推撲球                 318           13
+接殺防守                344           35
+
+                        4. 變數: _generated_figures_count: 1
+s: Windows
+chou_data: DataFrame/Series with 2609 rows
+shot_types_stats: DataFrame/Series with 10 rows
+sorted_shot_types: DataFrame/Series with 10 rows
+
+                        
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
+                        判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                         
+                        
+
+[Output Response]:
+```python
+import platform
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查數據是否存在
+if len(df) > 0:
+    # 篩選出周天成的回合
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+    
+    # 檢查是否有數據
+    if len(chou_data) > 0:
+        # 計算每個球種的使用次數及得分次數
+        shot_types_stats = chou_data.groupby('player_type').agg(
+            shot_count=('player_type', 'size'),
+            score_count=('getpoint_player', lambda x: x.notna().sum())
+        )
+
+        # 將 player_type 轉換為對應的球種名稱
+        shot_types_stats.index = shot_types_stats.index.map({
+            1: '發短球', 2: '發長球', 3: '長球', 4: '殺球', 
+            5: '切球', 6: '挑球', 7: '平球', 8: '網前球', 
+            9: '推撲球', 10: '接殺防守', 11: '接不到'
+        })
+
+        # 顯示統計信息
+        print(shot_types_stats)
+
+        # 根據得分次數進行排序
+        sorted_shot_types = shot_types_stats.sort_values(by='score_count', ascending=False)
+
+        # 合併得分次數小於某個閾值的球種為「其他」
+        threshold = 5  # 設定閾值
+        sorted_shot_types['球種'] = sorted_shot_types.index
+        sorted_shot_types['score_count'] = sorted_shot_types['score_count'].where(sorted_shot_types['score_count'] >= threshold, other=0)
+        others_count = sorted_shot_types[sorted_shot_types['score_count'] == 0]['score_count'].sum()
+        sorted_shot_types = sorted_shot_types[sorted_shot_types['score_count'] > 0]
+        if others_count > 0:
+            sorted_shot_types = sorted_shot_types.append(pd.Series({'score_count': others_count}, name='其他'))
+
+        # 繪製棒狀圖
+        fig, ax = plt.subplots(figsize=(12, 7))
+        sorted_shot_types['score_count'].plot(kind='bar', ax=ax, color='steelblue')
+
+        ax.set_title('周天成各球種得分次數', fontsize=16)
+        ax.set_xlabel('球種', fontsize=12)
+        ax.set_ylabel('得分次數', fontsize=12)
+        ax.set_xticklabels(sorted_shot_types.index, rotation=45)
+        
+        plt.tight_layout()
+    else:
+        print("周天成的數據框為空，無法進行分析。")
+else:
+    print("數據框為空，無法進行分析。")
+```
+==============================
+
+==============================
+[2025-12-13 14:58:08] Step: Step 6: Insight Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
+  <USER>
+
+                        你是羽球教練。
+                        問題: "周天成最常使用哪個球種直接得分"
+                        數據:
+                        --- 程式執行輸出 (Stdout) ---
+             shot_count  score_count
+player_type                         
+發短球                 147            0
+發長球                  34            0
+長球                  264            2
+殺球                  282           64
+切球                  207            5
+挑球                  255            2
+平球                  103            7
+網前球                 580           42
+推撲球                 318           13
+接殺防守                344           35
+
+
+程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `s` (型別: `str`)
+```
+Windows
+```
+
+### 變數 `chou_data` (型別: `str`)
+```
+DataFrame/Series with 2609 rows
+```
+
+### 變數 `shot_types_stats` (型別: `str`)
+```
+DataFrame/Series with 10 rows
+```
+
+### 變數 `sorted_shot_types` (型別: `str`)
+```
+DataFrame/Series with 6 rows
+```
+
+### 變數 `threshold` (型別: `int`)
+```
+5
+```
+
+
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
+                        
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        
+
+[Output Response]:
+根據數據分析，周天成最常使用的得分球種是「殺球」，共計64次直接得分，顯示其在進攻端的強大威脅。這意味著他在比賽中積極尋找機會進行強力攻擊，特別是在對手防守薄弱的時候。
+
+其次，「網前球」也表現不俗，雖然得分數量為42次，但其使用頻率高達580次，顯示出他在網前控制與變化的能力。這種策略可以有效地拉開對手的防線，創造更多得分機會。
+
+整體來看，周天成的戰術重點在於利用殺球進行直接得分，同時透過網前球來壓迫對手，這樣的組合使他在比賽中具備了多樣化的進攻選擇。教練可以針對這些數據進一步強化他的殺球技巧及網前控制，以提升整體競技水平。
+==============================
+
+==============================
+[2025-12-13 15:06:25] Step: Step 1: Enhancement
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題。
+                    2. 判斷問題是否需要場地位置資訊。
+
+                    Schema: <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }
+                    
+  <USER>
+周天成使用「殺球」得分佔他總得分的百分比是多少？
+
+[Output Response]:
+{
+    "enhanced_prompt": "請計算周天成在比賽中使用「殺球」得分的次數，並與他總得分進行比較，以求得「殺球」得分佔他總得分的百分比。",
+    "needs_court_info": false
+}
+==============================
+
+==============================
+[2025-12-13 15:06:38] Step: Step 2: Code Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
+
+**規則:**
+1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
+2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+3. 勿讀檔 (`df` 已存在)。
+4. 計算前驗證數據 (如 `len(df) > 0`)。
+5. 類別用名稱。Schema 字串需精確。
+6. 用繁體中文。
+7. 使用dropna()處理遺失值 
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
+10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+**數據:**
+Schema:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+定義:
+## 比賽資料結構
+- 比賽形式：三戰兩勝制
+- 計分方式：21分制
+
+⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。
+
+## 球種代碼對照表
+- 1: 發短球
+- 2: 發長球
+- 3: 長球
+- 4: 殺球
+- 5: 切球
+- 6: 挑球
+- 7: 平球
+- 8: 網前球
+- 9: 推撲球
+- 10: 接殺防守
+- 11: 接不到
+
+## 欄位定義
+### `match_id`
+**說明**：比賽 ID。用來區分不同的比賽場次。
+- **關鍵字**：場次
+### `set`
+**說明**：局數
+- **值域**：1-3
+### `rally`
+**說明**：從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。
+- **範圍**：局內
+- ⚠️ **重要**：跨局分析需配 match_id, set
+- ✅ **正確用法**：`總回合: df.groupby(['match_id', 'set', 'rally']).ngroups`
+### `rally_id`
+**說明**：整個數據集中唯一的回合 ID
+### `ball_round`
+**說明**：這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+- **用途**：回合中拍與拍的比較或回球數
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `player_score`
+**說明**：Kento MOMOTA的當前局內分數
+- **值域**：0-30(含延分)
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `opponent_score`
+**說明**：CHOU Tien Chen的當前局內分數
+- **值域**：0-30(含延分)
+### `score_status`
+**說明**：分數差距 (player score - opponent score)
+- **值域**：正=領先, 負=落後
+### `player`
+**說明**：擊球球員姓名
+- ⚠️ **重要**：每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')
+### `server`
+**說明**：發球狀態
+- **數值對應**：1=player發球, 2=對打中, 3=該回合結束
+### `type`
+**說明**：球種名稱(中文)
+- **可能值**：殺球, 切球, ...參照shot_types
+### `player_type`
+**說明**：球員擊球球種代碼
+- **資料類型**：float
+- **數值對應**：1-11 (見shot_types)
+- **用途**：適合分組統計球種
+- **備註**：為type轉換來的，直接使用type更佳
+- ✅ **正確用法**：`df[df['player_type']==4].groupby('player').size()`
+### `opponent_type`
+**說明**：對手上一拍球種代碼
+- **數值對應**：1-11 (見shot_types)
+### `hit_x`
+**說明**：擊球點X座標
+### `hit_y`
+**說明**：擊球點Y座標
+### `hit_area`
+**說明**：擊球點所在區域代碼 (1-32)
+- **關鍵字**：球員擊球點
+### `landing_x`
+**說明**：球的落點X座標，可視為下顆球對方的擊球點X座標
+### `landing_y`
+**說明**：球的落點Y座標，可視為下顆球對方的擊球點Y座標
+### `landing_area`
+**說明**：球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)
+- **關鍵字**：球的落點
+### `player_location_x`
+**說明**：球員所在的 X 座標。
+### `player_location_y`
+**說明**：球員所在的 Y 座標。
+### `player_location_area`
+**說明**：球員所在的站位區域。
+- **關鍵字**：球員站位
+### `player_move_x`
+**說明**：擊球點到移動位置的X座標位移量。(moving_x-hit_x)
+- **關鍵字**：球員移動量
+### `player_move_y`
+**說明**：擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
+- **關鍵字**：球員移動量
+### `moving_x`
+**說明**：球員擊完這一球後，移動到的X座標。
+### `moving_y`
+**說明**：球員擊完這一球後，移動到的Y座標。
+### `player_moving_area`
+**說明**：球員擊完這一球後，移動到的區域代碼
+- **關鍵字**：回位
+### `opponent_location_x`
+**說明**：對手所站的位置X座標
+### `opponent_location_y`
+**說明**：對手所站的位置Y座標
+### `opponent_location_area`
+**說明**：對手擊球區域。對手所站的位置區域代碼
+- **關鍵字**：對手站位
+### `opponent_move_x`
+**說明**：對手擊球點到移動位置的X座標位移量。
+- **關鍵字**：對手移動量
+### `opponent_move_y`
+**說明**：對手擊球點到移動位置的Y座標位移量。
+- **關鍵字**：對手移動量
+### `ball_distance`
+**說明**：飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
+- **關鍵字**：打擊的遠度
+### `getpoint_player`
+**說明**：該回合得分者
+- **範圍**：僅在rally最後一拍(得失分拍)有值，其他設為NULL
+- **備註**：可能是主動得分(如:player得分)，也可能是被動得分(如:opponent得分)
+- ✅ **正確用法**：`groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()`
+### `win_reason`
+**說明**：該球若player得分，則win_reason為得分原因
+- **範圍**：回合結束時(若player得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & win_reason.notna()`
+### `lose_reason`
+**說明**：該球若opponent得分，則lose_reason為失分原因，其他為NULL
+- **範圍**：回合結束時(若opponent得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & lose_reason.notna()`
+- ⚠️ **重要**：記錄的是player失誤原因
+
+## 分析指南
+
+### 💎 核心資料原則 (CORE DATA PRINCIPLES)
+- 💎 **PRINCIPLE_1**：Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.
+- 💎 **PRINCIPLE_2**：The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.
+- ✅ **正確實作**：`rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()`
+
+### 回合計數
+- **問題**：rally編號每局重置
+- ✅ **正確方法**：`df.groupby(['match_id', 'set', 'rally']).ngroups`
+
+### 得分手段分類 (主動 vs 受迫)
+- 💎 **PRINCIPLE**：Active vs Passive Winning
+- **備註**：For 'Active Winners' or 'Hitting Points', use the Active Winner condition.
+
+### 勝率計算
+- **STEP1**：groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()
+- **STEP2**：wins = (rally_winners == '球員').sum()
+- **STEP3**：win_rate = wins / len(rally_winners)
+
+### 球員名稱使用
+- **規則**：須用完整姓名
+
+### 球種分析
+- **目的**：球種統計
+- ✅ **正確方法**：`用 player_type (數字) 分組`
+- **備註**：type=字串, player_type=代碼
+
+### 比賽比分查詢
+- **情境**：三戰兩勝, 21分制
+- 最後一分沒記，贏家需+1
+- ✅ **正確方法**：`找出每局最後一筆 player_score/opponent_score，贏家分數+1`
+
+### 連續對打查詢
+- **目的**：連續對打紀錄
+- **範例**：周天成使用殺球後，對手使用那些球種回擊
+- ✅ **正確方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()`
+- ❌ **錯誤方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()`
+
+**字體設定 (程式碼開頭必填):**
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**圖表:**
+- `fig, ax = plt.subplots(figsize=(12, 7))`
+- 標題 `fontsize=16`，軸 `12`。
+- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
+- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
+- 必用 `plt.tight_layout()`。
+
+**回覆:**
+- 對象不明: 反問 (不寫 Code)。
+- 明確: 文字說明 + Code。
+- 詢問數值: Code 需 `print()` 結果。
+
+                    
+**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+                    
+  <USER>
+請計算周天成在比賽中使用「殺球」得分的次數，並與他總得分進行比較，以求得「殺球」得分佔他總得分的百分比。
+
+[Output Response]:
+要計算周天成使用「殺球」得分的次數並與他總得分進行比較，我們需要透過以下幾個步驟進行：
+
+1. **計算周天成的總得分**：我們通過計算`getpoint_player`欄位中等於周天成名字的次數來得出。
+2. **計算周天成使用「殺球」得分的次數**：同樣地，我們需要篩選出周天成在這些得分時所使用的球種是否為「殺球」。
+3. **計算百分比**：用「殺球」得分次數除以總得分，並乘以100以獲得百分比。
+
+以下是實作的步驟，包括必要的印出語句以確認數值：
+
+```python
+# 定義字體
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查數據長度
+if len(df) > 0:
+    # 1. 總得分
+    total_score = df[df['getpoint_player'] == 'CHOU Tien Chen'].shape[0]
+
+    # 2. 使用「殺球」得分的次數
+    smash_score_count = df[(df['getpoint_player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')].shape[0]
+
+    # 3. 計算百分比
+    if total_score > 0:
+        smash_percentage = (smash_score_count / total_score) * 100
+    else:
+        smash_percentage = 0
+
+    # 印出結果
+    print(f"周天成總得分次數: {total_score}")
+    print(f"使用「殺球」得分的次數: {smash_score_count}")
+    print(f"「殺球」得分佔總得分的百分比: {smash_percentage:.2f}%")
+else:
+    print("數據集為空。")
+```
+
+以上程式碼會計算出周天成得分的總數、使用「殺球」得分的次數，並且計算其百分比。最後將結果印出以便於觀察。
+==============================
+
+==============================
+[2025-12-13 15:06:39] Step: Step 4: Logic Reflection
+------------------------------
+[Input Messages]:
+  <USER>
+
+                        QA Check:
+                        1. 問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？" (強化: "請計算周天成在比賽中使用「殺球」得分的次數，並與他總得分進行比較，以求得「殺球」得分佔他總得分的百分比。")
+                        2. 程式:
+                        ```python
+                        # 定義字體
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查數據長度
+if len(df) > 0:
+    # 1. 總得分
+    total_score = df[df['getpoint_player'] == 'CHOU Tien Chen'].shape[0]
+
+    # 2. 使用「殺球」得分的次數
+    smash_score_count = df[(df['getpoint_player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')].shape[0]
+
+    # 3. 計算百分比
+    if total_score > 0:
+        smash_percentage = (smash_score_count / total_score) * 100
+    else:
+        smash_percentage = 0
+
+    # 印出結果
+    print(f"周天成總得分次數: {total_score}")
+    print(f"使用「殺球」得分的次數: {smash_score_count}")
+    print(f"「殺球」得分佔總得分的百分比: {smash_percentage:.2f}%")
+else:
+    print("數據集為空。")
+                        ```
+                        3. 結果 (Stdout): 周天成總得分次數: 196
+使用「殺球」得分的次數: 78
+「殺球」得分佔總得分的百分比: 39.80%
+
+                        4. 變數: _generated_figures_count: 0
+s: Windows
+total_score: 196
+smash_score_count: 78
+smash_percentage: 39.795918367346935
+
+                        
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
+                        判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                         
+                        
+
+[Output Response]:
+PASS
+==============================
+
+==============================
+[2025-12-13 15:06:43] Step: Step 6: Insight Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
+  <USER>
+
+                        你是羽球教練。
+                        問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？"
+                        數據:
+                        --- 程式執行輸出 (Stdout) ---
+周天成總得分次數: 196
+使用「殺球」得分的次數: 78
+「殺球」得分佔總得分的百分比: 39.80%
+
+
+程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `_generated_figures_count` (型別: `int`)
+```
+0
+```
+
+### 變數 `s` (型別: `str`)
+```
+Windows
+```
+
+### 變數 `total_score` (型別: `int`)
+```
+196
+```
+
+### 變數 `smash_score_count` (型別: `int`)
+```
+78
+```
+
+### 變數 `smash_percentage` (型別: `float`)
+```
+39.795918367346935
+```
+
+
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
+                        
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        
+
+[Output Response]:
+周天成在比賽中使用「殺球」得分的次數為78次，這佔他總得分196次的39.80%。這顯示出「殺球」是他得分的重要手段，幾乎每四次得分中就有一次來自於殺球。
+
+這一數據強調了他在進攻時的侵略性，尤其在對手防守不穩定的情況下，殺球的運用能有效提升得分效率。建議在訓練中持續強化殺球技術，並針對對手的防守弱點進行針對性訓練，以進一步提高這一得分手段的成功率。
+==============================
+
+==============================
+[2025-12-13 15:13:02] Step: Step 1: Enhancement
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題。
+                    2. 判斷問題是否需要場地位置資訊。
+
+                    Schema: <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }
+                    
+  <USER>
+周天成使用「殺球」得分佔他總得分的百分比是多少？
+
+[Output Response]:
+{
+    "enhanced_prompt": "請計算周天成在比賽中使用「殺球」得分的次數，並將其與他總得分進行比較，以計算「殺球」得分佔他總得分的百分比。",
+    "needs_court_info": false
+}
+==============================
+
+==============================
+[2025-12-13 15:13:11] Step: Step 2: Code Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
+
+**規則:**
+1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
+2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+3. 勿讀檔 (`df` 已存在)。
+4. 計算前驗證數據 (如 `len(df) > 0`)。
+5. 類別用名稱。Schema 字串需精確。
+6. 用繁體中文。
+7. 使用dropna()處理遺失值 
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
+10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+**數據:**
+Schema:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+定義:
+## 比賽資料結構
+- 比賽形式：三戰兩勝制
+- 計分方式：21分制
+
+⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。
+
+## 球種代碼對照表
+- 1: 發短球
+- 2: 發長球
+- 3: 長球
+- 4: 殺球
+- 5: 切球
+- 6: 挑球
+- 7: 平球
+- 8: 網前球
+- 9: 推撲球
+- 10: 接殺防守
+- 11: 接不到
+
+## 欄位定義
+### `match_id`
+**說明**：比賽 ID。用來區分不同的比賽場次。
+- **關鍵字**：場次
+### `set`
+**說明**：局數
+- **值域**：1-3
+### `rally`
+**說明**：從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。
+- **範圍**：局內
+- ⚠️ **重要**：跨局分析需配 match_id, set
+- ✅ **正確用法**：`總回合: df.groupby(['match_id', 'set', 'rally']).ngroups`
+### `rally_id`
+**說明**：整個數據集中唯一的回合 ID
+### `ball_round`
+**說明**：這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+- **用途**：回合中拍與拍的比較或回球數
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `player_score`
+**說明**：Kento MOMOTA的當前局內分數
+- **值域**：0-30(含延分)
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `opponent_score`
+**說明**：CHOU Tien Chen的當前局內分數
+- **值域**：0-30(含延分)
+### `score_status`
+**說明**：分數差距 (player score - opponent score)
+- **值域**：正=領先, 負=落後
+### `player`
+**說明**：擊球球員姓名
+- ⚠️ **重要**：每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')
+### `server`
+**說明**：發球狀態
+- **數值對應**：1=player發球, 2=對打中, 3=該回合結束
+### `type`
+**說明**：球種名稱(中文)
+- **可能值**：殺球, 切球, ...參照shot_types
+### `player_type`
+**說明**：球員擊球球種代碼
+- **資料類型**：float
+- **數值對應**：1-11 (見shot_types)
+- **用途**：適合分組統計球種
+- **備註**：為type轉換來的，直接使用type更佳
+- ✅ **正確用法**：`df[df['player_type']==4].groupby('player').size()`
+### `opponent_type`
+**說明**：對手上一拍球種代碼
+- **數值對應**：1-11 (見shot_types)
+### `hit_x`
+**說明**：擊球點X座標
+### `hit_y`
+**說明**：擊球點Y座標
+### `hit_area`
+**說明**：擊球點所在區域代碼 (1-32)
+- **關鍵字**：球員擊球點
+### `landing_x`
+**說明**：球的落點X座標，可視為下顆球對方的擊球點X座標
+### `landing_y`
+**說明**：球的落點Y座標，可視為下顆球對方的擊球點Y座標
+### `landing_area`
+**說明**：球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)
+- **關鍵字**：球的落點
+### `player_location_x`
+**說明**：球員所在的 X 座標。
+### `player_location_y`
+**說明**：球員所在的 Y 座標。
+### `player_location_area`
+**說明**：球員所在的站位區域。
+- **關鍵字**：球員站位
+### `player_move_x`
+**說明**：擊球點到移動位置的X座標位移量。(moving_x-hit_x)
+- **關鍵字**：球員移動量
+### `player_move_y`
+**說明**：擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
+- **關鍵字**：球員移動量
+### `moving_x`
+**說明**：球員擊完這一球後，移動到的X座標。
+### `moving_y`
+**說明**：球員擊完這一球後，移動到的Y座標。
+### `player_moving_area`
+**說明**：球員擊完這一球後，移動到的區域代碼
+- **關鍵字**：回位
+### `opponent_location_x`
+**說明**：對手所站的位置X座標
+### `opponent_location_y`
+**說明**：對手所站的位置Y座標
+### `opponent_location_area`
+**說明**：對手擊球區域。對手所站的位置區域代碼
+- **關鍵字**：對手站位
+### `opponent_move_x`
+**說明**：對手擊球點到移動位置的X座標位移量。
+- **關鍵字**：對手移動量
+### `opponent_move_y`
+**說明**：對手擊球點到移動位置的Y座標位移量。
+- **關鍵字**：對手移動量
+### `ball_distance`
+**說明**：飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
+- **關鍵字**：打擊的遠度
+### `getpoint_player`
+**說明**：該回合得分者
+- **範圍**：僅在rally最後一拍(得失分拍)有值，其他設為NULL
+- **備註**：與player搭配可看得分球是誰打的
+- ✅ **正確用法**：`groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()`
+### `win_reason`
+**說明**：該球若player得分，則win_reason為得分原因
+- **範圍**：回合結束時(若player得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & win_reason.notna()`
+### `lose_reason`
+**說明**：該球若opponent得分，則lose_reason為失分原因，其他為NULL
+- **範圍**：回合結束時(若opponent得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & lose_reason.notna()`
+- ⚠️ **重要**：記錄的是player失誤原因
+
+## 分析指南
+
+### 💎 核心資料原則 (CORE DATA PRINCIPLES)
+- 💎 **PRINCIPLE_1**：Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.
+- 💎 **PRINCIPLE_2**：The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.
+- ✅ **正確實作**：`rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()`
+
+### 回合計數
+- **問題**：rally編號每局重置
+- ✅ **正確方法**：`df.groupby(['match_id', 'set', 'rally']).ngroups`
+
+### 得分手段分類 (主動 vs 受迫)
+- 💎 **PRINCIPLE**：Active vs Passive Winning
+- **備註**：For 'Active Winners' or 'Hitting Points', use the Active Winner condition.
+
+### 勝率計算
+- **STEP1**：groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()
+- **STEP2**：wins = (rally_winners == '球員').sum()
+- **STEP3**：win_rate = wins / len(rally_winners)
+
+### 球員名稱使用
+- **規則**：須用完整姓名
+
+### 球種分析
+- **目的**：球種統計
+- ✅ **正確方法**：`用 player_type (數字) 分組`
+- **備註**：type=字串, player_type=代碼
+
+### 比賽比分查詢
+- **情境**：三戰兩勝, 21分制
+- 最後一分沒記，贏家需+1
+- ✅ **正確方法**：`找出每局最後一筆 player_score/opponent_score，贏家分數+1`
+
+### 連續對打查詢
+- **目的**：連續對打紀錄
+- **範例**：周天成使用殺球後，對手使用那些球種回擊
+- ✅ **正確方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()`
+- ❌ **錯誤方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()`
+
+**字體設定 (程式碼開頭必填):**
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**圖表:**
+- `fig, ax = plt.subplots(figsize=(12, 7))`
+- 標題 `fontsize=16`，軸 `12`。
+- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
+- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
+- 必用 `plt.tight_layout()`。
+
+**回覆:**
+- 對象不明: 反問 (不寫 Code)。
+- 明確: 文字說明 + Code。
+- 詢問數值: Code 需 `print()` 結果。
+
+                    
+**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+                    
+  <USER>
+請計算周天成在比賽中使用「殺球」得分的次數，並將其與他總得分進行比較，以計算「殺球」得分佔他總得分的百分比。
+
+[Output Response]:
+為了計算周天成在比賽中使用「殺球」得分的次數，我們可以依據以下步驟來進行：
+
+1. 過濾出周天成的擊球記錄，找到他使用「殺球」的情況。
+2. 計算周天成的總得分。
+3. 計算「殺球」得分的佔比。
+
+以下是具體的程式碼實作：
+
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查 DataFrame 是否有數據
+if len(df) > 0:
+    # 步驟1: 計算周天成使用「殺球」得分的次數
+    choutienchen_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球') & df['getpoint_player'].notna()]
+    smash_points_count = len(choutienchen_smash)
+
+    # 步驟2: 計算周天成的總得分
+    total_points_count = df[df['getpoint_player'] == 'CHOU Tien Chen'].shape[0]
+
+    # 步驟3: 計算「殺球」得分佔總得分的百分比
+    if total_points_count > 0:
+        smash_percentage = (smash_points_count / total_points_count) * 100
+    else:
+        smash_percentage = 0
+
+    print(f"周天成使用「殺球」得分的次數: {smash_points_count}")
+    print(f"周天成的總得分次數: {total_points_count}")
+    print(f"「殺球」得分佔總得分的百分比: {smash_percentage:.2f}%")
+else:
+    print("資料集為空，無法進行計算。")
+```
+
+這段程式碼首先檢查數據集是否為空。如果有數據，它會計算周天成使用「殺球」的得分次數，然後計算他總得分的次數，並在最後計算「殺球」得分佔總得分的百分比，並將結果打印出來。
+==============================
+
+==============================
+[2025-12-13 15:13:13] Step: Step 4: Logic Reflection
+------------------------------
+[Input Messages]:
+  <USER>
+
+                        QA Check:
+                        1. 問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？" (強化: "請計算周天成在比賽中使用「殺球」得分的次數，並將其與他總得分進行比較，以計算「殺球」得分佔他總得分的百分比。")
+                        2. 程式:
+                        ```python
+                        import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 檢查 DataFrame 是否有數據
+if len(df) > 0:
+    # 步驟1: 計算周天成使用「殺球」得分的次數
+    choutienchen_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球') & df['getpoint_player'].notna()]
+    smash_points_count = len(choutienchen_smash)
+
+    # 步驟2: 計算周天成的總得分
+    total_points_count = df[df['getpoint_player'] == 'CHOU Tien Chen'].shape[0]
+
+    # 步驟3: 計算「殺球」得分佔總得分的百分比
+    if total_points_count > 0:
+        smash_percentage = (smash_points_count / total_points_count) * 100
+    else:
+        smash_percentage = 0
+
+    print(f"周天成使用「殺球」得分的次數: {smash_points_count}")
+    print(f"周天成的總得分次數: {total_points_count}")
+    print(f"「殺球」得分佔總得分的百分比: {smash_percentage:.2f}%")
+else:
+    print("資料集為空，無法進行計算。")
+                        ```
+                        3. 結果 (Stdout): 周天成使用「殺球」得分的次數: 81
+周天成的總得分次數: 196
+「殺球」得分佔總得分的百分比: 41.33%
+
+                        4. 變數: _generated_figures_count: 0
+s: Windows
+choutienchen_smash: DataFrame/Series with 81 rows
+smash_points_count: 81
+total_points_count: 196
+smash_percentage: 41.3265306122449
+
+                        
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
+                        判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                         
+                        
+
+[Output Response]:
+PASS
+==============================
+
+==============================
+[2025-12-13 15:13:18] Step: Step 6: Insight Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
+  <USER>
+
+                        你是羽球教練。
+                        問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？"
+                        數據:
+                        --- 程式執行輸出 (Stdout) ---
+周天成使用「殺球」得分的次數: 81
+周天成的總得分次數: 196
+「殺球」得分佔總得分的百分比: 41.33%
+
+
+程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `_generated_figures_count` (型別: `int`)
+```
+0
+```
+
+### 變數 `s` (型別: `str`)
+```
+Windows
+```
+
+### 變數 `choutienchen_smash` (型別: `str`)
+```
+DataFrame/Series with 81 rows
+```
+
+### 變數 `smash_points_count` (型別: `int`)
+```
+81
+```
+
+### 變數 `total_points_count` (型別: `int`)
+```
+196
+```
+
+### 變數 `smash_percentage` (型別: `float`)
+```
+41.3265306122449
+```
+
+
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
+                        
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        
+
+[Output Response]:
+周天成在比賽中使用「殺球」得分的次數為81次，這佔他總得分196次的41.33%。這個數據顯示出他的進攻策略相當依賴於殺球，意味著他在比賽中積極尋找機會進行強攻。
+
+這樣的得分比例表明，他的對手需要特別注意他的殺球威脅，並且在防守時應該加強對殺球的應對策略。周天成的殺球效率高，顯示出他在進攻端的強大火力，這也可能迫使對手在防守時分散注意力，進而創造更多的得分機會。
+==============================
+
+==============================
+[2025-12-13 15:14:39] Step: Step 1: Enhancement
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+                    你是資料分析輔助系統。請分析使用者問題。
+                    任務：
+                    1. 將簡短問題轉化為完整、具體的數據分析問題。
+                    2. 判斷問題是否需要場地位置資訊。
+
+                    Schema: <class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+
+                    輸出 JSON 格式 (不要 Markdown):
+                    {
+                        "enhanced_prompt": "完整的問題與需求描述...",
+                        "needs_court_info": true/false
+                    }
+                    
+  <USER>
+周天成最常使用哪個球種直接得分
+
+[Output Response]:
+{
+    "enhanced_prompt": "請分析周天成在比賽中最常使用的球種，以及這些球種直接得分的次數和比例。具體來說，請提供周天成在比賽中每種球種的得分情況，並找出得分最多的球種。",
+    "needs_court_info": false
+}
+==============================
+
+==============================
+[2025-12-13 15:14:51] Step: Step 2: Code Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+
+你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
+
+**規則:**
+1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
+2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+3. 勿讀檔 (`df` 已存在)。
+4. 計算前驗證數據 (如 `len(df) > 0`)。
+5. 類別用名稱。Schema 字串需精確。
+6. 用繁體中文。
+7. 使用dropna()處理遺失值 
+8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
+9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
+10. 若是畫長條圖，可以進行排序
+11. 可使用print()印出重要數值與精簡說明數值意義
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+**數據:**
+Schema:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 5204 entries, 0 to 5203
+Data columns (total 47 columns):
+ #   Column                  Non-Null Count  Dtype  
+---  ------                  --------------  -----  
+ 0   rally                   5204 non-null   int64  
+ 1   ball_round              5204 non-null   int64  
+ 2   time                    5204 non-null   object 
+ 3   frame_num               5204 non-null   float64
+ 4   score_status            5204 non-null   float64
+ 5   player_score            5204 non-null   float64
+ 6   opponent_score          5204 non-null   float64
+ 7   player                  5204 non-null   object 
+ 8   server                  5204 non-null   float64
+ 9   type                    5204 non-null   object 
+ 10  aroundhead              5204 non-null   float64
+ 11  backhand                5204 non-null   float64
+ 12  hit_height              5204 non-null   float64
+ 13  hit_area                5204 non-null   float64
+ 14  hit_x                   5204 non-null   float64
+ 15  hit_y                   5204 non-null   float64
+ 16  landing_height          5105 non-null   float64
+ 17  landing_area            5204 non-null   float64
+ 18  landing_x               5204 non-null   float64
+ 19  landing_y               5204 non-null   float64
+ 20  lose_reason             274 non-null    object 
+ 21  win_reason              147 non-null    object 
+ 22  getpoint_player         422 non-null    object 
+ 23  flaw                    0 non-null      float64
+ 24  player_location_area    5204 non-null   float64
+ 25  player_location_x       5204 non-null   float64
+ 26  player_location_y       5204 non-null   float64
+ 27  player_move_x           5204 non-null   float64
+ 28  player_move_y           5204 non-null   float64
+ 29  opponent_location_area  5204 non-null   float64
+ 30  opponent_location_x     5204 non-null   float64
+ 31  opponent_location_y     5204 non-null   float64
+ 32  opponent_move_x         5204 non-null   float64
+ 33  opponent_move_y         5204 non-null   float64
+ 34  ball_distance           5204 non-null   float64
+ 35  player_type             5070 non-null   float64
+ 36  opponent_type           5069 non-null   float64
+ 37  player_move_area        5204 non-null   float64
+ 38  moving_x                5204 non-null   float64
+ 39  moving_y                5204 non-null   float64
+ 40  landing_court_number    0 non-null      float64
+ 41  ball_distance_x         5204 non-null   float64
+ 42  ball_distance_y         5204 non-null   float64
+ 43  db                      5204 non-null   float64
+ 44  set                     5204 non-null   int64  
+ 45  match_id                5204 non-null   float64
+ 46  rally_id                5204 non-null   int64  
+dtypes: float64(37), int64(4), object(6)
+memory usage: 1.9+ MB
+
+============================================================
+[欄位額外資訊 (動態分析)]
+============================================================
+### 欄位 'rally' 數值範圍:最小值 = 1, 最大值 = 42
+### 欄位 'ball_round' 數值範圍:最小值 = 1, 最大值 = 46
+### 欄位 'frame_num' 數值範圍:最小值 = 11467.0, 最大值 = 135576.0
+### 欄位 'score_status' 數值範圍:最小值 = -11.0, 最大值 = 10.0
+### 欄位 'player_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'opponent_score' 數值範圍:最小值 = 0.0, 最大值 = 21.0
+### 欄位 'player' (唯一值 <= 20 個):['Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'server' 數值範圍:最小值 = 1.0, 最大值 = 3.0
+### 欄位 'server' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'type' (唯一值 <= 20 個):['發短球', '長球', '推撲球', '殺球', '接殺防守', '平球', '網前球', '挑球', '切球', '發長球']
+### 欄位 'aroundhead' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'aroundhead' (唯一值 <= 20 個):[np.float64(0.0), np.float64(1.0)]
+### 欄位 'backhand' 數值範圍:最小值 = 0.0, 最大值 = 1.0
+### 欄位 'backhand' (唯一值 <= 20 個):[np.float64(1.0), np.float64(0.0)]
+### 欄位 'hit_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'hit_height' (唯一值 <= 20 個):[np.float64(2.0), np.float64(1.0)]
+### 欄位 'hit_area' 數值範圍:最小值 = 1.0, 最大值 = 24.0
+### 欄位 'hit_x' 數值範圍:最小值 = -0.7072498108502996, 最大值 = 0.7172898912180071
+### 欄位 'hit_y' 數值範圍:最小值 = -0.3553514469433116, 最大值 = 0.9998418761946708
+### 欄位 'landing_height' 數值範圍:最小值 = 1.0, 最大值 = 2.0
+### 欄位 'landing_height' (唯一值 <= 20 個):[np.float64(1.0), np.float64(2.0), np.float64(nan)]
+### 欄位 'landing_area' 數值範圍:最小值 = 1.0, 最大值 = 33.0
+### 欄位 'landing_x' 數值範圍:最小值 = -1.4798500180699032, 最大值 = 1.5145902614586062
+### 欄位 'landing_y' 數值範圍:最小值 = -0.5002113337896239, 最大值 = 0.9998418761946708
+### 欄位 'lose_reason' (唯一值 <= 20 個):[nan, '出界', '未過網', '掛網', '落點判斷失誤', '犯規']
+### 欄位 'win_reason' (唯一值 <= 20 個):[nan, '落地致勝', '落地判斷失誤']
+### 欄位 'getpoint_player' (唯一值 <= 20 個):[nan, 'Kento MOMOTA', 'CHOU Tien Chen']
+### 欄位 'flaw' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'flaw' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'player_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'player_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'player_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'player_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'player_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'opponent_location_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'opponent_location_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'opponent_location_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.95971952599695
+### 欄位 'opponent_move_x' 數值範圍:最小值 = -1.1697412471298043, 最大值 = 0.85737314225558
+### 欄位 'opponent_move_y' 數值範圍:最小值 = -0.9252298615080254, 最大值 = 0.5127036515604619
+### 欄位 'ball_distance' 數值範圍:最小值 = 0.0, 最大值 = 1.5661524051776352
+### 欄位 'player_type' 數值範圍:最小值 = 1.0, 最大值 = 10.0
+### 欄位 'player_type' (唯一值 <= 20 個):[np.float64(1.0), np.float64(nan), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(7.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'opponent_type' 數值範圍:最小值 = 0.0, 最大值 = 10.0
+### 欄位 'opponent_type' (唯一值 <= 20 個):[np.float64(0.0), np.float64(nan), np.float64(1.0), np.float64(9.0), np.float64(4.0), np.float64(10.0), np.float64(8.0), np.float64(6.0), np.float64(5.0), np.float64(7.0), np.float64(3.0), np.float64(2.0)]
+### 欄位 'player_move_area' 數值範圍:最小值 = 1.0, 最大值 = 32.0
+### 欄位 'moving_x' 數值範圍:最小值 = -0.7837007613539037, 最大值 = 0.7650948897725632
+### 欄位 'moving_y' 數值範圍:最小值 = -0.4370338007902143, 最大值 = 0.999696833101426
+### 欄位 'landing_court_number' 數值範圍:最小值 = nan, 最大值 = nan
+### 欄位 'landing_court_number' (唯一值 <= 20 個):[np.float64(nan)]
+### 欄位 'ball_distance_x' 數值範圍:最小值 = -1.1092144644472903, 最大值 = 1.330757215969243
+### 欄位 'ball_distance_y' 數值範圍:最小值 = -1.13632535323407, 最大值 = 1.2416487645230831
+### 欄位 'db' 數值範圍:最小值 = 0.0, 最大值 = 0.0
+### 欄位 'db' (唯一值 <= 20 個):[np.float64(0.0)]
+### 欄位 'set' 數值範圍:最小值 = 1, 最大值 = 3
+### 欄位 'set' (唯一值 <= 20 個):[np.int64(1), np.int64(2), np.int64(3)]
+### 欄位 'match_id' 數值範圍:最小值 = 1.0, 最大值 = 7.0
+### 欄位 'match_id' (唯一值 <= 20 個):[np.float64(1.0), np.float64(3.0), np.float64(5.0), np.float64(6.0), np.float64(7.0)]
+### 欄位 'rally_id' 數值範圍:最小值 = 0, 最大值 = 475
+定義:
+## 比賽資料結構
+- 比賽形式：三戰兩勝制
+- 計分方式：21分制
+
+⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。
+
+## 球種代碼對照表
+- 1: 發短球
+- 2: 發長球
+- 3: 長球
+- 4: 殺球
+- 5: 切球
+- 6: 挑球
+- 7: 平球
+- 8: 網前球
+- 9: 推撲球
+- 10: 接殺防守
+- 11: 接不到
+
+## 欄位定義
+### `match_id`
+**說明**：比賽 ID。用來區分不同的比賽場次。
+- **關鍵字**：場次
+### `set`
+**說明**：局數
+- **值域**：1-3
+### `rally`
+**說明**：從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。
+- **範圍**：局內
+- ⚠️ **重要**：跨局分析需配 match_id, set
+- ✅ **正確用法**：`總回合: df.groupby(['match_id', 'set', 'rally']).ngroups`
+### `rally_id`
+**說明**：整個數據集中唯一的回合 ID
+### `ball_round`
+**說明**：這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+- **用途**：回合中拍與拍的比較或回球數
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `player_score`
+**說明**：Kento MOMOTA的當前局內分數
+- **值域**：0-30(含延分)
+⚠️ **❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score.**
+### `opponent_score`
+**說明**：CHOU Tien Chen的當前局內分數
+- **值域**：0-30(含延分)
+### `score_status`
+**說明**：分數差距 (player score - opponent score)
+- **值域**：正=領先, 負=落後
+### `player`
+**說明**：擊球球員姓名
+- ⚠️ **重要**：每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')
+### `server`
+**說明**：發球狀態
+- **數值對應**：1=player發球, 2=對打中, 3=該回合結束
+### `type`
+**說明**：球種名稱(中文)
+- **可能值**：殺球, 切球, ...參照shot_types
+### `player_type`
+**說明**：球員擊球球種代碼
+- **資料類型**：float
+- **數值對應**：1-11 (見shot_types)
+- **用途**：適合分組統計球種
+- **備註**：為type轉換來的，直接使用type更佳
+- ✅ **正確用法**：`df[df['player_type']==4].groupby('player').size()`
+### `opponent_type`
+**說明**：對手上一拍球種代碼
+- **數值對應**：1-11 (見shot_types)
+### `hit_x`
+**說明**：擊球點X座標
+### `hit_y`
+**說明**：擊球點Y座標
+### `hit_area`
+**說明**：擊球點所在區域代碼 (1-32)
+- **關鍵字**：球員擊球點
+### `landing_x`
+**說明**：球的落點X座標，可視為下顆球對方的擊球點X座標
+### `landing_y`
+**說明**：球的落點Y座標，可視為下顆球對方的擊球點Y座標
+### `landing_area`
+**說明**：球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)
+- **關鍵字**：球的落點
+### `player_location_x`
+**說明**：球員所在的 X 座標。
+### `player_location_y`
+**說明**：球員所在的 Y 座標。
+### `player_location_area`
+**說明**：球員所在的站位區域。
+- **關鍵字**：球員站位
+### `player_move_x`
+**說明**：擊球點到移動位置的X座標位移量。(moving_x-hit_x)
+- **關鍵字**：球員移動量
+### `player_move_y`
+**說明**：擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
+- **關鍵字**：球員移動量
+### `moving_x`
+**說明**：球員擊完這一球後，移動到的X座標。
+### `moving_y`
+**說明**：球員擊完這一球後，移動到的Y座標。
+### `player_moving_area`
+**說明**：球員擊完這一球後，移動到的區域代碼
+- **關鍵字**：回位
+### `opponent_location_x`
+**說明**：對手所站的位置X座標
+### `opponent_location_y`
+**說明**：對手所站的位置Y座標
+### `opponent_location_area`
+**說明**：對手擊球區域。對手所站的位置區域代碼
+- **關鍵字**：對手站位
+### `opponent_move_x`
+**說明**：對手擊球點到移動位置的X座標位移量。
+- **關鍵字**：對手移動量
+### `opponent_move_y`
+**說明**：對手擊球點到移動位置的Y座標位移量。
+- **關鍵字**：對手移動量
+### `ball_distance`
+**說明**：飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
+- **關鍵字**：打擊的遠度
+### `getpoint_player`
+**說明**：該回合得分者
+- **範圍**：僅在rally最後一拍(得失分拍)有值，其他設為NULL
+- **備註**：與player搭配可看得分球是誰打的
+- ✅ **正確用法**：`groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()`
+### `win_reason`
+**說明**：該球若player得分，則win_reason為得分原因
+- **範圍**：回合結束時(若player得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & win_reason.notna()`
+### `lose_reason`
+**說明**：該球若opponent得分，則lose_reason為失分原因，其他為NULL
+- **範圍**：回合結束時(若opponent得分)有原因，其他設為NULL
+- **篩選條件**：`getpoint_player.notna() & lose_reason.notna()`
+- ⚠️ **重要**：記錄的是player失誤原因
+
+## 分析指南
+
+### 💎 核心資料原則 (CORE DATA PRINCIPLES)
+- 💎 **PRINCIPLE_1**：Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.
+- 💎 **PRINCIPLE_2**：The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.
+- ✅ **正確實作**：`rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()`
+
+### 回合計數
+- **問題**：rally編號每局重置
+- ✅ **正確方法**：`df.groupby(['match_id', 'set', 'rally']).ngroups`
+
+### 得分手段分類 (主動 vs 受迫)
+- 💎 **PRINCIPLE**：Active vs Passive Winning
+- **備註**：For 'Active Winners' or 'Hitting Points', use the Active Winner condition.
+
+### 勝率計算
+- **STEP1**：groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()
+- **STEP2**：wins = (rally_winners == '球員').sum()
+- **STEP3**：win_rate = wins / len(rally_winners)
+
+### 球員名稱使用
+- **規則**：須用完整姓名
+
+### 球種分析
+- **目的**：球種統計
+- ✅ **正確方法**：`用 player_type (數字) 分組`
+- **備註**：type=字串, player_type=代碼
+
+### 比賽比分查詢
+- **情境**：三戰兩勝, 21分制
+- 最後一分沒記，贏家需+1
+- ✅ **正確方法**：`找出每局最後一筆 player_score/opponent_score，贏家分數+1`
+
+### 連續對打查詢
+- **目的**：連續對打紀錄
+- **範例**：周天成使用殺球後，對手使用那些球種回擊
+- ✅ **正確方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()`
+- ❌ **錯誤方法**：`kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()`
+
+**字體設定 (程式碼開頭必填):**
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**圖表:**
+- `fig, ax = plt.subplots(figsize=(12, 7))`
+- 標題 `fontsize=16`，軸 `12`。
+- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
+- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
+- 必用 `plt.tight_layout()`。
+
+**回覆:**
+- 對象不明: 反問 (不寫 Code)。
+- 明確: 文字說明 + Code。
+- 詢問數值: Code 需 `print()` 結果。
+
+                    
+**最佳實踐:**
+                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+                    2. 軸標籤避免大量浮點數。
+                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+                    
+  <USER>
+請分析周天成在比賽中最常使用的球種，以及這些球種直接得分的次數和比例。具體來說，請提供周天成在比賽中每種球種的得分情況，並找出得分最多的球種。
+
+[Output Response]:
+首先，我們將分析周天成（CHOU Tien Chen）在比賽中使用的各種球種及其得分情況。具體來說，我們需要計算每種球種的得分次數及其比例。以下是我們的分析步驟：
+
+1. 篩選出周天成的擊球數據。
+2. 計算每種球種的得分次數。
+3. 計算每種球種的比例。
+4. 找出得分最多的球種。
+
+以下為實現上述步驟的程式碼：
+
+```python
+import platform
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame 不空
+if len(df) > 0:
+    # 篩選周天成的數據
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+
+    # 計算每種球種的得分次數
+    chou_data['score'] = chou_data['getpoint_player'] == 'CHOU Tien Chen'
+    scores_by_type = chou_data.groupby('player_type')['score'].sum().reset_index()
+    
+    # 總得分次數
+    total_scores = scores_by_type['score'].sum()
+    scores_by_type['score_percentage'] = scores_by_type['score'] / total_scores * 100
+    
+    # 找出得分最多的球種
+    max_score_row = scores_by_type.loc[scores_by_type['score'].idxmax()]
+    max_score_type = max_score_row['player_type']
+    max_score_count = max_score_row['score']
+
+    # 輸出結果
+    print("周天成每種球種得分情況：")
+    print(scores_by_type)
+    print(f"得分最多的球種為: {max_score_type}，得分次數為: {max_score_count}")
+
+    # 繪製圖表
+    fig, ax = plt.subplots(figsize=(12, 7))
+    scores_by_type = scores_by_type.sort_values(by='score', ascending=False)
+    ax.bar(scores_by_type['player_type'].astype(str), scores_by_type['score'], color='steelblue')
+    
+    ax.set_title('周天成球種得分情況', fontsize=16)
+    ax.set_xlabel('球種代碼', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    plt.xticks(rotation=45)
+    
+    # 標示得分比例
+    for i, v in enumerate(scores_by_type['score']):
+        ax.text(i, v + 0.5, f"{v} ({scores_by_type['score_percentage'].iloc[i]:.1f}%)", ha='center')
+
+    plt.tight_layout()
+else:
+    print("數據為空，無法進行分析。")
+```
+
+### 註解：
+1. **score** 欄位被創建來標記周天成的得分情況。
+2. `player_type` 是數字代碼，若要將其轉換為名稱，可參照事先提供的球種代碼對照表。
+3. 通過 `print()` 輸出每種球種的得分情況，並確認得分最多的球種類型及次数。
+4. 當然，圖表將會顯示每種球種的得分次數，並且標記了百分比，便於視覺化分析。
+==============================
+
+==============================
+[2025-12-13 15:15:02] Step: Step 4: Logic Reflection
+------------------------------
+[Input Messages]:
+  <USER>
+
+                        QA Check:
+                        1. 問題: "周天成最常使用哪個球種直接得分" (強化: "請分析周天成在比賽中最常使用的球種，以及這些球種直接得分的次數和比例。具體來說，請提供周天成在比賽中每種球種的得分情況，並找出得分最多的球種。")
+                        2. 程式:
+                        ```python
+                        import platform
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame 不空
+if len(df) > 0:
+    # 篩選周天成的數據
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+
+    # 計算每種球種的得分次數
+    chou_data['score'] = chou_data['getpoint_player'] == 'CHOU Tien Chen'
+    scores_by_type = chou_data.groupby('player_type')['score'].sum().reset_index()
+    
+    # 總得分次數
+    total_scores = scores_by_type['score'].sum()
+    scores_by_type['score_percentage'] = scores_by_type['score'] / total_scores * 100
+    
+    # 找出得分最多的球種
+    max_score_row = scores_by_type.loc[scores_by_type['score'].idxmax()]
+    max_score_type = max_score_row['player_type']
+    max_score_count = max_score_row['score']
+
+    # 輸出結果
+    print("周天成每種球種得分情況：")
+    print(scores_by_type)
+    print(f"得分最多的球種為: {max_score_type}，得分次數為: {max_score_count}")
+
+    # 繪製圖表
+    fig, ax = plt.subplots(figsize=(12, 7))
+    scores_by_type = scores_by_type.sort_values(by='score', ascending=False)
+    ax.bar(scores_by_type['player_type'].astype(str), scores_by_type['score'], color='steelblue')
+    
+    ax.set_title('周天成球種得分情況', fontsize=16)
+    ax.set_xlabel('球種代碼', fontsize=12)
+    ax.set_ylabel('得分次數', fontsize=12)
+    plt.xticks(rotation=45)
+    
+    # 標示得分比例
+    for i, v in enumerate(scores_by_type['score']):
+        ax.text(i, v + 0.5, f"{v} ({scores_by_type['score_percentage'].iloc[i]:.1f}%)", ha='center')
+
+    plt.tight_layout()
+else:
+    print("數據為空，無法進行分析。")
+                        ```
+                        3. 結果 (Stdout): 周天成每種球種得分情況：
+   player_type  score  score_percentage
+0          1.0      0          0.000000
+1          2.0      0          0.000000
+2          3.0      2          2.352941
+3          4.0     61         71.764706
+4          5.0      2          2.352941
+5          6.0      0          0.000000
+6          7.0      2          2.352941
+7          8.0      4          4.705882
+8          9.0      9         10.588235
+9         10.0      5          5.882353
+得分最多的球種為: 4.0，得分次數為: 61.0
+
+                        4. 變數: _generated_figures_count: 1
+s: Windows
+chou_data: DataFrame/Series with 2609 rows
+scores_by_type: DataFrame/Series with 10 rows
+max_score_row: DataFrame/Series with 3 rows
+max_score_type: 4.0
+max_score_count: 61.0
+i: 9
+v: 0
+
+                        
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        
+                        判斷:
+                        - 🐛 潛在邏輯問題 (Bug Check):
+                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
+                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
+                            - [統計邏輯]: 聚合函數 (sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
+                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
+                            - [上下文]: 結果是否真正回答了問題?
+                            - [其他]: 任何潛在的邏輯陷阱?
+                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
+                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        
+                        回覆: 
+                        - 若 PASS: 僅回覆 "PASS"
+                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
+                         
+                        
+
+[Output Response]:
+```python
+import platform
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame 不空
+if len(df) > 0:
+    # 篩選周天成的數據
+    chou_data = df[df['player'] == 'CHOU Tien Chen']
+
+    # 計算每種球種的得分次數
+    chou_data['score'] = chou_data['getpoint_player'] == 'CHOU Tien Chen'
+    scores_by_type = chou_data.groupby('player_type')['score'].sum().reset_index()
+    
+    # 總得分次數
+    total_scores = scores_by_type['score'].sum()
+    if total_scores > 0:  # 確保總得分不為零
+        scores_by_type['score_percentage'] = scores_by_type['score'] / total_scores * 100
+        
+        # 找出得分最多的球種
+        max_score_row = scores_by_type.loc[scores_by_type['score'].idxmax()]
+        max_score_type = max_score_row['player_type']
+        max_score_count = max_score_row['score']
+
+        # 輸出結果
+        print("周天成每種球種得分情況：")
+        print(scores_by_type)
+        print(f"得分最多的球種為: {max_score_type}，得分次數為: {max_score_count}")
+
+        # 繪製圖表
+        fig, ax = plt.subplots(figsize=(12, 7))
+        scores_by_type = scores_by_type.sort_values(by='score', ascending=False)
+        
+        # 合併小於5%的類別為「其他」
+        threshold = 5
+        scores_by_type['player_type'] = scores_by_type['player_type'].astype(str)
+        scores_by_type.loc[scores_by_type['score_percentage'] < threshold, 'player_type'] = '其他'
+        scores_by_type = scores_by_type.groupby('player_type', as_index=False).sum()
+
+        ax.bar(scores_by_type['player_type'], scores_by_type['score'], color='steelblue')
+        
+        ax.set_title('周天成球種得分情況', fontsize=16)
+        ax.set_xlabel('球種代碼', fontsize=12)
+        ax.set_ylabel('得分次數', fontsize=12)
+        plt.xticks(rotation=45)
+        
+        # 標示得分比例
+        for i, v in enumerate(scores_by_type['score']):
+            ax.text(i, v + 0.5, f"{v} ({scores_by_type['score_percentage'].iloc[i]:.1f}%)", ha='center')
+
+        plt.tight_layout()
+    else:
+        print("周天成在比賽中沒有得分。")
+else:
+    print("數據為空，無法進行分析。")
+```
+==============================
+
+==============================
+[2025-12-13 15:15:07] Step: Step 6: Insight Generation
+------------------------------
+[Input Messages]:
+  <SYSTEM>
+你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
+  <USER>
+
+                        你是羽球教練。
+                        問題: "周天成最常使用哪個球種直接得分"
+                        數據:
+                        --- 程式執行輸出 (Stdout) ---
+周天成每種球種得分情況：
+   player_type  score  score_percentage
+0          1.0      0          0.000000
+1          2.0      0          0.000000
+2          3.0      2          2.352941
+3          4.0     61         71.764706
+4          5.0      2          2.352941
+5          6.0      0          0.000000
+6          7.0      2          2.352941
+7          8.0      4          4.705882
+8          9.0      9         10.588235
+9         10.0      5          5.882353
+得分最多的球種為: 4.0，得分次數為: 61.0
+
+
+程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `s` (型別: `str`)
+```
+Windows
+```
+
+### 變數 `chou_data` (型別: `str`)
+```
+DataFrame/Series with 2609 rows
+```
+
+### 變數 `scores_by_type` (型別: `str`)
+```
+DataFrame/Series with 4 rows
+```
+
+### 變數 `max_score_row` (型別: `str`)
+```
+DataFrame/Series with 3 rows
+```
+
+### 變數 `max_score_type` (型別: `float64`)
+```
+4.0
+```
+
+### 變數 `max_score_count` (型別: `float64`)
+```
+61.0
+```
+
+### 變數 `threshold` (型別: `int`)
+```
+5
+```
+
+### 變數 `i` (型別: `int`)
+```
+3
+```
+
+### 變數 `v` (型別: `int`)
+```
+10
+```
+
+
+                        規定:
+                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
+| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
+| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
+| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
+| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
+| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
+                        
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        
+
+[Output Response]:
+根據數據分析，周天成最常使用的得分球種為「殺球」（player_type 4.0），其得分次數高達61次，佔總得分的71.76%。這顯示他在比賽中對於殺球的運用極為頻繁且有效，這種攻擊性打法能夠迅速壓制對手，並創造得分機會。
+
+因此，建議在訓練中強化殺球的準確性與變化，並加強對於對手防守的識別，以便在適當時機做出最具威脅的攻擊。這將有助於提升周天成的整體競爭力，並增加比賽中的得分效率。
+==============================

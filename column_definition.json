@@ -217,7 +217,8 @@
       "column": "getpoint_player",
       "description": "該回合得分者",
       "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL",
-      "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()"
+      "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
+      "note": "與player搭配可看得分球是誰打的"
     },
     {
       "column": "win_reason",

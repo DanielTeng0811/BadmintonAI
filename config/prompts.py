@@ -30,7 +30,8 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
 10. 若是畫長條圖，可以進行排序
 11. 可使用print()印出重要數值與精簡說明數值意義
-
+12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的對照表 (Legend Table)，以便使用者查閱。
+13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
 **數據:**
 Schema:
 {data_schema_info}
