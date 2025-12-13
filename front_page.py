@@ -398,10 +398,17 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     conversation = [{"role": "system", "content": system_prompt}]
                     if len(st.session_state.messages) > 1:
+                        # 1. 先收集所有有效的歷史訊息 (排除當前最新的一則 & 排除澄清對話)
+                        valid_history = []
                         for m in st.session_state.messages[:-1]:
-                            # 跳過澄清相關的對話（包含 🤔 emoji 的訊息）
-                            if m.get("content") and "🤔" not in m.get("content", ""):
-                                conversation.append({"role": m["role"], "content": m["content"]})
+                             if m.get("content") and "🤔" not in m.get("content", ""):
+                                valid_history.append({"role": m["role"], "content": m["content"]})
+                        
+                        # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
+                        recent_history = valid_history[-8:]
+                        
+                        # 3. 加入對話 Context
+                        conversation.extend(recent_history)
                     
                     conversation.append({"role": "user", "content": enhanced_prompt})
 
