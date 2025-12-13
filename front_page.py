@@ -180,6 +180,11 @@ if "original_prompt" not in st.session_state:
 # 顯示歷史
 for idx, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
+        # [修改點]：若有優化後的提問邏輯，顯示在對話中
+        if message.get("enhanced_prompt"):
+            with st.expander("🧠 查看 AI 優化後的提問邏輯 (Step 1)", expanded=False):
+                st.markdown(f"**優化導引 (Enhanced Prompt):**\n{message['enhanced_prompt']}")
+
         st.markdown(message["content"])
         figures = message.get("figures", [])
         if not figures and message.get("figure"):
@@ -769,6 +774,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         "role": "assistant",
                         "content": final_content_for_history.strip(),
                         "figures": final_figs,
+                        "enhanced_prompt": enhanced_prompt # [修改點]：儲存優化後的提問邏輯
                     })
 
                     status.update(label="分析完成！", state="complete")

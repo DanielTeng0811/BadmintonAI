@@ -218,20 +218,21 @@
     {
       "column": "getpoint_player",
       "description": "該回合得分者",
-      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得失分球",
+      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得分或失分球",
       "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
-      "note": "df['player'] == 'player_A' &df['getpoint_player'] =='player_A'，代表是player_A打擊造成自己得分"
+      "note": "df['player'] == 'player_A' &df['getpoint_player'] =='player_A'，代表是player_A打擊造成自己得分",
+      "usage": "A的得分資料: df[df['getpoint_player']=='player_A']"
     },
     {
       "column": "win_reason",
       "description": "該球若player得分，則win_reason為得分原因",
-      "scope": "回合結束時(若player得分)有原因，其他設為NULL代表擊球過程非得失分球",
+      "scope": "回合結束時(若player得分)有原因，其他設為NULL代表擊球過程非得分或失分球",
       "filter_condition": "getpoint_player.notna() & win_reason.notna()"
     },
     {
       "column": "lose_reason",
       "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL",
-      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL代表擊球過程非得失分球",
+      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL代表擊球過程非得分或失分球",
       "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
       "important_note": "記錄的是player失誤原因"
     }
