@@ -72,20 +72,21 @@
     {
       "column": "type",
       "description": "球種名稱(中文)",
-      "note": "參照shot_types"
+      "note": "參照shot_types",
+      "usage": "可使用df['type'].shift()獲取前後拍的球種"
     },
     {
       "column": "player_type",
       "description": "球員擊球球種代碼",
       "data_type": "float",
       "mapping": "1-11 (見shot_types)",
-      "usage": "分組統計用"
+      "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
     },
     {
       "column": "opponent_type",
       "description": "對手上一拍球種代碼",
       "mapping": "1-11 (見shot_types)",
-      "note": "等價於ball_round -1的player_type"
+      "note": "等價於該rally前一筆的player_type"
     },
     {
       "column": "hit_x",

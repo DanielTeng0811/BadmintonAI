@@ -340,7 +340,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     enhancement_system_prompt = f"""
                     你是資料分析輔助系統。請分析使用者問題：
                     1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋。
-                    2. 判斷問題在多數情況下是否需要場地位置資訊(needs_court_info)。
+                    2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
+                       - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
 
                     輸出 JSON (No Markdown):
                     {{
@@ -516,17 +517,24 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         for name, val in exec_globals.items():
                             if name.startswith('_') or name in ignore_list: continue
                             
-                            if isinstance(val, (int, float, str, bool)):
-                                summary_info[name] = val
-                            elif isinstance(val, (pd.DataFrame, pd.Series)):
-                                # 強制讓 LLM 知道資料是空的
-                                if val.empty:
-                                    summary_info[name] = "⚠️ Empty DataFrame/Series (0 rows)"
-                                else:
-                                    # 如果資料太大，只告訴 LLM 大小，不傳全部內容
-                                    summary_info[name] = f"DataFrame/Series with {len(val)} rows"
-                            elif hasattr(val, '__len__') and len(val) < 20:
-                                summary_info[name] = val
+                            try:
+                                # [Fix] 避免 class 物件觸發 object of type 'type' has no len()
+                                if isinstance(val, type):
+                                    continue
+
+                                if isinstance(val, (int, float, str, bool)):
+                                    summary_info[name] = val
+                                elif isinstance(val, (pd.DataFrame, pd.Series)):
+                                    # 強制讓 LLM 知道資料是空的
+                                    if val.empty:
+                                        summary_info[name] = "⚠️ Empty DataFrame/Series (0 rows)"
+                                    else:
+                                        # 如果資料太大，只告訴 LLM 大小，不傳全部內容
+                                        summary_info[name] = f"DataFrame/Series with {len(val)} rows"
+                                elif hasattr(val, '__len__') and len(val) < 20:
+                                    summary_info[name] = val
+                            except Exception:
+                                pass
 
                         # --- [Step 4: 邏輯反饋與修正 (Logic Reflection Loop)] ---
                         status.update(label="Step 4/6: AI 正在檢查分析結果的邏輯性...")
