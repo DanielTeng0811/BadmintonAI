@@ -10,7 +10,7 @@ import streamlit as st
 import numpy as np
 
 # 檔案路徑常數
-DATA_FILE = "processed_data.csv"
+DATA_FILE = "processed_new.csv"
 COLUMN_DEFINITION_FILE = "column_definition.json"
 
 
@@ -34,243 +34,107 @@ def load_data(filepath):
 def get_data_schema(df):
     """
     從 DataFrame 獲取欄位型態資訊。
-    額外功能：
-    - 若欄位唯一值 <= 20，列出所有唯一值。
-    - 若欄位為數值型（int/float），列出最小值與最大值。
-
-    Args:
-        df: pandas DataFrame
-
-    Returns:
-        str: DataFrame 的結構資訊（欄位名稱、型態、唯一值、數值範圍等）
+    Features:
+    - Column Type & Missing (Null) Percentage
+    - Numeric Range (Min/Max)
+    - Unique Values (if <= 20)
     """
-    # 1. 取得 df.info() 的基本資訊
-    buffer = io.StringIO()
-    df.info(buf=buffer)
-    schema_info = buffer.getvalue()
+    schema_parts = []
+    schema_parts.append(f"Total Rows: {len(df)}")
+    schema_parts.append("="*60)
 
-    # 2. 儲存額外欄位分析資訊
-    extra_info = []
-
-    # 3. 逐欄分析
     for col in df.columns:
         series = df[col]
         dtype = series.dtype
+        null_count = series.isnull().sum()
+        null_pct = (null_count / len(df)) * 100
+        
+        # Header: Name (Type) | Empty: X.X%
+        col_header = f"### `{col}` ({dtype}) | Empty: {null_pct:.1f}%"
+        schema_parts.append(col_header)
 
-        # --- 數值欄位統計 ---
-        if np.issubdtype(dtype, np.number):  # 判斷是否為數值型
+        # 1. Numeric Range
+        if np.issubdtype(dtype, np.number):
             col_min = series.min(skipna=True)
             col_max = series.max(skipna=True)
-            extra_info.append(f"\n### 欄位 '{col}' 數值範圍:")
-            extra_info.append(f"最小值 = {col_min}, 最大值 = {col_max}")
+            schema_parts.append(f"- Range: {col_min} ~ {col_max}")
 
-        # --- 唯一值資訊 ---
+        # 2. Unique Values (Cardinality check)
         num_unique = series.nunique()
         if num_unique <= 20:
             unique_vals = series.unique()
-            unique_vals_list = list(unique_vals)
-            extra_info.append(f"\n### 欄位 '{col}' (唯一值 <= 20 個):")
-            extra_info.append(f"{unique_vals_list}")
-
-    # 4. 新增固定的場地編號對應資訊
-    # court_mapping_info = (
-    #     "\n" + "="*60
-    #     + "\n[場地前中後場對應]"
-    #     + "\n" + "="*60
-    #     + "\n前場: y座標>0.7"
-    #     + "\n中場: y座標在-0.1到0.7之間"
-    #     + "\n後場: y座標<-0.1"
-    # )
-
-    # 5. 合併輸出內容 (已修正)
-    final_output = (
-        schema_info
-        #+ court_mapping_info # 插入場地資訊
-        + "\n" + "="*60  # <-- 修正：移除了多餘的 's'
-        + "\n[欄位額外資訊 (動態分析)]" # 修改l標題以區分
-        + "\n" + "="*60
-        + "".join(extra_info)
-    )
-
-    return final_output
+            # Convert numpy array to list for clean printing
+            val_list = unique_vals.tolist() if hasattr(unique_vals, 'tolist') else list(unique_vals)
+            # Filter out extensive output if list is still too long/messy (optional safety)
+            schema_parts.append(f"- Values: {val_list}")
+            
+    return "\n".join(schema_parts)
 #  加入"場地編號對應: 前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29
 
 @st.cache_data
 def load_column_definitions(filepath):
     """
     載入並格式化欄位定義（支援新的結構化格式）
-
-    Args:
-        filepath: 欄位定義 JSON 檔案路徑
-
-    Returns:
-        str: 格式化後的欄位定義文字（Markdown 格式）
     """
     try:
         with open(filepath, "r", encoding="utf-8") as f:
             full_definitions = json.load(f)
 
-        # 建立格式化輸出
         output_parts = []
 
-        # 1. 添加 metadata 資訊
+        # 1. Metadata
         if "metadata" in full_definitions:
-            metadata = full_definitions["metadata"]
+            meta = full_definitions["metadata"]
             output_parts.append("## 比賽資料結構")
-            output_parts.append(f"- 比賽形式：{metadata.get('match_structure', {}).get('format', '')}")
-            output_parts.append(f"- 計分方式：{metadata.get('match_structure', {}).get('set_scoring', '')}")
-            if 'data_recording_note' in metadata:
-                output_parts.append(f"\n{metadata['data_recording_note']}")
+            for k, v in meta.items():
+                output_parts.append(f"- {k.capitalize()}: {v}")
             output_parts.append("")
 
-        # 2. 添加球種定義
+        # 2. Shot Types
         if "shot_types" in full_definitions:
             output_parts.append("## 球種代碼對照表")
-            shot_types = full_definitions["shot_types"]
-            for code, info in shot_types.items():
-                if 'english' in info:
-                    output_parts.append(f"- {code}: {info['name']} ({info['english']})")
-                else:
-                    output_parts.append(f"- {code}: {info['name']}")
+            for code, name in full_definitions["shot_types"].items():
+                output_parts.append(f"- {code}: {name}")
             output_parts.append("")
 
-        # 3. 添加欄位定義（結構化格式）
+        # 3. Data Columns
         output_parts.append("## 欄位定義")
-        column_definitions = full_definitions.get("data_columns", [])
-        for item in column_definitions:
-            col_name = item.get('column', '')
-            desc = item.get('description', '')
-
-            # 基本資訊
-            if 'warning' in item:
-                output_parts.append(f"⚠️ **{item['warning']}**")
-            output_parts.append(f"### `{col_name}`")
-            output_parts.append(f"**說明**：{desc}")
-
-            # 關鍵字
-            if 'keyword' in item:
-                output_parts.append(f"- **關鍵字**：{item['keyword']}")
-
-            # 資料類型與值域
-            if 'data_type' in item:
-                output_parts.append(f"- **資料類型**：{item['data_type']}")
-            if 'value_range' in item:
-                val_range = item['value_range']
-                if isinstance(val_range, list):
-                    output_parts.append(f"- **可能值**：{', '.join(val_range)}")
+        for item in full_definitions.get("data_columns", []):
+            col = item.get("column", "Unknown")
+            desc = item.get("description", "")
+            output_parts.append(f"### `{col}`")
+            output_parts.append(f"**說明**: {desc}")
+            
+            # Generic loop for other attributes
+            for k, v in item.items():
+                if k in ["column", "description"]: continue
+                
+                label = k.replace("_", " ").title()
+                if k == "warning" or k == "IMPORTANT":
+                    output_parts.append(f"- ⚠️ **{label}**: {v}")
                 else:
-                    output_parts.append(f"- **值域**：{val_range}")
+                    output_parts.append(f"- **{label}**: {v}")
 
-            # 數值對應 (New)
-            if 'value_mapping' in item:
-                vm = item['value_mapping']
-                if isinstance(vm, dict):
-                    vm_str = ", ".join([f"{k}={v}" for k,v in vm.items()])
-                    output_parts.append(f"- **數值對應**：{vm_str}")
-                else:
-                    output_parts.append(f"- **數值對應**：{vm}")
-
-            # 範圍 Scope (New)
-            if 'scope' in item:
-                output_parts.append(f"- **範圍**：{item['scope']}")
-
-            # 計算方式
-            if 'calculation' in item:
-                output_parts.append(f"- **計算方式**：{item['calculation']}")
-
-            # 篩選條件 (New)
-            if 'filter_condition' in item:
-                 output_parts.append(f"- **篩選條件**：`{item['filter_condition']}`")
-
-            # 使用情境
-            if 'usage' in item:
-                output_parts.append(f"- **用途**：{item['usage']}")
-
-            # 備註 (New)
-            if 'note' in item:
-                output_parts.append(f"- **備註**：{item['note']}")
-
-            # 重要提醒
-            if 'important_note' in item:
-                output_parts.append(f"- ⚠️ **重要**：{item['important_note']}")
-
-            # 正確用法
-            if 'correct_usage' in item:
-                output_parts.append(f"- ✅ **正確用法**：`{item['correct_usage']}`")
-
-        # 4. 添加分析指南
+        # 4. Analysis Guidelines
         if "analysis_guidelines" in full_definitions:
             output_parts.append("\n## 分析指南")
             guidelines = full_definitions["analysis_guidelines"]
+            
+            def format_guideline(key, val, level=0):
+                indent = "  " * level
+                prefix = "- " if level > 0 else "### "
+                label = key.replace("_", " ").title()
+                
+                if isinstance(val, dict):
+                    lines = [f"{indent}{prefix}{label}"]
+                    for sub_k, sub_v in val.items():
+                        lines.append(format_guideline(sub_k, sub_v, level + 1))
+                    return "\n".join(lines)
+                else:
+                    return f"{indent}- **{label}**: {val}"
 
-            for guide_name, guide_info in guidelines.items():
-                title_map = {
-                    "rally_counting": "回合計數",
-                    "winning_type_classification": "得分手段分類 (主動 vs 受迫)",
-                    "core_principles": "💎 核心資料原則 (CORE DATA PRINCIPLES)",
-                    "win_rate_calculation": "勝率計算",
-                    "player_name_usage": "球員名稱使用",
-                    "shot_type_analysis": "球種分析",
-                    "lose_reason_filter": "失誤原因篩選",
-                    "win_reason_filter": "得分方式篩選",
-                    "match_score_query": "比賽比分查詢",
-                    "continuous_shot_query": "連續對打查詢"
-                }
-                title = title_map.get(guide_name, guide_name)
-                output_parts.append(f"\n### {title}")
-
-                for key, value in guide_info.items():
-                    if key == "issue":
-                        output_parts.append(f"- **問題**：{value}")
-                    elif key == "context":
-                        output_parts.append(f"- **情境**：{value}")
-                    elif key == "data_limitation":
-                        output_parts.append(f"- {value}")
-                    elif key == "correct_method" or key == "correct" or key == "correct_usage":
-                        if isinstance(value, list):
-                            output_parts.append(f"- ✅ **正確**：{', '.join(value)}")
-                        else:
-                            output_parts.append(f"- ✅ **正確方法**：`{value}`")
-                    elif key == "wrong_method" or key == "wrong" or key == "wrong_usage":
-                        if isinstance(value, list):
-                            output_parts.append(f"- ❌ **錯誤**：{', '.join(value)}")
-                        else:
-                            output_parts.append(f"- ❌ **錯誤方法**：`{value}`")
-                    elif key.startswith("step"):
-                        output_parts.append(f"- **{key.upper()}**：{value}")
-                    elif key == "purpose":
-                        output_parts.append(f"- **目的**：{value}")
-                    elif key == "explanation":
-                        output_parts.append(f"- **說明**：{value}")
-                    elif key == "rule":
-                        output_parts.append(f"- **規則**：{value}")
-                    elif key == "example_code":
-                        output_parts.append(f"- **程式碼範例**：```python\n{value}\n```")
-                    elif key == "example":
-                        output_parts.append(f"- **範例**：{value}")
-                    elif key == "important_note":
-                        output_parts.append(f"- ⚠️ **重要提醒**：{value}")
-                    elif key == "visualization":
-                        output_parts.append(f"- **視覺化建議**：{value}")
-                    elif key == "note":
-                        output_parts.append(f"- **備註**：{value}")
-                    elif key == "data_format":
-                        output_parts.append(f"- **資料格式**：{value}")
-                    elif key == "alternative":
-                        output_parts.append(f"- **替代方案**：{value}")
-                    elif key.startswith("principle"):
-                        output_parts.append(f"- 💎 **{key.upper()}**：{value}")
-                    elif key == "active_winner":
-                        output_parts.append(f"- ✅ **主動得分 (Active Winner)**：`{value}`")
-                    elif key == "passive_winner":
-                        output_parts.append(f"- ⚠️ **受迫得分 (Passive Winner/Opponent Error)**：`{value}`")
-                    elif key == "correct_implementation":
-                        output_parts.append(f"- ✅ **正確實作**：`{value}`")
-                    else:
-                        # Fallback for any other keys to ensure everything is captured
-                        # Capitalize key for better display, replace underscores with spaces
-                        formatted_key = key.replace("_", " ").title()
-                        output_parts.append(f"- **{formatted_key}**：{value}")
+            for k, v in guidelines.items():
+                output_parts.append(format_guideline(k, v))
 
         return "\n".join(output_parts)
 

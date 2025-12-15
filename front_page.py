@@ -104,7 +104,7 @@ with st.sidebar:
     if api_mode == "Gemini":
         model_choice = st.selectbox("選擇模型",["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
     else:
-        model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
+        model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=1)
 
     st.divider()
 
@@ -264,14 +264,10 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                         import json
                         clarification_check_prompt = f"""
-                        檢查問題是否明確 (含球員/時間/比較對象)。
+                        檢查問題是否明確 (含球員/時間/比較對象)。無法判斷則回傳 JSON 請求澄清。
                         問題: "{prompt}"
                         欄位: {data_schema_info}
-                        若不明確/有歧義/代名詞不清，需澄清。
-                        
-                        輸出:
-                        1. 明確: CLEAR
-                        2. 需澄清 JSON:
+                        輸出: "CLEAR" 或 JSON:
                         {{
                         "need_clarification": true,
                         "question": "請問您要...",
@@ -342,12 +338,11 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     status.update(label="Step 1/6: 正在釐清您的問題...")
                     
                     enhancement_system_prompt = f"""
-                    你是資料分析輔助系統。請一步步思考分析使用者問題。
-                    任務：
-                    1. 將簡短問題轉化為完整、具體的數據分析問題。
-                    2. 判斷問題在多數情況下是否需要場地位置資訊。
+                    你是資料分析輔助系統。請分析使用者問題：
+                    1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋。
+                    2. 判斷問題在多數情況下是否需要場地位置資訊(needs_court_info)。
 
-                    輸出 JSON 格式 (不要 Markdown):
+                    輸出 JSON (No Markdown):
                     {{
                         "enhanced_prompt": "完整的問題",
                         "needs_court_info": true/false
@@ -456,9 +451,9 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     final_figs = []
                     summary_info = {}
                     exec_globals = {} # 初始化環境變數
+                    execution_output = "" # [Fix] Ensure variable is defined even if no code is generated
                     
                     if code_to_execute:
-                        execution_output = ""
                         max_retries = 3
                         retry_count = 0
                         success = False
@@ -542,58 +537,35 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         
                         if not reflection_context:
                             reflection_context = "(無特定輸出變數，這通常表示沒有計算出任何數據)"
-
                         reflection_prompt = f"""
-                        QA Check:
-                        1. 問題: "{prompt}" (強化: "{enhanced_prompt}")
-                        2. 程式:
+                        [查核資料]
+                        1. 問題: "{prompt}"
+                        2. 程式碼:
                         ```python
                         {code_to_execute}
                         ```
-                        3. 結果 (Stdout): {execution_output}
-                        4. 變數: {reflection_context}
-                        
+                        3. 執行與變數: {execution_output}
+                        {reflection_context}
+
                         你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
-                        IMPORTANT: 程式碼是否與問題相符合，圖表是否符合問題要求
+                        IMPORTANT: 根據"問題"程式碼是否有誤，畫出的圖表是否符合問題要求
                         
                         判斷:
                         - 🐛 潛在邏輯問題 (Bug Check):
-                            - [資料完整性]: 是否不小心覆蓋變數 (如 `df=df[...]`) 或不當 `dropna`? -> 必須修正。
-                            - [資料合適性]: 是否合併了數值型資料 (如 Score)? -> 數值不可合併，這是嚴重錯誤。
-                            - [統計與聚合邏輯]: (groupby + sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
-                            - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
-                            - [上下文]: 結果是否真正回答了問題?
-                            - [其他(維度問題...)]: 任何潛在的邏輯陷阱?
-                        - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
-                        - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
+                            - [資料完整性]: 檢查變數覆蓋、dropna不當。
+                            - [資料合適性]: 檢查數值合併錯誤 (如Score求和)。
+                            - [統計聚合]: 檢查 groupby + sum/mean 合理性。
+                            - [欄位正確性]: 檢查欄位選用 (如 player vs getpoint_player)。
+                            - [上下文]: 結果是否回答問題。
+                            - [其他(維度問題、主客關係...)]: 任何潛在邏輯陷阱。
+                        - ❌ 無資料: 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL
+                        - ⚠️ 資訊過載 (Information Overload):
                             - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
                             - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，或X軸與Y軸邏輯搞相反，**必須**重新設計圖表。
-                        - ✅ 資料非空且有輸出/圖表清晰 -> PASS
+                        - ✅ 通過: 資料非空且有輸出/圖表清晰 -> PASS
                         
-                        回覆: 
-                        - 若 PASS: 僅回覆 "PASS"
-                        - 若 FAIL/雜亂: 回覆改善後的完整程式碼 (含 ```python)。
-                         
+                        回覆: "PASS" 或 修正後的完整程式碼 (含 ```python)。
                         """
-                        #  ```python
-                        #   # 假設: df_plot 為繪圖用的 DataFrame
-                        #   # label_col = 分類欄位 (如: 球種, 落點區域) -> 這是 X 軸
-                        #   # value_col = 數值欄位 (如: 次數, 得分) -> 這是 Y 軸或圓餅數值
-                          
-                        #   # 1. 確保分類欄位為字串型態 (避免 FutureWarning)
-                        #   df_plot['label_col'] = df_plot['label_col'].astype(str)
-                          
-                        #   # 2. 計算門檻
-                        #   total_value = df_plot['value_col'].sum()
-                        #   threshold = total_value * 0.05 # 依需求調整比例
-                          
-                        #   # 3. 找出小類別 (注意: 判斷的是數值，修改的是分類名稱!)
-                        #   small_mask = df_plot['value_col'] < threshold
-                        #   df_plot.loc[small_mask, 'label_col'] = '其他'
-                          
-                        #   # 4. 重新 Groupby 加總 (CRITICAL: 必須重新聚合，否則"其他"會重複)
-                        #   df_final = df_plot.groupby('label_col', as_index=False)['value_col'].sum()
-                        #   ```
                         messages_4 = [{"role": "user", "content": reflection_prompt}]
                         reflection_response = client.chat.completions.create(
                             model=model_choice,
@@ -725,13 +697,13 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     analysis_context_str += f"```\n{str(val)}\n```\n\n"
                         
                         insight_prompt = f"""
-                        你是羽球教練。
-                        問題: "{prompt}"
+                        你是羽球教練。問題: "{prompt}"
                         數據:
                         {analysis_context_str}
                         規定:
-                        1. 若程式碼繪製的圖使用到"player_type" 或 "opponent_type"，必須輸出:1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
-                        2. 若程式碼繪製的圖使用到"area"的欄位("landing_area","player_location_area"...)，必須輸出:| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+                        1. 若圖表含 "player_type"/"opponent_type"，必須輸出 Mapping: 1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+                        2. 若圖表含 "area" (landing_area...)，必須輸出:
+| Row/Col | Col A (Left) | Col B (C-Left) | Col C (C-Right) | Col D (Right) |
 | :--- | :---: | :---: | :---: | :---: |
 | **Row 6 (Front)** | 21 | 22 | 23 | 24 |
 | **Row 5 (Front)** | 17 | 18 | 19 | 20 |
@@ -739,13 +711,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 | **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
 | **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
 | **Row 1 (Back)** | 1 | 2 | 3 | 4 |
-                        """
 
-                        if needs_court_info and court_place_info:
-                            insight_prompt += f"\n場地定義參考:\n{court_place_info}\n"
-
-                        insight_prompt += """
-                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，不要只唸數字，勿過度解讀，只說正確的事實。
+                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，只說事實。
                         """
                         
                         

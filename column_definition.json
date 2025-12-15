@@ -1,52 +1,25 @@
 {
   "metadata": {
     "description": "羽球比賽數據欄位定義",
-    "match_structure": {
-      "format": "三戰兩勝制",
-      "set_scoring": "21分制"
-    },
-    "data_recording_note": "⚠️ 資料特性：每局最後一分（決勝分）未記錄。查詢比分時，贏家分數需+1。"
+    "structure": "三戰兩勝制, 21分制。⚠️ 每局決勝分未記錄，贏家分數需+1。"
   },
   "shot_types": {
-    "1": {
-      "name": "發短球"
-    },
-    "2": {
-      "name": "發長球"
-    },
-    "3": {
-      "name": "長球"
-    },
-    "4": {
-      "name": "殺球"
-    },
-    "5": {
-      "name": "切球"
-    },
-    "6": {
-      "name": "挑球"
-    },
-    "7": {
-      "name": "平球"
-    },
-    "8": {
-      "name": "網前球"
-    },
-    "9": {
-      "name": "推撲球"
-    },
-    "10": {
-      "name": "接殺防守"
-    },
-    "11": {
-      "name": "接不到"
-    }
+    "1": "發短球",
+    "2": "發長球",
+    "3": "長球",
+    "4": "殺球",
+    "5": "切球",
+    "6": "挑球",
+    "7": "平球",
+    "8": "網前球",
+    "9": "推撲球",
+    "10": "接殺防守",
+    "11": "接不到"
   },
   "data_columns": [
     {
       "column": "match_id",
-      "description": "比賽 ID。用來區分不同的比賽場次。",
-      "keyword": "場次"
+      "description": "比賽 ID。用來區分不同的比賽場次。"
     },
     {
       "column": "set",
@@ -56,9 +29,7 @@
     {
       "column": "rally",
       "description": "從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。每局刷新。",
-      "scope": "局內",
-      "important_note": "跨局分析需配 match_id, set",
-      "correct_usage": "總回合: df.groupby(['match_id', 'set', 'rally']).ngroups"
+      "usage": "跨局需配match_id, set。總回合: df.groupby(['match_id', 'set', 'rally']).ngroups"
     },
     {
       "column": "rally_id",
@@ -66,63 +37,55 @@
     },
     {
       "column": "ball_round",
-      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。",
-      "usage": "回合中拍與拍的比較或回球數"
+      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。"
     },
     {
       "column": "player_score",
       "description": "Kento MOMOTA的當前局內分數。每局刷新。",
-      "value_range": "0-30(含延分)",
-      "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
+      "warning": "❌ DO NOT SUM/MAX. Use `getpoint_player` counts."
     },
     {
       "column": "opponent_score",
       "description": "CHOU Tien Chen的當前局內分數。每局刷新。",
-      "value_range": "0-30(含延分)",
-      "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
+      "warning": "❌ DO NOT SUM/MAX. Use `getpoint_player` counts."
     },
     {
       "column": "score_status",
       "description": "分數差距 (player score - opponent score)",
-      "value_range": "正=領先, 負=落後"
+      "note": "正=領先, 負=落後"
     },
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "important_note": "每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')",
-      "note": "查詢某球員的表現需用此欄位"
+      "note": "每個rally雙方交替擊球"
+    },
+    {
+      "column": "opponent",
+      "description": "對手球員姓名",
+      "note": "每個rally雙方交替擊球"
     },
     {
       "column": "server",
       "description": "發球狀態",
-      "value_mapping": {
-        "1": "player發球",
-        "2": "對打中",
-        "3": "該回合結束"
-      }
+      "mapping": "1:player發球, 2:對打中, 3:該回合結束"
     },
     {
       "column": "type",
       "description": "球種名稱(中文)",
-      "value_range": [
-        "殺球",
-        "切球",
-        "...參照shot_types"
-      ]
+      "note": "參照shot_types"
     },
     {
       "column": "player_type",
       "description": "球員擊球球種代碼",
       "data_type": "float",
-      "value_mapping": "1-11 (見shot_types)",
-      "usage": "適合分組統計球種",
-      "correct_usage": "df[df['player_type']==4].groupby('player').size()",
-      "note": "為type轉換來的，直接使用type更佳"
+      "mapping": "1-11 (見shot_types)",
+      "usage": "分組統計用"
     },
     {
       "column": "opponent_type",
       "description": "對手上一拍球種代碼",
-      "value_mapping": "1-11 (見shot_types)"
+      "mapping": "1-11 (見shot_types)",
+      "note": "等價於ball_round -1的player_type"
     },
     {
       "column": "hit_x",
@@ -134,8 +97,7 @@
     },
     {
       "column": "hit_area",
-      "description": "擊球點所在區域代碼 (1-32)",
-      "keyword": "球員擊球點"
+      "description": "擊球點所在區域代碼 (1-32)"
     },
     {
       "column": "landing_x",
@@ -147,32 +109,27 @@
     },
     {
       "column": "landing_area",
-      "description": "球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)",
-      "keyword": "球的落點"
+      "description": "球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)"
     },
     {
       "column": "player_location_x",
-      "description": "球員所在的 X 座標。"
+      "description": "球員所站點的 X 座標。"
     },
     {
       "column": "player_location_y",
-      "description": "球員所在的 Y 座標。"
+      "description": "球員所站點的 Y 座標。"
     },
     {
       "column": "player_location_area",
-      "description": "球員所在的站位區域。",
-      "keyword": "球員站位",
-      "usage": "例如:球員在前場時..."
+      "description": "球員所站點的區域代碼。"
     },
     {
       "column": "player_move_x",
-      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)",
-      "keyword": "球員移動量"
+      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)"
     },
     {
       "column": "player_move_y",
-      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)",
-      "keyword": "球員移動量"
+      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)"
     },
     {
       "column": "moving_x",
@@ -197,87 +154,51 @@
     },
     {
       "column": "opponent_location_area",
-      "description": "對手擊球區域。對手所站的位置區域代碼",
-      "keyword": "對手站位",
-      "usage": "例如:對手在前場時..."
+      "description": "對手擊球區域。對手所站的位置區域代碼"
     },
     {
       "column": "opponent_move_x",
-      "description": "對手擊球點到移動位置的X座標位移量。",
-      "keyword": "對手移動量"
+      "description": "對手擊球點到移動位置的X座標位移量。"
     },
     {
       "column": "opponent_move_y",
-      "description": "對手擊球點到移動位置的Y座標位移量。",
-      "keyword": "對手移動量"
+      "description": "對手擊球點到移動位置的Y座標位移量。"
     },
     {
       "column": "ball_distance",
-      "description": "飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。",
-      "keyword": "打擊的遠度"
+      "description": "飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。"
     },
     {
       "column": "getpoint_player",
-      "description": "該回合得分者",
-      "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得分或失分球",
-      "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
-      "note": "若要分析「得分手段」(如：靠殺球得分)，需確認 `player == getpoint_player` (主動得分)，否則會包含對手失誤。",
-      "usage": "A的得分資料: df[df['getpoint_player']=='player_A']"
+      "description": "該回合得分者，若正在打球過程",
+      "scope": "IMPORTANT:若值為NULL不代表任何得失分",
+      "usage": "group by set/rally取last()，同時欄位有NULL存在，必要時可使用dropna()",
+      "IMPORTANT": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_ player==NULL)。"
     },
     {
       "column": "win_reason",
-      "description": "該球若player得分，則win_reason為得分原因",
-      "scope": "回合結束時(若player得分)有原因，其他設為NULL代表擊球過程非得分或失分球",
-      "filter_condition": "getpoint_player.notna() & win_reason.notna()"
+      "description": "該球若player得分，則win_reason為得分原因，其他為NULL不代表任何得失分",
+      "condition": "getpoint_player & win_reason both not null"
     },
     {
       "column": "lose_reason",
-      "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL",
-      "scope": "回合結束時(若opponent得分)有原因，其他設為NULL代表擊球過程非得分或失分球",
-      "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
-      "important_note": "記錄的是player失誤原因"
+      "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL不代表任何得失分",
+      "note": "記錄的是player失誤原因"
     }
   ],
   "analysis_guidelines": {
-    "core_principles": {
-      "principle_1": "Event vs State: `player_score` is a state (snapshot). `getpoint_player` is an event. Use Events for statistics.",
-      "principle_2": "The Counting Rule: ANY calculation about 'Total Points', 'Counts', or 'Who Won' MUST be done by counting rows (rallies) where `getpoint_player` matches the target. NEVER aggregate (sum/max/mean) the `player_score` or `opponent_score` columns.",
-      "correct_implementation": "rally_winners = df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].last(); wins = (rally_winners == 'PlayerName').sum()"
+    "core": "使用 `getpoint_player` (Event) 統計得分，勿用 `player_score` (State) 加總。",
+    "rally_count": "df.groupby(['match_id', 'set', 'rally']).ngroups",
+    "winning_logic": {
+      "active": "球員(P1)擊球得分: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
+      "passive": "球員(P1)對手失誤: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`"
     },
-    "rally_counting": {
-      "issue": "rally編號每局重置",
-      "correct": "df.groupby(['match_id', 'set', 'rally']).ngroups"
+    "win_rate": "1.GroupBy Rally取 getpoint_player 2.Sum Wins 3.Divide by total rallies",
+    "shot_analysis": {
+      "group": "用 `player_type` (數字代碼)",
+      "logic": "分析「特定球種得分」時，必須篩選 `player == getpoint_player` (Active Win)。"
     },
-    "winning_type_classification": {
-      "principle": "Active vs Passive Winning",
-      "active_winner": "球員(P1)擊球得分的資料。 Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
-      "passive_winner": "球員(P1)對手擊球失誤的資料。 Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`",
-      "note": "For 'Active Winners' or 'Hitting Points', use the Active Winner condition."
-    },
-    "win_rate_calculation": {
-      "step1": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
-      "step2": "wins = (rally_winners == '球員').sum()",
-      "step3": "win_rate = wins / len(rally_winners)"
-    },
-    "player_name_usage": {
-      "rule": "須用完整姓名"
-    },
-    "shot_type_analysis": {
-      "purpose": "球種統計",
-      "correct": "用 player_type (數字) 分組",
-      "note": "type=字串, player_type=代碼",
-      "logic": "分析「特定球種得分」時，必須篩選 `player == getpoint_player`，確保是贏家擊出的球。"
-    },
-    "match_score_query": {
-      "context": "三戰兩勝, 21分制",
-      "data_limitation": "最後一分沒記，贏家需+1",
-      "correct": "找出每局最後一筆 player_score/opponent_score，贏家分數+1"
-    },
-    "continuous_shot_query": {
-      "purpose": "連續對打紀錄",
-      "example": "周天成使用殺球後，對手使用那些球種回擊",
-      "correct_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['type'].iloc[kento_smash.index + 1].dropna()",
-      "wrong_usage": "kento_smash = df[(df['player'] == 'CHOU Tien Chen') & (df['type'] == '殺球')  opponent_return_types = df['opponent_type'].iloc[kento_smash.index + 1].dropna()"
-    }
+    "match_score": "找出每局最後一筆分數，贏家+1。",
+    "continuous_play": "回球查詢應用: `iloc` + `index + 1`，注意對手回球是在下一列。"
   }
 }
