@@ -89,7 +89,8 @@
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "important_note": "每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')"
+      "important_note": "每個rally雙方球員會交替擊球(例如:這球player='A球員'，下一個球就是player='B球員')",
+      "note": "查詢某球員的表現需用此欄位"
     },
     {
       "column": "server",
@@ -220,7 +221,7 @@
       "description": "該回合得分者",
       "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得分或失分球",
       "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
-      "note": "df['player'] == 'player_A' &df['getpoint_player'] =='player_A'，代表是player_A打擊造成自己得分",
+      "note": "若要分析「得分手段」(如：靠殺球得分)，需確認 `player == getpoint_player` (主動得分)，否則會包含對手失誤。",
       "usage": "A的得分資料: df[df['getpoint_player']=='player_A']"
     },
     {
@@ -264,7 +265,8 @@
     "shot_type_analysis": {
       "purpose": "球種統計",
       "correct": "用 player_type (數字) 分組",
-      "note": "type=字串, player_type=代碼"
+      "note": "type=字串, player_type=代碼",
+      "logic": "分析「特定球種得分」時，必須篩選 `player == getpoint_player`，確保是贏家擊出的球。"
     },
     "match_score_query": {
       "context": "三戰兩勝, 21分制",

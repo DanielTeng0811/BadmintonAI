@@ -260,8 +260,17 @@ def load_column_definitions(filepath):
                         output_parts.append(f"- **替代方案**：{value}")
                     elif key.startswith("principle"):
                         output_parts.append(f"- 💎 **{key.upper()}**：{value}")
+                    elif key == "active_winner":
+                        output_parts.append(f"- ✅ **主動得分 (Active Winner)**：`{value}`")
+                    elif key == "passive_winner":
+                        output_parts.append(f"- ⚠️ **受迫得分 (Passive Winner/Opponent Error)**：`{value}`")
                     elif key == "correct_implementation":
                         output_parts.append(f"- ✅ **正確實作**：`{value}`")
+                    else:
+                        # Fallback for any other keys to ensure everything is captured
+                        # Capitalize key for better display, replace underscores with spaces
+                        formatted_key = key.replace("_", " ").title()
+                        output_parts.append(f"- **{formatted_key}**：{value}")
 
         return "\n".join(output_parts)
 
