@@ -208,6 +208,10 @@ for idx, message in enumerate(st.session_state.messages):
 use_history = st.toggle("🔗 接續前文 (Track History)", value=False, help="開啟後，AI 將參考最近的對話紀錄來回答問題。")
 
 if prompt := st.chat_input("請輸入你的數據分析問題..."):
+    # Clear debug log on new input (create if not exists, truncate if exists)
+    with open("llm_debug_log.txt", "w", encoding="utf-8") as f:
+        pass # Truncate file to 0 bytes
+
     if df is None:
         st.error("❌ 找不到 'all_dataset.csv'。")
     elif not api_key_input:
@@ -550,6 +554,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         4. 變數: {reflection_context}
                         
                         你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        IMPORTANT: 程式碼是否與問題相符合，圖表是否符合問題要求
                         
                         判斷:
                         - 🐛 潛在邏輯問題 (Bug Check):
@@ -558,11 +563,11 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             - [統計與聚合邏輯]: (groupby + sum/mean) 是否合理 (如對 State 欄位求和)? -> 必須修正。
                             - [欄位正確性]: 是否選錯欄位 (如 `player` vs `getpoint_player`)?
                             - [上下文]: 結果是否真正回答了問題?
-                            - [其他]: 任何潛在的邏輯陷阱?
+                            - [其他(維度問題...)]: 任何潛在的邏輯陷阱?
                         - ❌ 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL (原因: 無資料)
                         - ⚠️ 視覺化過於雜亂的例子 (Information Overload):
                             - **圓餅圖 (Pie Check)**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**，以免數據失真。
-                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，需取 Top N (如前 10 名) 或合併剩餘項目。
+                            - **長條圖 (Bar Check)**: 根據結果若 X 軸標籤過多導致重疊，或X軸與Y軸邏輯搞相反，**必須**重新設計圖表。
                         - ✅ 資料非空且有輸出/圖表清晰 -> PASS
                         
                         回覆: 

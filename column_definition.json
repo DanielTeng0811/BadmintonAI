@@ -50,12 +50,12 @@
     },
     {
       "column": "set",
-      "description": "局數",
+      "description": "局數。每場刷新。",
       "value_range": "1-3"
     },
     {
       "column": "rally",
-      "description": "從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。",
+      "description": "從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。每局刷新。",
       "scope": "局內",
       "important_note": "跨局分析需配 match_id, set",
       "correct_usage": "總回合: df.groupby(['match_id', 'set', 'rally']).ngroups"
@@ -71,13 +71,13 @@
     },
     {
       "column": "player_score",
-      "description": "Kento MOMOTA的當前局內分數",
+      "description": "Kento MOMOTA的當前局內分數。每局刷新。",
       "value_range": "0-30(含延分)",
       "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
     },
     {
       "column": "opponent_score",
-      "description": "CHOU Tien Chen的當前局內分數",
+      "description": "CHOU Tien Chen的當前局內分數。每局刷新。",
       "value_range": "0-30(含延分)",
       "warning": "❌ DO NOT SUM/MAX THIS COLUMN. Use `getpoint_player` counts for total score."
     },
@@ -250,8 +250,8 @@
     },
     "winning_type_classification": {
       "principle": "Active vs Passive Winning",
-      "active_winner": "Player won AND Player hit the last shot. Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
-      "passive_winner": "Player won BUT Opponent hit the last shot (Opponent Error). Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`",
+      "active_winner": "球員(P1)擊球得分的資料。 Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
+      "passive_winner": "球員(P1)對手擊球失誤的資料。 Code: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`",
       "note": "For 'Active Winners' or 'Hitting Points', use the Active Winner condition."
     },
     "win_rate_calculation": {
