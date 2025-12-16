@@ -38,17 +38,17 @@
     {
       "column": "ball_round",
       "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。",
-      "usage": "若要觀察對手回球、輸球原因等，可使用df['ball_round'].shift()獲取前後拍的資訊"
+      "usage": "若要觀察對手回球、輸球原因等，可使用df['其他特定欄位'].shift()獲取前後拍的資訊"
     },
     {
       "column": "player_score",
-      "description": "Kento MOMOTA的當前局內分數。每局刷新。",
-      "warning": "❌ DO NOT SUM/MAX. Use `getpoint_player` counts."
+      "description": "'Kento MOMOTA'的當前局內分數。每局刷新。",
+      "warning": "NOT 當下player的分數"
     },
     {
       "column": "opponent_score",
       "description": "CHOU Tien Chen的當前局內分數。每局刷新。",
-      "warning": "❌ DO NOT SUM/MAX. Use `getpoint_player` counts."
+      "warning": "NOT 當下opponent的分數"
     },
     {
       "column": "score_status",
@@ -58,7 +58,8 @@
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "note": "每個rally中雙方交替擊球"
+      "note": "每個rally中雙方交替擊球",
+      "usage": "與多數欄位同時使用，代表player的各種情況。例如:(df['player']=='Player A' & df['type']=='殺球') -> Player A的殺球"
     },
     {
       "column": "opponent",
@@ -85,9 +86,9 @@
     },
     {
       "column": "opponent_type",
-      "description": "上一球player(=該球opponent)打出的球種代碼",
+      "description": "等價於該rally前一筆的player_type",
       "mapping": "1-11 (見shot_types)",
-      "note": "等價於該rally前一筆的player_type"
+      "note": "不等價於opponent的回擊球種代碼"
     },
     {
       "column": "hit_x",

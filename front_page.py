@@ -339,7 +339,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     
                     enhancement_system_prompt = f"""
                     你是資料分析輔助系統。請分析使用者問題：
-                    1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋。
+                    1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
                     2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
                        - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
 
@@ -555,7 +555,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         3. 執行與變數: {execution_output}
                         {reflection_context}
 
-                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請檢查：
+                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」，察覺邏輯錯誤部分詳細思考如何修改。請檢查：
                         IMPORTANT: 根據"問題"程式碼是否有誤，畫出的圖表是否符合問題要求
                         
                         判斷:
