@@ -96,6 +96,7 @@ def get_data_schema(df):
 #  加入"場地編號對應: 前排:1-4,27,28,31,32;中排:5-16,26,30;後排:17-25,29
 
 @st.cache_data
+<<<<<<< Updated upstream
 def load_column_definitions(filepath):
     """
     載入並格式化欄位定義（支援新的結構化格式）
@@ -106,10 +107,19 @@ def load_column_definitions(filepath):
     Returns:
         str: 格式化後的欄位定義文字（Markdown 格式）
     """
+=======
+def load_raw_definitions(filepath):
+    """載入原始 JSON 定義"""
+    if not os.path.exists(filepath):
+        return None
+>>>>>>> Stashed changes
     try:
         with open(filepath, "r", encoding="utf-8") as f:
-            full_definitions = json.load(f)
+            return json.load(f)
+    except:
+        return None
 
+<<<<<<< Updated upstream
         # 建立格式化輸出
         output_parts = []
 
@@ -269,6 +279,101 @@ def load_column_definitions(filepath):
         return "錯誤：找不到 'column_definition.json' 檔案。"
     except json.JSONDecodeError:
         return "錯誤：'column_definition.json' 檔案格式錯誤。"
+=======
+def format_definitions(full_definitions):
+    """將定義字典格式化為 Markdown 字串 (共用邏輯)"""
+    if not full_definitions: return ""
+    
+    output_parts = []
+    
+    # 1. Metadata
+    if "metadata" in full_definitions:
+        meta = full_definitions["metadata"]
+        output_parts.append("## 比賽資料結構")
+        for k, v in meta.items():
+            output_parts.append(f"- {k.capitalize()}: {v}")
+        output_parts.append("")
+
+    # 2. Shot Types (Always included if present)
+    if "shot_types" in full_definitions:
+        output_parts.append("## 球種代碼對照表")
+        for code, name in full_definitions["shot_types"].items():
+            output_parts.append(f"- {code}: {name}")
+        output_parts.append("")
+
+    # 3. Data Columns
+    output_parts.append("## 欄位定義")
+    for item in full_definitions.get("data_columns", []):
+        col = item.get("column", "Unknown")
+        desc = item.get("description", "")
+        # 簡化輸出: 只顯示必要資訊
+        output_parts.append(f"### `{col}`: {desc}")
+        
+        for k, v in item.items():
+            if k in ["column", "description"]: continue
+            if k in ["usage", "note", "warning", "IMPORTANT", "mapping"]:
+                 output_parts.append(f"- **{k.title()}**: {v}")
+
+    # 4. Analysis Guidelines
+    if "analysis_guidelines" in full_definitions:
+        output_parts.append("\n## 分析指南")
+        # 這裡簡化處理，直接轉 string，省去遞迴排版
+        output_parts.append(json.dumps(full_definitions["analysis_guidelines"], indent=2, ensure_ascii=False))
+
+    return "\n".join(output_parts)
+
+@st.cache_data
+def load_column_definitions(filepath):
+    """相容舊版函數: 回傳完整定義字串"""
+    raw = load_raw_definitions(filepath)
+    if not raw: return "錯誤：找不到定義檔。"
+    return format_definitions(raw)
+
+def get_filtered_schema_string(topics: list):
+    """
+    根據主題動態篩選欄位定義。
+    Topics: ['spatial', 'score'] (Core is always included)
+    """
+    raw = load_raw_definitions(COLUMN_DEFINITION_FILE)
+    if not raw: return ""
+    
+    # 定義欄位群組
+    SPATIAL_KEYWORDS = ['_x', '_y', '_area', 'distance', 'moving']
+    SCORE_KEYWORDS = ['score', 'win_reason', 'lose_reason', 'server', 'status']
+    
+    # 複製一份以免修改到快取
+    filtered_defs = raw.copy()
+    filtered_columns = []
+    
+    core_cols = []
+    spatial_cols = []
+    score_cols = []
+    
+    # 分類欄位
+    for col_def in raw.get("data_columns", []):
+        name = col_def['column']
+        
+        is_spatial = any(k in name for k in SPATIAL_KEYWORDS)
+        is_score = any(k in name for k in SCORE_KEYWORDS)
+        
+        if is_spatial:
+            spatial_cols.append(col_def)
+        elif is_score:
+            score_cols.append(col_def)
+        else:
+            core_cols.append(col_def) # Core 包含 match, set, rally, player, type 等
+            
+    # 根據 Topics 組裝
+    final_cols = core_cols[:] # Core 永遠保留
+    
+    if 'spatial' in topics or 'all' in topics:
+        final_cols.extend(spatial_cols)
+    if 'score' in topics or 'all' in topics:
+        final_cols.extend(score_cols)
+        
+    filtered_defs['data_columns'] = final_cols
+    return format_definitions(filtered_defs)
+>>>>>>> Stashed changes
 
 
 def load_all_data():

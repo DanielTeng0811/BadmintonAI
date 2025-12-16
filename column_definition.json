@@ -50,6 +50,7 @@
     },
     {
       "column": "set",
+<<<<<<< Updated upstream
       "description": "局數",
       "value_range": "1-3"
     },
@@ -59,6 +60,13 @@
       "scope": "局內",
       "important_note": "跨局分析需配 match_id, set",
       "correct_usage": "總回合: df.groupby(['match_id', 'set', 'rally']).ngroups"
+=======
+      "description": "局數。每場刷新。"
+    },
+    {
+      "column": "rally",
+      "description": "從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。每局刷新。"
+>>>>>>> Stashed changes
     },
     {
       "column": "rally_id",
@@ -66,6 +74,7 @@
     },
     {
       "column": "ball_round",
+<<<<<<< Updated upstream
       "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。",
       "usage": "回合中拍與拍的比較或回球數"
     },
@@ -122,6 +131,45 @@
       "column": "opponent_type",
       "description": "對手上一拍球種代碼",
       "value_mapping": "1-11 (見shot_types)"
+=======
+      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。"
+    },
+    {
+      "column": "player_score",
+      "description": "'Kento MOMOTA'的當前局內分數。每局刷新。"
+    },
+    {
+      "column": "opponent_score",
+      "description": "CHOU Tien Chen的當前局內分數。每局刷新。"
+    },
+    {
+      "column": "score_status",
+      "description": "分數差距 (player score - opponent score)"
+    },
+    {
+      "column": "player",
+      "description": "擊球球員姓名"
+    },
+    {
+      "column": "opponent",
+      "description": "對手球員姓名"
+    },
+    {
+      "column": "server",
+      "description": "發球狀態"
+    },
+    {
+      "column": "type",
+      "description": "該球player打出的球種名稱(中文)"
+    },
+    {
+      "column": "player_type",
+      "description": "該球player打出的球種代碼"
+    },
+    {
+      "column": "opponent_type",
+      "description": "等價於該rally前一筆的player_type"
+>>>>>>> Stashed changes
     },
     {
       "column": "hit_x",
@@ -183,8 +231,7 @@
     },
     {
       "column": "player_moving_area",
-      "description": "球員擊完這一球後，移動到的區域代碼",
-      "keyword": "回位"
+      "description": "球員擊完這一球後，移動到的區域代碼"
     },
     {
       "column": "opponent_location_x",
@@ -217,6 +264,7 @@
     },
     {
       "column": "getpoint_player",
+<<<<<<< Updated upstream
       "description": "該回合得分者",
       "scope": "僅在rally最後一拍(得失分拍)有值，其他設為NULL代表擊球過程非得分或失分球",
       "correct_usage": "groupby(['match_id', 'set', 'rally'])['getpoint_player'].last()",
@@ -235,6 +283,17 @@
       "scope": "回合結束時(若opponent得分)有原因，其他設為NULL代表擊球過程非得分或失分球",
       "filter_condition": "getpoint_player.notna() & lose_reason.notna()",
       "important_note": "記錄的是player失誤原因"
+=======
+      "description": "該回合得分者，若正在打球過程"
+    },
+    {
+      "column": "win_reason",
+      "description": "player得分原因，其他為NULL不代表任何得失分"
+    },
+    {
+      "column": "lose_reason",
+      "description": "player失分原因，其他為NULL不代表任何得失分"
+>>>>>>> Stashed changes
     }
   ],
   "analysis_guidelines": {

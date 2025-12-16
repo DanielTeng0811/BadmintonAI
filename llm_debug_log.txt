@@ -1,10 +1,15 @@
 
 ==============================
+<<<<<<< Updated upstream
 [2025-12-13 23:47:18] Step: Step 1: Enhancement
+=======
+[2025-12-16 22:07:01] Step: Step 1: Enhancement
+>>>>>>> Stashed changes
 ------------------------------
 [Input Messages]:
   <SYSTEM>
 
+<<<<<<< Updated upstream
                     你是資料分析輔助系統。請一步步思考分析使用者問題。
                     任務：
                     1. 將簡短問題轉化為完整、具體的數據分析問題。
@@ -23,17 +28,47 @@
 {
     "enhanced_prompt": "請分析周天成在比賽中前場、中場和後場的得分與失分數據，並提供具體的數據分析結果。",
     "needs_court_info": true
+=======
+    你是資料分析輔助系統。請分析使用者問題：
+    1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
+    2. 主題判斷 (Topics): 判斷問題涉及哪些面向，以決定需載入的資料欄位。
+       - "spatial": 涉及座標 (x,y)、區域 (area)、落點、移動距離、站位。
+       - "score": 涉及得分原因 (win_reason)、失分原因 (lose_reason)、分數狀態 (score)。
+       - 若不確定，請列入。若僅需基礎資訊 (rally, player, type)，則留空列表。
+    3. 場地資訊 (Needs Court Info): 若涉及 spatial 主題，通常為 true。
+
+    輸出 JSON (No Markdown):
+    {
+        "enhanced_prompt": "完整的問題",
+        "relevant_topics": ["spatial", "score"],
+        "needs_court_info": true
+    }
+    
+  <USER>
+周天成使用「殺球」得分佔他總得分的百分比是多少？
+
+[Output Response]:
+{
+    "enhanced_prompt": "計算周天成使用「殺球」得分佔他總得分的百分比。",
+    "relevant_topics": ["score"],
+    "needs_court_info": false
+>>>>>>> Stashed changes
 }
 ==============================
 
 ==============================
+<<<<<<< Updated upstream
 [2025-12-13 23:47:36] Step: Step 2: Code Generation
+=======
+[2025-12-16 22:07:12] Step: Step 2: Code Generation
+>>>>>>> Stashed changes
 ------------------------------
 [Input Messages]:
   <SYSTEM>
 
 你是一位羽球數據科學家，任務是分析 pandas DataFrame `df` 並生成 Python 程式碼解決問題，你必須對齊人類的常見邏輯，必要時可新增欄位方便撰寫程式碼，請一步步地思考後再撰寫程式碼。
 
+<<<<<<< Updated upstream
 **規則:**
 1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
 2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
@@ -105,6 +140,77 @@ Data columns (total 47 columns):
 dtypes: float64(37), int64(4), object(6)
 memory usage: 1.9+ MB
 
+=======
+**核心規則:**
+1. **數據處理**:
+   - 勿讀檔 (`df` 已存在)，計算前務必驗證數據量 (`len(df)>0`)，參見數據 Schema小心使用 `dropna()` 處理遺失值，勿直接使用df.dropna()。
+   - 區分比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`，查詢某層級時**必須**考慮上層索引。 df已按照(match_id、set、rally、ball_round)排序過。
+   - 類別使用名稱 (繁體中文)，Schema 需精確。
+
+2. **邏輯判斷 (CRITICAL)**:
+   - **善用工具箱 (Badminton Toolkit)**: 環境中已預載 `lib` 模組 (from utils import badminton_lib as lib)。**這比你自己寫 Pandas 更準確且省 Token，請優先使用。**
+     - **WARNING**: 呼叫 `lib` 函數時，請務必傳入**完整 DataFrame (df)**，**切勿**先篩選欄位 (e.g., `df[['col1', 'col2']]`)，以免缺少必要欄位導致錯誤。
+     - `lib.get_shot_context(df, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 DataFrame 與位移量 (+1=setup, -1=response)，回傳含有 suffix 欄位的新 DataFrame。
+     - `lib.filter_active_win(df)`: 篩選球員主動得分的回合，排除對手失誤。輸入 DataFrame，回傳過濾後的主動得分 DataFrame。
+     - `lib.merge_small_slices(series)`: 合併圓餅圖中佔比過小的區塊。輸入 Series，回傳合併小區塊為「其他」後的 Series。
+     - `lib.classify_area(zone_id)`: 將 1-32 的落點代碼轉換為四大場地區域。輸入 Zone ID，回傳前場/中場/後場/出界標籤。
+     - `lib.get_win_loss_reason_counts(df, player_name)`: 統計特定球員的得分與失分原因。輸入 DataFrame 與球員名稱，回傳得分原因與失分原因兩個 Series。
+     - `lib.get_rally_flow(df, match_id, set_num, rally_id)`: 取得特定 Rally 的完整擊球流程。輸入 Match/Set/Rally ID，回傳依照擊球順序排序的 DataFrame。
+     - `lib.get_zones_by_area(area_name)`: 轉換中文場地描述為 Zone ID 列表。輸入區域描述 (如 "前後場")，回傳對應的 Zone ID List (list[int])。
+
+   - **時序分析 (Temporal Analysis)**:
+     - 務必使用 `lib.get_shot_context(df, n)`，除特殊情況外，**不要自己寫** `groupby().shift()`。
+     - 使用範例:
+       ```python
+       # 分析周天成殺球後，對手與下一拍的反應
+       df_prev = lib.get_shot_context(df, shift_n=-1) 
+       df_smash = df_prev[(df_prev['player'] == 'CHOU Tien Chen') & (df_prev['type'] == '殺球')]
+       # 分析對手下一拍回球: 欄位變成 'type_next1'
+       print(df_smash['type_next1'].value_counts())
+       ```
+   - IMPORTANT: 主客關係邏輯務必清晰。若該球player='玩家A'為主opponent='玩家A的對手'為客，下一球player='玩家A的對手'為主opponent='玩家A'為客，輪流交替。
+
+3. **視覺化 (Matplotlib/Seaborn)**:
+   - 繪製圓餅圖 (Pie Chart) 時，**必須** 使用 `lib.merge_small_slices(data)` 處理數據。
+   - 用最適合解決問題的視覺畫圖表呈現(考慮視覺效果，讓圖表更好讀)
+   - 必須產生 `fig` 物件，**勿用** `plt.show()`。使用 `plt.tight_layout()` 確保不重疊。
+   - 避免資訊過載 (Information Overload)：長條圖可排序/取 Top N；圖表文字需清晰且符合常見展示方式。
+   - 若欄位為代碼 (如 `player_type`)，**必須**在圖表中加入圖例。
+   - **IMPORTANT**: 不限畫單一圖表，可繪製多張圖表。
+   - 「繪圖數據」與「標籤數據」須確保一致。
+   - 謹慎使用堆疊長條圖。
+   - IMPORTANT: 用繁體中文的圖表標籤
+
+4. **字體設定 (程式碼開頭必寫)**:
+```python
+import platform
+import matplotlib.pyplot as plt
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+```
+
+**回覆模式 (Strict Format)**:
+1. **PLAN 區塊** (必填): 先列出解題邏輯點列 (Pseudocode)，確保邏輯正確。
+   e.g.
+   PLAN:
+   1. Filter data by player...
+   2. Use lib.get_shot_context(shift=-1)...
+   3. Group by type and count...
+2. **PYTHON CODE 區塊**: 接著才是 Python 程式碼。
+3. **解釋**: 最後可視情況補充說明。
+
+**回覆範例**:
+PLAN:
+1. ...
+```python
+...
+```
+解釋: ...
+
+**數據 Schema:**
+Total Rows: 5204
+>>>>>>> Stashed changes
 ============================================================
 [欄位額外資訊 (動態分析)]
 ============================================================
@@ -187,6 +293,7 @@ memory usage: 1.9+ MB
 - 11: 接不到
 
 ## 欄位定義
+<<<<<<< Updated upstream
 ### `match_id`
 **說明**：比賽 ID。用來區分不同的比賽場次。
 - **關鍵字**：場次
@@ -357,67 +464,51 @@ plt.rcParams['axes.unicode_minus'] = False
 - 對象不明: 反問 (不寫 Code)。
 - 明確: 文字說明 + Code。
 - 詢問數值: Code 需 `print()` 結果。
+=======
+### `match_id`: 比賽 ID。用來區分不同的比賽場次。
+### `set`: 局數。每場刷新。
+### `rally`: 從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。每局刷新。
+### `rally_id`: 整個數據集中唯一的回合 ID
+### `ball_round`: 這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
+### `player`: 擊球球員姓名
+### `opponent`: 對手球員姓名
+### `type`: 該球player打出的球種名稱(中文)
+### `player_type`: 該球player打出的球種代碼
+### `opponent_type`: 等價於該rally前一筆的player_type
+### `getpoint_player`: 該回合得分者，若正在打球過程
+### `player_score`: 'Kento MOMOTA'的當前局內分數。每局刷新。
+### `opponent_score`: CHOU Tien Chen的當前局內分數。每局刷新。
+### `score_status`: 分數差距 (player score - opponent score)
+### `server`: 發球狀態
+### `win_reason`: player得分原因，其他為NULL不代表任何得失分
+### `lose_reason`: player失分原因，其他為NULL不代表任何得失分
 
+## 分析指南
+{
+  "core": "使用 `getpoint_player` (Event) 統計得分，勿用 `player_score` (State) 加總。",
+  "rally_count": "df.groupby(['match_id', 'set', 'rally']).ngroups",
+  "winning_logic": {
+    "active": "球員(P1)擊球得分: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
+    "passive": "球員(P1)對手失誤: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`"
+  },
+  "win_rate": "1.GroupBy Rally取 getpoint_player 2.Sum Wins 3.Divide by total rallies",
+  "shot_analysis": {
+    "group": "用 `player_type` (數字代碼)",
+    "logic": "分析「特定球種得分」時，必須篩選 `player == getpoint_player` (Active Win)。"
+  },
+  "match_score": "找出每局最後一筆分數，贏家+1。",
+  "continuous_play": "回球查詢應用: `iloc` + `index + 1`，注意對手回球是在下一列。"
+}
+>>>>>>> Stashed changes
 
-**場地位置參考資訊 (Court Grid Definitions):**
-# Role Definition
-You are an expert Badminton Tactical Analyst. You interpret court positions based on a specific discretized grid layout of a half-court.
-
-# Court Grid Definitions
-The badminton half-court is divided into a grid system with specific Zone IDs (1-32).
-
-## 1. Zone Categories (Semantic Layers)
-* **Front Court (前排 - Net Area):** Zones [17, 18, 19, 20, 21, 22, 23, 24]
-    * *Sub-divided into 2 rows:*
-        * Row M2 (the net area): 21, 22, 23, 24
-        * Row M1: 17, 18, 19, 20
-* **Mid Court (中排 - Midfield):** Zones [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
-    * *Sub-divided into 3 rows:*
-        * Row M3 (Front-Mid): 13, 14, 15, 16
-        * Row M2: 9, 10, 11, 12
-        * Row M1 (Back-Mid): 5, 6, 7, 8
-* **Back Court (後排 - Baseline Area):** Zones [1, 2, 3, 4]
-    * *Defensive area, clears and smashes originate here.*
-* **Out of Bounds (出界區域):**
-    * Left Flank (Left Side Out): 31 (Bottom), 30 (Mid), 29 (Top)
-    * Right Flank (Right Side Out): 27 (Bottom), 26 (Mid), 25 (Top)
-    * Rear Out (Behind Baseline): 32 (Left-Back), 28 (Right-Back)
-
-## 2. Spatial Relationships (The Grid Matrix)
-Imagine the court as a Matrix where Row 1 is the back (baseline) and Row 6 is the front (net).
-Columns go from Left (A) to Right (D).
-
-| Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
-| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
-| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
-| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
-| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
-| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
-
-*Note: Zones 29-31 are to the left of Col A. Zones 25-27 are to the right of Col D.*
-
-## 3. Logic Rules for Analysis
-1.  **Movement logic:** Moving from Zone 6 to Zone 10 is a "Forward" movement. Moving from 10 to 6 is "Backward".
-2.  **Left/Right logic:** Zone 5 is "Left" of Zone 6. Zone 8 is the "Rightmost" in its row.
-3.  **Adjacency:**
-    * Zone 1 is adjacent to [2, 5, 31, 32].
-    * Zone 14 is adjacent to [13, 15, 10, 18].
-    * Zone 24 (Front-Right) is adjacent to [23, 20, 25].
-
-# Task
-When I provide a Zone ID, tell me its:
-1.  **Category** (Front/Mid/Back/Out)
-2.  **Relative Position** (e.g., Front-Left, Mid-Center)
-
-                    
+    
 **最佳實踐:**
-                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
-                    2. 軸標籤避免大量浮點數。
-                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
-                    
+    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
+    2. 軸標籤避免大量浮點數。
+    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+    
   <USER>
+<<<<<<< Updated upstream
 請分析周天成在比賽中前場、中場和後場的得分與失分數據，並提供具體的數據分析結果。
 
 [Output Response]:
@@ -429,16 +520,33 @@ When I provide a Zone ID, tell me its:
 4. **統計周天成在不同位置的得分與失分**。
 
 以下是具體的Python程式碼來進行這些分析：
+=======
+計算周天成使用「殺球」得分佔他總得分的百分比。
+
+[Output Response]:
+PLAN:
+1. 檢查 `df` 是否有資料 (`len(df) > 0`)。
+2. 使用 `lib.filter_active_win(df)` 篩選出周天成的所有得分回合。
+3. 篩選 `type` 為「殺球」的回合，確認這些是周天成主動得分。
+4. 計算使用「殺球」得分的次數佔周天成總得分數量的百分比。
+>>>>>>> Stashed changes
 
 ```python
 import platform
 import matplotlib.pyplot as plt
+<<<<<<< Updated upstream
 import pandas as pd
 
+=======
+from utils import badminton_lib as lib
+
+# 字體設定
+>>>>>>> Stashed changes
 s = platform.system()
 plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
 plt.rcParams['axes.unicode_minus'] = False
 
+<<<<<<< Updated upstream
 # 假設 df 是我們已經存在的 DataFrame
 if len(df) > 0:
     
@@ -495,10 +603,43 @@ else:
 
 ==============================
 [2025-12-13 23:47:52] Step: Step 4: Logic Reflection
+=======
+# 確保 df 有資料
+if len(df) > 0:
+    # 篩選出周天成的主動得分回合
+    df_active_win = lib.filter_active_win(df)
+    df_chou_wins = df_active_win[df_active_win['getpoint_player'] == 'CHOU Tien Chen']
+    
+    # 篩選出周天成使用「殺球」得分的回合
+    chou_smash_wins = df_chou_wins[df_chou_wins['type'] == '殺球']
+    
+    # 計算使用「殺球」得分的次數和總得分次數
+    smash_win_count = len(chou_smash_wins)
+    total_win_count = len(df_chou_wins)
+    
+    # 計算百分比
+    if total_win_count > 0:
+        percentage_smash_wins = (smash_win_count / total_win_count) * 100
+    else:
+        percentage_smash_wins = 0
+    
+    # 打印結果
+    print(f"周天成使用「殺球」得分佔總得分的百分比為: {percentage_smash_wins:.2f}%")
+```
+
+解釋:
+- 此程式碼首先確認 `df` 是否有資料，然後使用 `lib.filter_active_win(df)` 來篩選周天成的主動得分回合。
+- 接著，篩選出 `type` 為「殺球」的回合，然後計算這些回合的次數，並將其除以周天成的總得分次數，得到殺球得分佔總得分的百分比。
+==============================
+
+==============================
+[2025-12-16 22:07:17] Step: Step 4: Logic Reflection
+>>>>>>> Stashed changes
 ------------------------------
 [Input Messages]:
   <USER>
 
+<<<<<<< Updated upstream
                         QA Check:
                         1. 問題: "分析周天成在前中後場，分別的得分與失分數" (強化: "請分析周天成在比賽中前場、中場和後場的得分與失分數據，並提供具體的數據分析結果。")
                         2. 程式:
@@ -507,10 +648,22 @@ else:
 import matplotlib.pyplot as plt
 import pandas as pd
 
+=======
+    [查核資料]
+    1. 問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？"
+    2. 程式碼:
+    ```python
+    import platform
+import matplotlib.pyplot as plt
+from utils import badminton_lib as lib
+
+# 字體設定
+>>>>>>> Stashed changes
 s = platform.system()
 plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
 plt.rcParams['axes.unicode_minus'] = False
 
+<<<<<<< Updated upstream
 # 假設 df 是我們已經存在的 DataFrame
 if len(df) > 0:
     
@@ -658,12 +811,90 @@ else:
 
 ==============================
 [2025-12-13 23:48:00] Step: Step 6: Insight Generation
+=======
+# 確保 df 有資料
+if len(df) > 0:
+    # 篩選出周天成的主動得分回合
+    df_active_win = lib.filter_active_win(df)
+    df_chou_wins = df_active_win[df_active_win['getpoint_player'] == 'CHOU Tien Chen']
+    
+    # 篩選出周天成使用「殺球」得分的回合
+    chou_smash_wins = df_chou_wins[df_chou_wins['type'] == '殺球']
+    
+    # 計算使用「殺球」得分的次數和總得分次數
+    smash_win_count = len(chou_smash_wins)
+    total_win_count = len(df_chou_wins)
+    
+    # 計算百分比
+    if total_win_count > 0:
+        percentage_smash_wins = (smash_win_count / total_win_count) * 100
+    else:
+        percentage_smash_wins = 0
+    
+    # 打印結果
+    print(f"周天成使用「殺球」得分佔總得分的百分比為: {percentage_smash_wins:.2f}%")
+    ```
+    3. 執行與變數: 周天成使用「殺球」得分佔總得分的百分比為: 71.76%
+
+    _generated_figures_count: 0
+s: Windows
+df_active_win: DataFrame/Series with 147 rows
+df_chou_wins: DataFrame/Series with 85 rows
+chou_smash_wins: DataFrame/Series with 61 rows
+smash_win_count: 61
+total_win_count: 85
+percentage_smash_wins: 71.76470588235294
+
+
+    你是嚴格的「程式碼邏輯審計員 (Code Auditor)」，察覺邏輯錯誤部分詳細思考如何修改。請檢查：
+    IMPORTANT: 根據"問題"程式碼是否有誤，畫出的圖表是否符合問題要求
+    
+    判斷:
+    - 🐛 潛在邏輯問題 (Bug Check):
+        - [資料完整性]: 檢查變數覆蓋、dropna不當。
+        - [資料合適性]: 檢查數值合併錯誤 (如Score求和)。
+        - [統計聚合]: 檢查 groupby + sum/mean 合理性。
+        - [欄位正確性]: 檢查欄位選用 (如 player vs getpoint_player)。
+        - [上下文]: 結果是否回答問題。
+        - [其他]: 任何潛在邏輯陷阱。
+    - ❌ 無資料: 變數顯示 `Empty/0 rows` 或 `_generated_figures_count`=0 且無輸出 -> FAIL
+    - ⚠️ 資訊過載 (Information Overload):
+        - **圓餅圖**: 根據結果若有多於兩類別皆為極小比例(如 < 5%)，**必須**將小於閾值的類別合併為「其他 (Others)」，**嚴禁直接過濾刪除**。
+        - **長條圖**: 根據結果若 X 軸標籤過多導致重疊，或X軸與Y軸邏輯搞相反，**必須**重新設計圖表。
+    - ✅ 通過: 資料非空且有輸出/圖表清晰 -> PASS
+    
+    回覆: "PASS" 或 修正後的完整程式碼 (含 ```python)。
+    
+
+[Output Response]:
+根據提供的程式碼和問題描述，程式碼的邏輯是正確的。它計算了周天成使用「殺球」得分佔他總得分的百分比，並且結果顯示為 71.76%。這與問題的要求一致。
+
+以下是程式碼的邏輯檢查：
+
+- **資料完整性**: 程式碼檢查了 `df` 是否有資料，並且在篩選過程中沒有不當的 `dropna` 操作。
+- **資料合適性**: 使用 `filter_active_win` 函數篩選出主動得分回合，並且正確地篩選出周天成的得分回合。
+- **統計聚合**: 使用 `len()` 函數計算得分次數，並且計算百分比的邏輯正確。
+- **欄位正確性**: 使用了正確的欄位 `getpoint_player` 和 `type` 來篩選資料。
+- **上下文**: 結果正確地回答了問題。
+- **其他**: 沒有發現其他潛在的邏輯陷阱。
+
+由於程式碼沒有生成圖表，因此不涉及圖表的檢查。
+
+因此，程式碼通過了邏輯檢查，沒有需要修正的地方。
+
+回覆: "PASS"
+==============================
+
+==============================
+[2025-12-16 22:07:25] Step: Step 6: Insight Generation
+>>>>>>> Stashed changes
 ------------------------------
 [Input Messages]:
   <SYSTEM>
 你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
   <USER>
 
+<<<<<<< Updated upstream
                         你是羽球教練。
                         問題: "分析周天成在前中後場，分別的得分與失分數"
                         數據:
@@ -673,15 +904,27 @@ area_category
 中場             75  131
 前場              9   13
 後場              1   16
+=======
+    你是羽球教練。問題: "周天成使用「殺球」得分佔他總得分的百分比是多少？"
+    數據:
+    --- 程式執行輸出 (Stdout) ---
+周天成使用「殺球」得分佔總得分的百分比為: 71.76%
+>>>>>>> Stashed changes
 
 
 程式碼執行後，擷取出以下核心變數與其值：
+
+### 變數 `_generated_figures_count` (型別: `int`)
+```
+0
+```
 
 ### 變數 `s` (型別: `str`)
 ```
 Windows
 ```
 
+<<<<<<< Updated upstream
 ### 變數 `chou_data` (型別: `str`)
 ```
 DataFrame/Series with 245 rows
@@ -743,6 +986,43 @@ Imagine the court as a Matrix where Row 1 is the back (baseline) and Row 6 is th
 Columns go from Left (A) to Right (D).
 
 | Row/Col | Col A (Left) | Col B (Center-Left) | Col C (Center-Right) | Col D (Right) |
+=======
+### 變數 `df_active_win` (型別: `str`)
+```
+DataFrame/Series with 147 rows
+```
+
+### 變數 `df_chou_wins` (型別: `str`)
+```
+DataFrame/Series with 85 rows
+```
+
+### 變數 `chou_smash_wins` (型別: `str`)
+```
+DataFrame/Series with 61 rows
+```
+
+### 變數 `smash_win_count` (型別: `int`)
+```
+61
+```
+
+### 變數 `total_win_count` (型別: `int`)
+```
+85
+```
+
+### 變數 `percentage_smash_wins` (型別: `float`)
+```
+71.76470588235294
+```
+
+
+    規定:
+    1. 若圖表含 "player_type"/"opponent_type"，必須輸出 Mapping: 1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
+    2. 若圖表含 "area" (landing_area...)，必須輸出:
+| Row/Col | Col A (Left) | Col B (C-Left) | Col C (C-Right) | Col D (Right) |
+>>>>>>> Stashed changes
 | :--- | :---: | :---: | :---: | :---: |
 | **Row 6 (Front)** | 21 | 22 | 23 | 24 |
 | **Row 5 (Front)** | 17 | 18 | 19 | 20 |
@@ -751,6 +1031,7 @@ Columns go from Left (A) to Right (D).
 | **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
 | **Row 1 (Back)** | 1 | 2 | 3 | 4 |
 
+<<<<<<< Updated upstream
 *Note: Zones 29-31 are to the left of Col A. Zones 25-27 are to the right of Col D.*
 
 ## 3. Logic Rules for Analysis
@@ -7961,4 +8242,15 @@ When I provide a Zone ID, tell me its:
 3. **後場**: 得分1，失分16。這表明他在後場的攻擊幾乎沒有威脅，失分比例極高，可能與防守策略或擊球選擇不當有關。
 
 總結來看，周天成在前場和後場的表現需加強，特別是中場的防守策略應重新評估，以提升整體的得分效率和降低失分。
+=======
+    用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，只說事實。
+    
+
+[Output Response]:
+周天成的殺球得分佔總得分的71.76%，這是一個非常高的比例，顯示他在比賽中極具攻擊性，並且擁有強大的殺球能力。這意味著他在進攻端的表現非常突出，能夠有效地利用殺球來壓制對手並獲得直接得分。
+
+從數據來看，總得分中有85次得分，而其中61次是通過殺球獲得的。這表明周天成在比賽中非常依賴殺球作為主要的得分手段。這樣的數據顯示出他在場上可能會主動尋求進攻機會，並且在適當的時機果斷出手。
+
+戰術上，這樣的風格要求他保持高水平的體能和精確的技術，以確保在長時間的比賽中能夠持續施壓對手。此外，對手可能會針對他的殺球進行防守部署，因此周天成需要在比賽中靈活變換策略，可能需要增加其他技術如切球或網前球的使用，以保持攻擊的多樣性和不可預測性。
+>>>>>>> Stashed changes
 ==============================
