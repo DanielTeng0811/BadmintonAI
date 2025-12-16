@@ -72,34 +72,34 @@
     },
     {
       "column": "type",
-      "description": "球種名稱(中文)",
+      "description": "該球player打出的球種名稱(中文)",
       "note": "參照shot_types",
       "usage": "可使用df['type'].shift()獲取前後拍的球種"
     },
     {
       "column": "player_type",
-      "description": "球員擊球球種代碼",
+      "description": "該球player打出的球種代碼",
       "data_type": "float",
       "mapping": "1-11 (見shot_types)",
       "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
     },
     {
       "column": "opponent_type",
-      "description": "對手上一拍球種代碼",
+      "description": "上一球player(=該球opponent)打出的球種代碼",
       "mapping": "1-11 (見shot_types)",
       "note": "等價於該rally前一筆的player_type"
     },
     {
       "column": "hit_x",
-      "description": "擊球點X座標"
+      "description": "player擊球點X座標"
     },
     {
       "column": "hit_y",
-      "description": "擊球點Y座標"
+      "description": "player擊球點Y座標"
     },
     {
       "column": "hit_area",
-      "description": "擊球點所在區域代碼 (1-32)"
+      "description": "player擊球點所在區域代碼 (1-32)"
     },
     {
       "column": "landing_x",
@@ -180,12 +180,13 @@
     {
       "column": "win_reason",
       "description": "player得分原因，其他為NULL不代表任何得失分",
-      "note": "搭配ball_round查詢前後拍(e.x.回擊)對手得分原因等"
+      "note": "搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手得分原因等"
     },
     {
       "column": "lose_reason",
       "description": "player失分原因，其他為NULL不代表任何得失分",
-      "note": "搭配ball_round查詢前後拍(e.x.回擊)對手失分原因等"
+      "note": "搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手失分原因等",
+      "usage": "(relevant_df['player'] == 'Player_A') & (relevant_df['lose_reason'] == '未過網') -> Player_A自己失分原因為未過網的情況"
     }
   ],
   "analysis_guidelines": {
