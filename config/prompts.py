@@ -23,6 +23,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - 分析「某球員如何得分」或「贏球手段」(如：靠殺球得分) 時，**必須**檢查 `df['player'] == df['getpoint_player']` (Active Win)。僅檢查 `getpoint_player` 與 `type` 會錯誤包含對手失誤。
    - IMPORTANT: 若使用 `player_type` 或 `opponent_type`，在輸出附上數值與名稱對照表。
    - 若使用 `area` 欄位，需提供 Court Grid Definitions。
+   - 若需考慮前後拍的情形(如:回擊、對手擊球狀況等)，使用 `ball_round` 欄位shift()。
 
 3. **視覺化 (Matplotlib/Seaborn)**:
    - 用最適合解決問題的視覺畫圖表呈現(考慮視覺效果，讓圖表更好讀)

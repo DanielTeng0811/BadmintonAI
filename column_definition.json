@@ -37,7 +37,8 @@
     },
     {
       "column": "ball_round",
-      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。"
+      "description": "這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。",
+      "usage": "若要觀察對手回球、輸球原因等，可使用df['ball_round'].shift()獲取前後拍的資訊"
     },
     {
       "column": "player_score",
@@ -57,12 +58,12 @@
     {
       "column": "player",
       "description": "擊球球員姓名",
-      "note": "每個rally雙方交替擊球"
+      "note": "每個rally中雙方交替擊球"
     },
     {
       "column": "opponent",
       "description": "對手球員姓名",
-      "note": "每個rally雙方交替擊球"
+      "note": "每個rally中雙方交替擊球"
     },
     {
       "column": "server",
@@ -178,13 +179,13 @@
     },
     {
       "column": "win_reason",
-      "description": "該球若player得分，則win_reason為得分原因，其他為NULL不代表任何得失分",
-      "condition": "getpoint_player & win_reason both not null"
+      "description": "player得分原因，其他為NULL不代表任何得失分",
+      "note": "搭配ball_round查詢前後拍(e.x.回擊)對手得分原因等"
     },
     {
       "column": "lose_reason",
-      "description": "該球若opponent得分，則lose_reason為失分原因，其他為NULL不代表任何得失分",
-      "note": "記錄的是player失誤原因"
+      "description": "player失分原因，其他為NULL不代表任何得失分",
+      "note": "搭配ball_round查詢前後拍(e.x.回擊)對手失分原因等"
     }
   ],
   "analysis_guidelines": {
