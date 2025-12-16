@@ -20,31 +20,28 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 
 **規則:**
 1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
-2. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
-3. 勿讀檔 (`df` 已存在)。
-4. 計算前驗證數據 (如 `len(df) > 0`)。
-5. 類別用名稱。Schema 字串需精確。
-6. 用繁體中文。
-7. 使用dropna()處理遺失值 
+2. 分清楚三種狀態: 主動(得分)、被動(得分)或兩者皆有
+3. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
+4. 勿讀檔 (`df` 已存在)。
+5. 計算前驗證數據 (如 `len(df) > 0`)。
+6. 類別用名稱。Schema 字串需精確。
+7. 用繁體中文。
 8. 避免圖表資訊過載 (Information Overload)，保持圖表清晰易讀。
 9. 圖表大小、文字與圖片搭配的視覺化需符合常見的圖表展示方式。
 10. 若是畫長條圖，可以進行排序，增加識別性。
 11. 可使用print()印出重要數值與精簡說明數值意義
-12. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的'shot_types'對照表，以便使用者查閱。
-13. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
+11. 若使用 `player_type` 或 `opponent_type` 繪圖，**必須**在輸出中附上數值與名稱的'shot_types'對照表，以便使用者查閱。
+12. 若使用area的欄位繪圖(如:player_location_area、landing_area......)，需給予使用者Court Grid Definitions中的Spatial Relationships Matrix
 **數據:**
 Schema:
 {data_schema_info}
 定義:
 {column_definitions_info}
 
-<<<<<<< Updated upstream
-**字體設定 (IMPORTANT:程式碼開頭必寫):**
-=======
 2. **邏輯判斷 (CRITICAL)**:
    - **善用工具箱 (Badminton Toolkit)**: 環境中已預載 `lib` 模組 (from utils import badminton_lib as lib)。**這比你自己寫 Pandas 更準確且省 Token，請優先使用。**
      - **WARNING**: 呼叫 `lib` 函數時，請務必傳入**完整 DataFrame (df)**，**切勿**先篩選欄位 (e.g., `df[['col1', 'col2']]`)，以免缺少必要欄位導致錯誤。
-     - `lib.get_shot_context(df, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 DataFrame 與位移量 (+1=setup, -1=response)，回傳含有 suffix 欄位的新 DataFrame。
+     - `lib.get_shot_context(df, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 某欄位的DataFrame 與位移量 (+1=setup, -1=response)，回傳含有 suffix 欄位的新 DataFrame。
      - `lib.filter_active_win(df)`: 篩選球員主動得分的回合，排除對手失誤。輸入 DataFrame，回傳過濾後的主動得分 DataFrame。
      - `lib.merge_small_slices(series)`: 合併圓餅圖中佔比過小的區塊。輸入 Series，回傳合併小區塊為「其他」後的 Series。
      - `lib.classify_area(zone_id)`: 將 1-32 的落點代碼轉換為四大場地區域。輸入 Zone ID，回傳前場/中場/後場/出界標籤。
@@ -76,7 +73,6 @@ Schema:
    - IMPORTANT: 用繁體中文的圖表標籤
 
 4. **字體設定 (程式碼開頭必寫)**:
->>>>>>> Stashed changes
 ```python
 import platform
 import matplotlib.pyplot as plt
@@ -85,19 +81,6 @@ plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Dar
 plt.rcParams['axes.unicode_minus'] = False
 ```
 
-<<<<<<< Updated upstream
-**圖表:**
-- `fig, ax = plt.subplots(figsize=(12, 7))`
-- 標題 `fontsize=16`，軸 `12`。
-- 顏色: 'steelblue' 或 `['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A']`。
-- 圓餅圖: `autopct='%1.1f%%'`, `pctdistance=0.85`, 圖例放外側。
-- 必用 `plt.tight_layout()`。
-
-**回覆:**
-- 對象不明: 反問 (不寫 Code)。
-- 明確: 文字說明 + Code。
-- 詢問數值: Code 需 `print()` 結果。
-=======
 **回覆模式 (Strict Format)**:
 1. **PLAN 區塊** (必填): 先列出解題邏輯點列 (Pseudocode)，確保邏輯正確。
    e.g.
@@ -121,5 +104,4 @@ PLAN:
 
 **欄位定義:**
 {column_definitions_info}
->>>>>>> Stashed changes
 """
