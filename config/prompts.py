@@ -29,7 +29,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 3. **視覺化 (Matplotlib/Seaborn)**:
    - 用最適合解決問題的視覺畫圖表呈現(考慮視覺效果，讓圖表更好讀)
    - 必須產生 `fig` 物件，**勿用** `plt.show()`。使用 `plt.tight_layout()` 確保不重疊。
-   - 避免資訊過載 (Information Overload)：長條圖可排序/取 Top N；圖表文字需清晰且符合常見展示方式。
+   - 避免資訊過載 (Information Overload)：# 合併小比例的類別為 "其他"；圖表文字需清晰且符合常見展示方式。
    - 若欄位為代碼 (如 `player_type`)，**必須**在圖表中加入圖例。
    - **IMPORTANT**: 不限畫單一圖表，可繪製多張圖表。
    - 「繪圖數據」與「標籤數據」須確保一致。

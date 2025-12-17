@@ -79,7 +79,7 @@
     },
     {
       "column": "player_type",
-      "description": "該球player打出的球種代碼",
+      "description": "該球player打出的球種代碼，等價於下一筆的opponent_type",
       "data_type": "float",
       "mapping": "1-11 (見shot_types)",
       "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
