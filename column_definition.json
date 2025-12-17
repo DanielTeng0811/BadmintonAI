@@ -1,7 +1,7 @@
 {
   "metadata": {
     "description": "羽球比賽數據欄位定義",
-    "structure": "三戰兩勝制, 21分制。⚠️ 每局決勝分未記錄，贏家分數需+1。"
+    "structure": "三戰兩勝制, 21分制。⚠️ 每局決勝分未記錄，每個set的最後一球誰得分，他的分數需+1。"
   },
   "shot_types": {
     "1": "發短球",
@@ -43,17 +43,17 @@
     {
       "column": "player_score",
       "description": "'Kento MOMOTA'的當前局內分數。每局刷新。",
-      "warning": "NOT 當下player的分數"
+      "warning": "NOT 玩家分數"
     },
     {
       "column": "opponent_score",
-      "description": "CHOU Tien Chen的當前局內分數。每局刷新。",
-      "warning": "NOT 當下opponent的分數"
+      "description": "'CHOU Tien Chen'的當前局內分數。每局刷新。",
+      "warning": "NOT 對手分數"
     },
     {
       "column": "score_status",
-      "description": "分數差距 (player score - opponent score)",
-      "note": "正=領先, 負=落後"
+      "description": "分數差距 (player score(Kento MOMOTA) - opponent score(CHOU Tien Chen)",
+      "note": "score_status>3表示CHOU Tien Chen落後3分以上，score_status<-3表示CHOU Tien Chen領先3分以上"
     },
     {
       "column": "player",
@@ -174,35 +174,63 @@
     {
       "column": "getpoint_player",
       "description": "該回合得分者，若正在打球過程",
-      "scope": "IMPORTANT:若值為NULL不代表任何得失分",
       "usage": "group by set/rally取last()，同時欄位有NULL存在，必要時可使用dropna()",
-      "IMPORTANT": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_ player==NULL)。"
+      "note": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_ player==NULL)。",
+      "IMPORTANT": "getpoint_player != CHOU Tien Chen不代表周天成失分，getpoint_player == Kento MOMOTA代表周天成失分(正確邏輯)，up 因為getpoint_player可能為NULL。"
     },
     {
       "column": "win_reason",
-      "description": "player得分原因，其他為NULL不代表任何得失分",
+      "description": "player得分原因，其他為NULL無意義不代表任何得失分",
       "note": "搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手得分原因等"
     },
     {
       "column": "lose_reason",
-      "description": "player失分原因，其他為NULL不代表任何得失分",
+      "description": "player失分原因，其他為NULL無意義不代表任何得失分",
       "note": "搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手失分原因等",
       "usage": "(relevant_df['player'] == 'Player_A') & (relevant_df['lose_reason'] == '未過網') -> Player_A自己失分原因為未過網的情況"
+    },
+    {
+      "column": "aroundhead",
+      "description": "是否為繞頭擊球 (1: 是, 0: 否)"
+    },
+    {
+      "column": "backhand",
+      "description": "是否為反手拍 (1: 是, 0: 否)"
+    },
+    {
+      "column": "hit_height",
+      "description": "擊球時的高度"
+    },
+    {
+      "column": "landing_height",
+      "description": "被接球時的高度"
+    },
+    {
+      "column": "landing_court_number",
+      "description": "落點所在的詳細場地編號"
+    },
+    {
+      "column": "ball_distance_x",
+      "description": "球飛行路徑的 X 軸分量距離"
+    },
+    {
+      "column": "ball_distance_y",
+      "description": "球飛行路徑的 Y 軸分量距離"
     }
   ],
   "analysis_guidelines": {
-    "core": "使用 `getpoint_player` (Event) 統計得分，勿用 `player_score` (State) 加總。",
+    "core": "使用 getpoint_player (Event) 統計得分，勿用 player_score (State) 加總。",
     "rally_count": "df.groupby(['match_id', 'set', 'rally']).ngroups",
     "winning_logic": {
-      "active": "球員(P1)擊球得分: `df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]`",
-      "passive": "球員(P1)對手失誤: `df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]`"
+      "active": "球員(P1)擊球得分: df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]",
+      "passive": "球員(P1)對手失誤: df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]"
     },
     "win_rate": "1.GroupBy Rally取 getpoint_player 2.Sum Wins 3.Divide by total rallies",
     "shot_analysis": {
-      "group": "用 `player_type` (數字代碼)",
-      "logic": "分析「特定球種得分」時，必須篩選 `player == getpoint_player` (Active Win)。"
+      "group": "用 player_type (數字代碼)",
+      "logic": "分析「特定球種得分」時，必須篩選 player == getpoint_player (Active Win)。"
     },
     "match_score": "找出每局最後一筆分數，贏家+1。",
-    "continuous_play": "回球查詢應用: `iloc` + `index + 1`，注意對手回球是在下一列。"
+    "continuous_play": "回球查詢應用: iloc + `index + 1`，注意對手回球是在下一列。"
   }
 }

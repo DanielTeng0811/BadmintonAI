@@ -47,7 +47,7 @@ plt.rcParams['axes.unicode_minus'] = False
 
 **回覆模式**:
 - 對象不明: 反問 (不寫 Code)。
-- 明確: 文字說明 + Code (詢問數值需 `print()` 結果)。
+- 明確: 完整文字思考過程 + Code (詢問數值需 `print()` 結果)。
 
 **數據 Schema:**
 {data_schema_info}
