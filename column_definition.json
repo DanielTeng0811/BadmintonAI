@@ -69,7 +69,7 @@
     {
       "column": "server",
       "description": "發球狀態",
-      "mapping": "1:player發球, 2:對打中, 3:該回合結束"
+      "mapping": "1:player發球, 2:對打中"
     },
     {
       "column": "type",
