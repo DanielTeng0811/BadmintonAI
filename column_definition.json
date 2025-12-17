@@ -87,7 +87,7 @@
     {
       "column": "opponent_type",
       "description": "等價於該rally前一筆的player_type",
-      "mapping": "1-11 (見shot_types)",
+      "mapping": "1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)",
       "note": "不等價於opponent的回擊球種代碼"
     },
     {
@@ -207,7 +207,7 @@
     },
     {
       "column": "landing_court_number",
-      "description": "落點所在的詳細場地編號"
+      "description": "落點所在的場地編號"
     },
     {
       "column": "ball_distance_x",
