@@ -39,7 +39,7 @@ def get_shot_context(df: pd.DataFrame, shift_n: int = 1) -> pd.DataFrame:
     suffix = f"_prev{abs(shift_n)}" if shift_n > 0 else f"_next{abs(shift_n)}"
     shifted.columns = [f"{col}{suffix}" for col in shifted.columns]
     
-    return shifted.loc[df.index]
+    return pd.concat([df_sorted, shifted], axis=1)
 
 def filter_active_win(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -56,19 +56,6 @@ def filter_active_win(df: pd.DataFrame) -> pd.DataFrame:
     active_wins = last_shots[last_shots['player'] == last_shots['getpoint_player']].copy()
     
     return active_wins
-
-def filter_player(df: pd.DataFrame, player_name: str) -> pd.DataFrame:
-    """
-    篩選特定球員擊球的紀錄。
-    """
-    if not isinstance(player_name, str):
-        raise TypeError(f"player_name must be a string, got {type(player_name)}: {player_name}")
-
-    _validate_columns(df, ['player'])
-    
-    # 加上 strip() 避免空白導致篩不到
-    clean_name = player_name.strip()
-    return df[df['player'] == clean_name].copy()
 
 def merge_small_slices(series: Union[pd.Series, dict, list], threshold: float = 0.05, other_label: str = "其他 (Others)") -> pd.Series:
     """
