@@ -43,12 +43,12 @@
     {
       "column": "player_score",
       "description": "'Kento MOMOTA'的當前局內分數。每局刷新。",
-      "warning": "NOT 當下player的分數"
+      "warning": "NOT 玩家分數"
     },
     {
       "column": "opponent_score",
-      "description": "CHOU Tien Chen的當前局內分數。每局刷新。",
-      "warning": "NOT 當下opponent的分數"
+      "description": "'CHOU Tien Chen'的當前局內分數。每局刷新。",
+      "warning": "NOT 對手分數"
     },
     {
       "column": "score_status",
@@ -188,6 +188,34 @@
       "description": "player失分原因，其他為NULL不代表任何得失分",
       "note": "搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手失分原因等",
       "usage": "(relevant_df['player'] == 'Player_A') & (relevant_df['lose_reason'] == '未過網') -> Player_A自己失分原因為未過網的情況"
+    },
+    {
+      "column": "aroundhead",
+      "description": "是否為繞頭擊球 (1: 是, 0: 否)"
+    },
+    {
+      "column": "backhand",
+      "description": "是否為反手拍 (1: 是, 0: 否)"
+    },
+    {
+      "column": "hit_height",
+      "description": "擊球時的高度"
+    },
+    {
+      "column": "landing_height",
+      "description": "被接球時的高度"
+    },
+    {
+      "column": "landing_court_number",
+      "description": "落點所在的詳細場地編號"
+    },
+    {
+      "column": "ball_distance_x",
+      "description": "球飛行路徑的 X 軸分量距離"
+    },
+    {
+      "column": "ball_distance_y",
+      "description": "球飛行路徑的 Y 軸分量距離"
     }
   ],
   "analysis_guidelines": {
