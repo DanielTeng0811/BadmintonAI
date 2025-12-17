@@ -16,7 +16,7 @@ The badminton half-court is divided into a grid system with specific Zone IDs (1
         * Row M1 (Back-Mid): 5, 6, 7, 8
 * **Back Court (後排 - Baseline Area):** Zones [1, 2, 3, 4]
     * *Defensive area, clears and smashes originate here.*
-* **Out of Bounds (出界區域):**
+* **Out of Bounds (出界):**
     * Left Flank (Left Side Out): 31 (Bottom), 30 (Mid), 29 (Top)
     * Right Flank (Right Side Out): 27 (Bottom), 26 (Mid), 25 (Top)
     * Rear Out (Behind Baseline): 32 (Left-Back), 28 (Right-Back)

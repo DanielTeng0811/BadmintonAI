@@ -74,7 +74,7 @@
     {
       "column": "type",
       "description": "該球player打出的球種名稱(中文)",
-      "note": "參照shot_types",
+      "note": "參照shot_types。發球球種:發短球/發長球；其他皆是打擊球種，依題目篩選兩者",
       "usage": "可使用df['type'].shift()獲取前後拍的球種"
     },
     {
