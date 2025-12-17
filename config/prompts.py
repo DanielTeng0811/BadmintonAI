@@ -20,7 +20,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
 
 **規則:**
 1. IMPORTANT: 若使用的欄位是代碼，必須圖表中加入圖例(如:"player_type": ，"landing_area"...)
-2. 分清楚三種狀態: 主動(得分)、被動(得分)或兩者皆有
+2. 分清楚三種狀態: 主動(得失分)、被動(得失分)或兩者皆有
 3. 用 `matplotlib`/`seaborn` 繪圖，最後必須產生 `fig` 物件。勿用 `plt.show()`，且必須確保圖上所有元素不重疊使用(plt.tight_layout())。
 4. 勿讀檔 (`df` 已存在)。
 5. 計算前驗證數據 (如 `len(df) > 0`)。
@@ -39,7 +39,7 @@ Schema:
 {column_definitions_info}
 
 2. **邏輯判斷 (CRITICAL)**:
-   - **善用工具箱 (Badminton Toolkit)**: 環境中已預載 `lib` 模組 (from utils import badminton_lib as lib)。**這比你自己寫 Pandas 更準確且省 Token，請優先使用。**
+   - **善用工具箱 (Badminton Toolkit)**: 環境中已預載 `lib` 模組 (from utils import badminton_lib as lib)。**這比你自己寫 Pandas 更準確且省 Token，請優先使用。謹慎注意傳入與回傳的形式**
      - **WARNING**: 呼叫 `lib` 函數時，請務必傳入**完整 DataFrame (df)**，**切勿**先篩選欄位 (e.g., `df[['col1', 'col2']]`)，以免缺少必要欄位導致錯誤。
      - `lib.get_shot_context(df, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 某欄位的DataFrame 與位移量 (+1=setup, -1=response)，回傳含有 suffix 欄位的新 DataFrame。
      - `lib.filter_active_win(df)`: 篩選球員主動得分的回合，排除對手失誤。輸入 DataFrame，回傳過濾後的主動得分 DataFrame。
