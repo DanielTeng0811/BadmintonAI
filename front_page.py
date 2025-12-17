@@ -71,7 +71,7 @@ with st.sidebar:
     if api_mode == "Gemini":
         model_choice = st.selectbox("選擇模型",["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
     else:
-        model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=0)
+        model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=1)
 
     st.divider()
 
