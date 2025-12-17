@@ -127,6 +127,11 @@ def process_user_query(prompt, client, model_choice, df, data_schema_info, enabl
 
                 # --- [Step 6: 生成數據洞察] ---
                 status.update(label="Step 5/6: 正在撰寫數據洞察...")
+                
+                # 獲取精簡欄位定義
+                from utils.data_loader import get_concise_column_defs
+                concise_col_defs = get_concise_column_defs()
+
                 summary_text = ""
                 st.markdown("### 📊 數據洞察")
                 
@@ -135,7 +140,7 @@ def process_user_query(prompt, client, model_choice, df, data_schema_info, enabl
                     st.code(execution_output, language="text")
                     st.divider()
 
-                summary_text = generate_insights(client, model_choice, prompt, execution_output, summary_info)
+                summary_text = generate_insights(client, model_choice, prompt, execution_output, summary_info, code_to_execute, concise_col_defs)
                 st.markdown(summary_text)
 
                 # --- [Step 7: 儲存至歷史] ---

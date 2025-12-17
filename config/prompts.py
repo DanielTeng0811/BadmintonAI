@@ -36,24 +36,16 @@ Schema:
 2. **邏輯判斷 (CRITICAL)**:
    - **善用工具箱 (Badminton Toolkit)**: 環境中已預載 `lib` 模組 (from utils import badminton_lib as lib)。**這比你自己寫 Pandas 更準確且省 Token，請優先使用。謹慎注意傳入與回傳的形式**
      - **WARNING**: 呼叫 `lib` 函數時，請務必傳入**完整 DataFrame (df)**，**切勿**先篩選欄位 (e.g., `df[['col1', 'col2']]`)，以免缺少必要欄位導致錯誤。
-     - `lib.get_shot_context(df, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 某欄位的DataFrame 與位移量 (+1=setup, -1=response)。回傳含有 suffix 欄位 (`_prevN` 或 `_nextN`) 的新 DataFrame。
-     - `lib.filter_active_win(df)`: 篩選球員主動得分的回合，排除對手失誤。輸入 DataFrame，回傳過濾後的主動得分 DataFrame。
+     - `lib.get_shot_context(df_A, shift_n=1)`: 獲取前後 N 拍資訊，處理時序分析。輸入 某欄位的DataFrame 與位移量 (+1=前1拍, -1=後1拍)。回傳含有 suffix 欄位 (`_prevN` 或 `_nextN`) 的新 DataFrame。
+     - `lib.filter_active_win(df_A)`: 篩選球員主動得分的回合，排除對手失誤。輸入 DataFrame，回傳過濾後的主動得分 DataFrame。
      - `lib.merge_small_slices(series)`: 合併圓餅圖中佔比過小的區塊。輸入 Series，回傳合併小區塊為「其他」後的 Series。
      - `lib.classify_area(zone_id)`: 將 1-32 的落點代碼轉換為四大場地區域。輸入 Zone ID，回傳前場/中場/後場/出界標籤。
-     - `lib.get_win_loss_reason_counts(df, player_name)`: 統計特定球員的得分與失分原因。輸入 DataFrame 與球員名稱，回傳得分原因與失分原因兩個 Series。
-     - `lib.get_rally_flow(df, match_id, set_num, rally_id)`: 取得特定 Rally 的完整擊球流程。輸入 Match/Set/Rally ID，回傳依照擊球順序排序的 DataFrame。
+     - `lib.get_win_loss_reason_counts(df_A, player_name)`: 統計特定球員的得分與失分原因。輸入 DataFrame 與球員名稱，回傳得分原因與失分原因兩個 Series。
+     - `lib.get_rally_flow(df_A, match_id, set_num, rally_id)`: 取得特定 Rally 的完整擊球流程。輸入 Match/Set/Rally ID，回傳依照擊球順序排序的 DataFrame。
      - `lib.get_zones_by_area(area_name)`: 轉換中文場地描述為 Zone ID 列表。輸入區域描述 (如 "前後場")，回傳對應的 Zone ID List (list[int])。
 
    - **時序分析 (Temporal Analysis)**:
-     - 務必使用 `lib.get_shot_context(df, n)`，除特殊情況外，**不要自己寫** `groupby().shift()`。
-     - 使用範例:
-       ```python
-       # 分析周天成殺球後，對手與下一拍的反應
-       df_prev = lib.get_shot_context(df, shift_n=-1) 
-       df_smash = df_prev[(df_prev['player'] == 'CHOU Tien Chen') & (df_prev['type'] == '殺球')]
-       # 分析對手下一拍回球: 欄位變成 'type_next1'
-       print(df_smash['type_next1'].value_counts())
-       ```
+     - 使用 `lib.get_shot_context(df_A, n)`
    - IMPORTANT: 主客關係邏輯務必清晰。若該球player='玩家A'為主opponent='玩家A的對手'為客，下一球player='玩家A的對手'為主opponent='玩家A'為客，輪流交替。
 
 3. **視覺化 (Matplotlib/Seaborn)**:

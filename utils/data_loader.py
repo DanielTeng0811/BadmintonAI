@@ -215,3 +215,20 @@ def load_all_data():
         column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
 
     return df, data_schema_info, column_definitions_info
+
+def get_concise_column_defs():
+    """
+    僅回傳欄位名稱與描述，供 Step 6 洞察使用。
+    Format:
+    - column_name: description
+    """
+    raw = load_raw_definitions(COLUMN_DEFINITION_FILE)
+    if not raw: return ""
+    
+    parts = ["欄位定義 (Column Definitions):"]
+    for item in raw.get("data_columns", []):
+        col = item.get("column", "Unknown")
+        desc = item.get("description", "")
+        parts.append(f"- {col}: {desc}")
+        
+    return "\n".join(parts)
