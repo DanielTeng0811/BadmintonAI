@@ -23,7 +23,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - 分析「某球員如何得分」或「贏球手段」(如：靠殺球得分) 時，**必須**檢查 `df['player'] == df['getpoint_player']` (Active Win)。僅檢查 `getpoint_player` 與 `type` 會錯誤包含對手失誤。
    - IMPORTANT: 若使用 `player_type` 或 `opponent_type`，在輸出附上數值與名稱對照表。
    - 若使用 `area` 欄位，需提供 Court Grid Definitions。
-   - 時序分析 (Temporal Analysis):若需查詢比較前後ball_round(e.x. 調動、比較前後球等)，IMPORTANT:「先對完整數據(df)的某欄做位移 (shift) 後再篩選」：位移: 務必在 groupby(['match_id', 'set', 'rally']) 後，於完整資料集(df)上執行 shift(n) 建立新欄位。篩選: 欄位建立後才進行條件篩選 (filter)，嚴禁先篩選後shift。
+   - 時序分析 (Temporal Analysis):若需查詢比較前後ball_round(e.x. 調動、造成、導致、前後球比較等)，IMPORTANT:「先對完整數據(df)的某欄做位移 (shift) 後再篩選」：位移: 務必在 groupby(['match_id', 'set', 'rally']) 後，於完整資料集(df)上執行 shift(n) 建立新欄位。篩選: 欄位建立後才進行條件篩選 (filter)，嚴禁先篩選後shift。
    - IMPORTANT: 主客關係邏輯務必清晰。若該球player='玩家A'為主opponent='玩家A的對手'為客，下一球player='玩家A的對手'為主opponent='玩家A'為客，輪流交替。
 
 3. **視覺化 (Matplotlib/Seaborn)**:

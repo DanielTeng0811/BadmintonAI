@@ -43,12 +43,12 @@
     {
       "column": "player_score",
       "description": "'Kento MOMOTA'的當前局內分數。每局刷新。",
-      "warning": "NOT 玩家分數"
+      "warning": "非字面意思的player分數"
     },
     {
       "column": "opponent_score",
       "description": "'CHOU Tien Chen'的當前局內分數。每局刷新。",
-      "warning": "NOT 對手分數"
+      "warning": "非字面意思的opponent分數"
     },
     {
       "column": "score_status",
