@@ -79,14 +79,14 @@
     },
     {
       "column": "player_type",
-      "description": "該球player打出的球種代碼，等價於df['opponent_type'].shift(-1)",
+      "description": "該球player打出的球種代碼，等價於df['opponent_type'].shift(-1)。與type欄位對應，用df['type']為佳",
       "data_type": "float",
       "mapping": "1-11 (見shot_types)",
       "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
     },
     {
       "column": "opponent_type",
-      "description": "opponent前一球打出的球種代碼，等價於df['player_type'].shift(1)",
+      "description": "opponent前一球打出的球種代碼，等價於df['player_type'].shift(1)。與df['type'].shift(1)欄位對應，用df['type'].shift(1)為佳",
       "mapping": "1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)",
       "note": "不等價於opponent的回擊球種代碼"
     },
@@ -124,7 +124,7 @@
     },
     {
       "column": "player_location_area",
-      "description": "當前打擊者所站點的區域代碼，等價於df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)"
+      "description": "當前打擊者所站點的區域代碼，df['player_location_area'] == df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)"
     },
     {
       "column": "player_move_x",
@@ -157,7 +157,7 @@
     },
     {
       "column": "opponent_location_area",
-      "description": "當前對手所站的位置區域代碼，等價於df.groupby(['match_id', 'set', 'rally'])['player_location_area'].shift(-1)"
+      "description": "當前對手所站的位置區域代碼，等價於df['opponent_location_area'] == df.groupby(['match_id', 'set', 'rally'])['player_location_area'].shift(-1)"
     },
     {
       "column": "opponent_move_x",
