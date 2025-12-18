@@ -124,7 +124,7 @@
     },
     {
       "column": "player_location_area",
-      "description": "球員所站點的區域代碼。"
+      "description": "當前打擊者所站點的區域代碼，等價於df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)"
     },
     {
       "column": "player_move_x",
@@ -157,7 +157,7 @@
     },
     {
       "column": "opponent_location_area",
-      "description": "對手擊球區域。對手所站的位置區域代碼"
+      "description": "當前對手所站的位置區域代碼，等價於df.groupby(['match_id', 'set', 'rally'])['player_location_area'].shift(-1)"
     },
     {
       "column": "opponent_move_x",
