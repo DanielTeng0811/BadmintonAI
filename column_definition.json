@@ -79,14 +79,14 @@
     },
     {
       "column": "player_type",
-      "description": "該球player打出的球種代碼，等價於下一筆的opponent_type",
+      "description": "該球player打出的球種代碼，等價於df['opponent_type'].shift(-1)",
       "data_type": "float",
       "mapping": "1-11 (見shot_types)",
       "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
     },
     {
       "column": "opponent_type",
-      "description": "等價於該rally前一筆的player_type",
+      "description": "opponent前一球打出的球種代碼，等價於df['player_type'].shift(1)",
       "mapping": "1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)",
       "note": "不等價於opponent的回擊球種代碼"
     },
@@ -100,7 +100,7 @@
     },
     {
       "column": "hit_area",
-      "description": "player擊球點所在區域代碼 (1-32)"
+      "description": "player擊球點所在區域代碼 (1-32)，等價於df['landing_area'].shift(1)"
     },
     {
       "column": "landing_x",
@@ -112,7 +112,7 @@
     },
     {
       "column": "landing_area",
-      "description": "球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)"
+      "description": "球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)，等價於df['hit_area'].shift(-1)"
     },
     {
       "column": "player_location_x",
