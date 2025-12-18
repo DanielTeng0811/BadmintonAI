@@ -225,7 +225,7 @@
       "active": "球員(P1)擊球得分: df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]",
       "passive": "球員(P1)對手失誤: df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]"
     },
-    "win_rate": "1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / 總回合數",
+    "win_rate": "1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / getpoint_player非空的總回合數",
     "shot_analysis": {
       "group": "用 player_type (數字代碼)",
       "logic": "分析「特定球種得分」時，必須篩選 player == getpoint_player (Active Win)。"
