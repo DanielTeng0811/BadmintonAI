@@ -52,7 +52,7 @@
     },
     {
       "column": "score_status",
-      "description": "分數差距 (player score(Kento MOMOTA) - opponent score(CHOU Tien Chen)",
+      "description": "分數差距 (player score(Kento MOMOTA) - opponent score(CHOU Tien Chen)，同一個rally中雙方分數差距相同",
       "note": "score_status>3表示CHOU Tien Chen落後3分以上，score_status<-3表示CHOU Tien Chen領先3分以上"
     },
     {
@@ -74,20 +74,20 @@
     {
       "column": "type",
       "description": "該球player打出的球種名稱(中文)，非接到的球種",
-      "note": "參照shot_types。發球球種:發短球/發長球；其他皆是打擊球種，依題目篩選兩者",
+      "note": "參照shot_types。發球球種:發短球/發長球；大部分指的球種是扣掉發球球種保留[長球、殺球、切球、挑球、平球、網前球、推撲球、接殺防守、接不到]，依題目篩選兩者",
       "usage": "可使用df['type'].shift()獲取前後拍的球種"
     },
     {
       "column": "player_type",
       "description": "該球player打出的球種代碼，等價於df['opponent_type'].shift(-1)。與type欄位對應，用df['type']為佳",
       "data_type": "float",
-      "mapping": "1-11 (見shot_types)",
+      "mapping": "1-11 (見shot_types)，1、2為發球球種代碼，或0(未意義:出現在rally第一球與最後一球)，一般定義球種不包含發球球種",
       "usage": "若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中"
     },
     {
       "column": "opponent_type",
       "description": "opponent前一球打出的球種代碼，等價於df['player_type'].shift(1)。與df['type'].shift(1)欄位對應，用df['type'].shift(1)為佳",
-      "mapping": "1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)",
+      "mapping": "1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)，一般定義球種不包含發球球種",
       "note": "不等價於opponent的回擊球種代碼"
     },
     {
@@ -174,9 +174,10 @@
     {
       "column": "getpoint_player",
       "description": "只記錄在該回合結束的那一拍。該回合得分者，若正在擊球未結束為NULL",
-      "usage": "group by set/rally取last()，同時欄位有NULL存在，必要時可使用dropna()",
-      "note": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_ player==NULL)。",
-      "IMPORTANT": "getpoint_player != CHOU Tien Chen不代表周天成失分，getpoint_player == Kento MOMOTA代表周天成失分(正確邏輯)，up 因為getpoint_player可能為NULL。"
+      "usage": "若要觀察該回合的得分者使用.groupby(['match_id', 'set', 'rally']).last()，同時欄位有NULL存在，必要時可使用dropna()",
+      "note": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_player==NULL)。",
+      "IMPORTANT": "getpoint_player != CHOU Tien Chen不代表周天成失分，getpoint_player == Kento MOMOTA代表周天成失分(正確邏輯)，因為getpoint_player可能為NULL。",
+      "warning": "必要時可使用df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].transform('last')"
     },
     {
       "column": "win_reason",
