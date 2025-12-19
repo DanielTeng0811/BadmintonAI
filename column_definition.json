@@ -173,7 +173,7 @@
     },
     {
       "column": "getpoint_player",
-      "description": "該回合得分者，若正在打球過程",
+      "description": "只記錄在該回合結束的那一拍。該回合得分者，若正在擊球未結束為NULL",
       "usage": "group by set/rally取last()，同時欄位有NULL存在，必要時可使用dropna()",
       "note": "此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_ player==NULL)。",
       "IMPORTANT": "getpoint_player != CHOU Tien Chen不代表周天成失分，getpoint_player == Kento MOMOTA代表周天成失分(正確邏輯)，up 因為getpoint_player可能為NULL。"
@@ -226,6 +226,7 @@
       "passive": "球員(P1)對手失誤: df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]"
     },
     "win_rate": "1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / getpoint_player非空的總回合數",
+    "success rate": "擊球球種成功率 = 某球種使用下的 (getpoint_player!=opponent / 使用次數)",
     "shot_analysis": {
       "group": "用 player_type (數字代碼)",
       "logic": "分析「特定球種得分」時，必須篩選 player == getpoint_player (Active Win)。"
