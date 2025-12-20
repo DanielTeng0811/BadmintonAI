@@ -82,59 +82,12 @@ def load_column_definitions(filepath):
 
         output_parts = []
 
-        # 1. Metadata
-        if "metadata" in full_definitions:
-            meta = full_definitions["metadata"]
-            output_parts.append("## 比賽資料結構")
-            for k, v in meta.items():
-                output_parts.append(f"- {k.capitalize()}: {v}")
-            output_parts.append("")
-
-        # 2. Shot Types
-        if "shot_types" in full_definitions:
-            output_parts.append("## 球種代碼對照表")
-            for code, name in full_definitions["shot_types"].items():
-                output_parts.append(f"- {code}: {name}")
-            output_parts.append("")
-
-        # 3. Data Columns
+        # Only extract column and description from data_columns
         output_parts.append("## 欄位定義")
         for item in full_definitions.get("data_columns", []):
             col = item.get("column", "Unknown")
             desc = item.get("description", "")
-            output_parts.append(f"### `{col}`")
-            output_parts.append(f"**說明**: {desc}")
-            
-            # Generic loop for other attributes
-            for k, v in item.items():
-                if k in ["column", "description"]: continue
-                
-                label = k.replace("_", " ").title()
-                if k == "warning" or k == "IMPORTANT":
-                    output_parts.append(f"- ⚠️ **{label}**: {v}")
-                else:
-                    output_parts.append(f"- **{label}**: {v}")
-
-        # 4. Analysis Guidelines
-        if "analysis_guidelines" in full_definitions:
-            output_parts.append("\n## 分析指南")
-            guidelines = full_definitions["analysis_guidelines"]
-            
-            def format_guideline(key, val, level=0):
-                indent = "  " * level
-                prefix = "- " if level > 0 else "### "
-                label = key.replace("_", " ").title()
-                
-                if isinstance(val, dict):
-                    lines = [f"{indent}{prefix}{label}"]
-                    for sub_k, sub_v in val.items():
-                        lines.append(format_guideline(sub_k, sub_v, level + 1))
-                    return "\n".join(lines)
-                else:
-                    return f"{indent}- **{label}**: {val}"
-
-            for k, v in guidelines.items():
-                output_parts.append(format_guideline(k, v))
+            output_parts.append(f"- `{col}`: {desc}")
 
         return "\n".join(output_parts)
 
