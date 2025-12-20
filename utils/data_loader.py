@@ -10,7 +10,7 @@ import streamlit as st
 import numpy as np
 
 # 檔案路徑常數
-DATA_FILE = "processed_new.csv"
+DATA_FILE = "processed_new_2.csv"
 COLUMN_DEFINITION_FILE = "column_definition.json"
 
 
