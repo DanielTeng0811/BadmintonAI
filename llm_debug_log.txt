@@ -1,6 +1,6 @@
 
 ==============================
-[2025-12-20 09:05:33] Step: Single Step Analysis
+[2025-12-20 15:16:24] Step: Single Step Analysis
 ------------------------------
 [Input Messages]:
   <SYSTEM>
@@ -219,7 +219,7 @@ Columns go from Left (A) to Right (D).
 請直接輸出 Python 程式碼塊 (以 ```python 開頭)，不要有多餘的解釋文字。
 
   <USER>
-給我所有局的最終得分數
+周天成打擊出界失誤，該球的落點分布
 
 [Output Response]:
 ```python
@@ -228,21 +228,32 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
+# 字體設定
 s = platform.system()
 plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
 plt.rcParams['axes.unicode_minus'] = False
 
-# 假設 df 已經被載入
+# 假設 df 已經被系統預先載入
 if len(df) > 0:
-    # 取得每局的最終得分數
-    final_scores = df.groupby(['match_id', 'set']).agg({
-        'player_score': 'max',
-        'opponent_score': 'max'
-    }).reset_index()
+    # 篩選出周天成打擊出界失誤的數據
+    chou_out_of_bounds = df[(df['player'] == 'CHOU Tien Chen') & (df['lose_reason'] == '出界')]
 
-    print("每局的最終得分數:")
-    print(final_scores)
+    # 檢查是否有數據
+    if len(chou_out_of_bounds) > 0:
+        # 繪製落點分布圖
+        plt.figure(figsize=(10, 6))
+        sns.scatterplot(data=chou_out_of_bounds, x='landing_x', y='landing_y', hue='lose_reason', palette='Reds', s=100, edgecolor='w')
+        plt.title('周天成打擊出界失誤的落點分布')
+        plt.xlabel('落點 X 座標')
+        plt.ylabel('落點 Y 座標')
+        plt.axhline(0, color='gray', linestyle='--', linewidth=0.5)
+        plt.axvline(0, color='gray', linestyle='--', linewidth=0.5)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend(title='失誤原因')
+        plt.show()
+    else:
+        print("沒有周天成打擊出界失誤的數據。")
 else:
-    print("數據集中沒有數據。")
+    print("數據框為空。")
 ```
 ==============================
