@@ -41,21 +41,6 @@
       "usage": "若要觀察對手回球、輸球原因等，可使用df['其他特定欄位'].shift()獲取前後拍的資訊"
     },
     {
-      "column": "player_score",
-      "description": "'Kento MOMOTA'的當前局內分數。每局刷新。",
-      "warning": "非字面意思的player分數"
-    },
-    {
-      "column": "opponent_score",
-      "description": "'CHOU Tien Chen'的當前局內分數。每局刷新。",
-      "warning": "非字面意思的opponent分數"
-    },
-    {
-      "column": "score_status",
-      "description": "分數差距 (player score(Kento MOMOTA) - opponent score(CHOU Tien Chen)，同一個rally中雙方分數差距相同",
-      "note": "score_status>3表示CHOU Tien Chen落後3分以上，score_status<-3表示CHOU Tien Chen領先3分以上"
-    },
-    {
       "column": "player",
       "description": "擊球球員姓名",
       "note": "每個rally中雙方交替擊球",

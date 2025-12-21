@@ -10,7 +10,7 @@ import streamlit as st
 import numpy as np
 
 # 檔案路徑常數
-DATA_FILE = "processed_new_2.csv"
+DATA_FILE = "processed_new_3.csv"
 COLUMN_DEFINITION_FILE = "column_definition.json"
 
 
@@ -152,12 +152,43 @@ def load_all_data():
         tuple: (df, data_schema_info, column_definitions_info)
     """
     df = load_data(DATA_FILE)
+    
+    # 預設值 (若無資料)
+    data_schema_info = ""
+    column_definitions_info = ""
 
-    if df is not None:
-        data_schema_info = get_data_schema(df)
-        column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
+    if df is not None and not df.empty:
+        # [Dynamic Column Renaming]
+        # 根據第一筆資料的 player/opponent 決定欄位名稱
+        # 假設資料已排序: match_id -> set -> rally -> ball_round
+        try:
+            first_row = df.iloc[0]
+            p1_name = first_row['player'] # 第一球的打擊者 (Player A)
+            p2_name = first_row['opponent'] # 對手 (Player B)
+            
+            # 1. Rename DataFrame Columns
+            rename_map = {
+                'player_score': f'{p1_name}_score',
+                'opponent_score': f'{p2_name}_score'
+            }
+            df = df.rename(columns=rename_map)
+            
+            # 2. Update Definitions String (to match new column names)
+            column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
+            column_definitions_info = column_definitions_info.replace("player_score", f"{p1_name}_score")
+            column_definitions_info = column_definitions_info.replace("opponent_score", f"{p2_name}_score")
+            
+            # 3. Generate Schema from the MODIFIED DataFrame
+            data_schema_info = get_data_schema(df)
+            
+        except Exception as e:
+            print(f"Error during dynamic renaming: {e}")
+            # Fallback
+            data_schema_info = get_data_schema(df)
+            column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
+            
     else:
-        data_schema_info = "錯誤：找不到 `all_dataset.csv`，請先準備好數據檔案。"
+        data_schema_info = "錯誤：找不到 `all_dataset.csv` 或資料為空。"
         column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
 
     return df, data_schema_info, column_definitions_info
