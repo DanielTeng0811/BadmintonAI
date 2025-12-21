@@ -13,7 +13,8 @@ import seaborn as sns # 引入 seaborn 提供更多繪圖選擇，但不強制�
 
 # 自訂模組 (請確保 config/prompts.py 裡面沒有 circular import)
 from config.prompts import create_system_prompt
-from utils.data_loader import load_all_data
+from config.prompts import create_system_prompt
+from utils.data_loader import load_all_data, get_available_matches, DATA_DIR # Import new helpers
 from utils.ai_client import initialize_client
 
 # --- 初始設定與環境變數載入 ---
@@ -79,7 +80,9 @@ def log_llm_interaction(step_name, messages, response_content):
         f.write(f"{'='*30}\n")
 
 # --- 資料載入 ---
-df, data_schema_info, column_definitions_info = load_all_data()
+# 預設載入: 空或全部? 建議預設載入空，或提示使用者選擇
+matches_info = get_available_matches()
+df, data_schema_info, column_definitions_info = load_all_data() # 預設流程 (Loader 內部會決定 fallback)
 
 # --- Streamlit UI ---
 st.title("🏸 羽球 AI 數據分析師")
@@ -337,16 +340,24 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     # --- [Step 1: 轉化使用者問題] ---
                     status.update(label="Step 1/6: 正在釐清您的問題...")
                     
+                    matches_str = "\n".join([f"- Match {m['id']}: {m['info']}" for m in matches_info])
+
                     enhancement_system_prompt = f"""
                     你是資料分析輔助系統。請分析使用者問題：
                     1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
                     2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
                        - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
+                    3. **[重要]** 判斷使用者想分析哪幾場比賽。
+                       參考可用賽事列表:
+                       {matches_str}
+                       - 若指定特定場次(e.g. 第1,3場)，回傳 target_match_ids: [1, 3]
+                       - 若無指定，依據問題判斷 (e.g. "Kento的比賽" -> 找出所有Kento的場次ID)，或回傳 [] (系統將預設處理或詢問)
 
                     輸出 JSON (No Markdown):
                     {{
                         "enhanced_prompt": "完整的問題",
-                        "needs_court_info": true/false
+                        "needs_court_info": true/false,
+                        "target_match_ids": [1, 2...]
                     }}
                     """
                     
@@ -382,14 +393,43 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         parsed = json.loads(json_str)
                         enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
                         needs_court_info = parsed.get("needs_court_info", False)
+                        target_match_ids = parsed.get("target_match_ids", [])
                     except:
                         print(f"Enhancement JSON parse failed, using raw text. Content: {raw_content[:50]}...")
+                        target_match_ids = []
                         # Fallback: 如果解析失敗，假設不需要場地資訊，或者如果關鍵字出現則設為True
                         if any(k in prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
                             needs_court_info = True
 
                     print(f"Enhanced Prompt: {enhanced_prompt}")
                     print(f"Needs Court Info: {needs_court_info}")
+                    print(f"Target Match IDs: {target_match_ids}")
+
+                    # --- [Step 1.5: 動態載入資料] ---
+                    # 若 AI 解析出需要特定場次，則重新載入 Data
+                    if target_match_ids:
+                        target_paths = []
+                        # 簡單查找: 遍歷 matches_info 找對應 ID
+                        # 這裡假設 matches_info 的 'id' 是字串或可轉int
+                        # target_match_ids 可能包含 int 或 str
+                        target_ids_str = [str(x) for x in target_match_ids]
+                        
+                        for m in matches_info:
+                            if str(m['id']) in target_ids_str:
+                                target_paths.append(os.path.join(DATA_DIR, m['filename']))
+                        
+                        if target_paths:
+                            status.update(label=f"正在載入 {len(target_paths)} 場賽事資料...")
+                            try:
+                                df, data_schema_info, column_definitions_info = load_all_data(target_paths)
+                            except Exception as e:
+                                print(f"Data reload failed: {e}")
+                                # Keep original data if failed
+                        else:
+                            print("Warning: Target IDs found but no matching files.")
+                            # Fallback: maintain current data or load all?
+                            # 暫時保持現狀
+
 
                     # --- [Step 2: 生成分析程式碼] ---
                     status.update(label="Step 2/6: 正在生成分析程式碼...")
