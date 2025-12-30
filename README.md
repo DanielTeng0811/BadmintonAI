@@ -3,7 +3,7 @@
 2. 去Gemini官網申請免費的API key (或設定OPENAI_API_KEY="你的GPT的key" 也可)
 3. 設定自己的.env檔 (GEMINI_API_KEY="自己的API key")
 4. 若要使用不同數據集，修改data_processing.ipynb，讀取的檔名，並執行
-5. 執行steamlit run fronot_page.py
+5. 執行steamlit run front_page.py
 6. 系統中有"清空對話" "儲存所有對話""是否使用歷史紀錄"的按鈕
 
 
