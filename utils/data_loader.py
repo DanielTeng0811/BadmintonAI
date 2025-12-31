@@ -166,17 +166,25 @@ def load_all_data():
             p1_name = first_row['player'] # 第一球的打擊者 (Player A)
             p2_name = first_row['opponent'] # 對手 (Player B)
             
-            # 1. Rename DataFrame Columns
-            rename_map = {
-                'player_score': f'{p1_name}_score',
-                'opponent_score': f'{p2_name}_score'
-            }
-            df = df.rename(columns=rename_map)
+            # 2. Update Definitions String (Dynamic)
+            # 因為 data_processor 已經將 CSV 的欄位改為 {Name}_score
+            # 我們需要偵測欄位名稱來更新 definition string
+            # 偵測邏輯：找出所有以 "_score" 結尾且不是 "player" 或 "opponent" 的欄位
             
-            # 2. Update Definitions String (to match new column names)
-            column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
-            column_definitions_info = column_definitions_info.replace("player_score", f"{p1_name}_score")
-            column_definitions_info = column_definitions_info.replace("opponent_score", f"{p2_name}_score")
+            score_cols = [c for c in df.columns if c.endswith('_score')]
+            
+            # 簡單策略：如果找到 2 個分數欄位，嘗試替換
+            if len(score_cols) >= 2:
+                # 假設順序通常是 P1, P2 (或根據資料分布)
+                # 這裡我們嘗試找出如果不叫 'player_score' 或 'opponent_score' 的那些
+                custom_score_cols = [c for c in score_cols if c not in ['player_score', 'opponent_score']]
+                
+                if len(custom_score_cols) == 2:
+                    # 更新 definition string
+                    # 注意：原 JSON 是 player_score / opponent_score
+                    # 我們分別用前兩個找到的取代之
+                     column_definitions_info = column_definitions_info.replace("player_score", custom_score_cols[0])
+                     column_definitions_info = column_definitions_info.replace("opponent_score", custom_score_cols[1])
             
             # 3. Generate Schema from the MODIFIED DataFrame
             data_schema_info = get_data_schema(df)

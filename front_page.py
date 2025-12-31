@@ -15,6 +15,7 @@ import seaborn as sns # 引入 seaborn 提供更多繪圖選擇，但不強制�
 from config.prompts import create_system_prompt
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
+from utils.data_processor import process_badminton_data
 
 # --- 初始設定與環境變數載入 ---
 load_dotenv()
@@ -100,6 +101,25 @@ with st.sidebar:
         type="password",
         help="💡 本地開發：從 .env 讀取 | 雲端部署：從 Streamlit Secrets 讀取"
     )
+    
+    st.divider()
+    st.header("📂 資料管理")
+    uploaded_file = st.file_uploader("上傳新比賽資料 (CSV)", type=["csv"], help="上傳 raw data，系統將自動執行 data_processing 並更新資料庫")
+    
+    if uploaded_file is not None:
+        if st.button("🚀 開始處理並載入"):
+            with st.spinner("正在進行資料預處理與資料庫更新..."):
+                try:
+                    # 執行資料處理
+                    process_badminton_data(uploaded_file)
+                    
+                    # 清除快取以確保載入新資料
+                    st.cache_data.clear()
+                    
+                    st.success("✅ 資料處理完成！請稍候，頁面將自動重整...")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ 處理失敗: {e}")
 
     if api_mode == "Gemini":
         model_choice = st.selectbox("選擇模型",["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)

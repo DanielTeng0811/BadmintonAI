@@ -1,6 +1,6 @@
 
 ==============================
-[2025-12-21 13:45:43] Step: Step 1: Enhancement
+[2025-12-31 12:23:27] Step: Step 1: Enhancement
 ------------------------------
 [Input Messages]:
   <SYSTEM>
@@ -17,17 +17,17 @@
                     }
                     
   <USER>
-給我第一場各局雙方的比分
+分析周天成在雙方都達18分以上時的球種分布。
 
 [Output Response]:
 {
-    "enhanced_prompt": "請提供第一場比賽中每一局雙方的比分數據。",
+    "enhanced_prompt": "分析周天成在比賽中當雙方比分都達到18分以上時，他所使用的不同球種的分布情況。",
     "needs_court_info": false
 }
 ==============================
 
 ==============================
-[2025-12-21 13:45:48] Step: Step 2: Code Generation
+[2025-12-31 12:23:32] Step: Step 2: Code Generation
 ------------------------------
 [Input Messages]:
   <SYSTEM>
@@ -83,8 +83,6 @@ Total Rows: 5204
 ### `time` (object) | Empty: 0.0%
 ### `frame_num` (float64) | Empty: 0.0%
 - Range: 11467.0 ~ 135576.0
-### `score_status` (float64) | Empty: 0.0%
-- Range: -11.0 ~ 10.0
 ### `Kento MOMOTA_score` (float64) | Empty: 0.0%
 - Range: 0.0 ~ 22.0
 ### `CHOU Tien Chen_score` (float64) | Empty: 0.0%
@@ -185,151 +183,7 @@ Total Rows: 5204
 - Values: ['CHOU Tien Chen', 'Kento MOMOTA']
 
 **欄位定義:**
-## 比賽資料結構
-- Description: 羽球比賽數據欄位定義
-- Structure: 比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`。getpoint_player、lose_reason、win_reason只有每回合最後一球(得分球)才會記錄。
 
-## 球種代碼對照表
-- 1: 發短球
-- 2: 發長球
-- 3: 長球
-- 4: 殺球
-- 5: 切球
-- 6: 挑球
-- 7: 平球
-- 8: 網前球
-- 9: 推撲球
-- 10: 接殺防守
-- 11: 接不到
-
-## 欄位定義
-### `match_id`
-**說明**: 比賽 ID。用來區分不同的比賽場次。
-### `set`
-**說明**: 局數。每場刷新。
-- **Value Range**: 1-3
-### `rally`
-**說明**: 從發球開始到死球結束稱為一個 Rally。這是該局的第幾個 Rally。每局刷新。
-- **Usage**: 跨局需配match_id, set。總回合: df.groupby(['match_id', 'set', 'rally']).ngroups
-### `rally_id`
-**說明**: 整個數據集中唯一的回合 ID
-### `ball_round`
-**說明**: 這是一個 Rally 中的第幾拍。發球是第 1 拍，接發球是第 2 拍，以此類推。
-- **Usage**: 若要觀察對手回球、輸球原因等，可使用df['其他特定欄位'].shift()獲取前後拍的資訊
-### `Kento MOMOTA_score`
-**說明**: 'Kento MOMOTA'的當前局內分數。每局刷新。
-- ⚠️ **Warning**: 非字面意思的player分數
-### `CHOU Tien Chen_score`
-**說明**: 'CHOU Tien Chen'的當前局內分數。每局刷新。
-- ⚠️ **Warning**: 非字面意思的opponent分數
-### `score_status`
-**說明**: 分數差距 (player score(Kento MOMOTA) - opponent score(CHOU Tien Chen)，同一個rally中雙方分數差距相同
-- **Note**: score_status>3表示CHOU Tien Chen落後3分以上，score_status<-3表示CHOU Tien Chen領先3分以上
-### `player`
-**說明**: 擊球球員姓名
-- **Note**: 每個rally中雙方交替擊球
-- **Usage**: 與多數欄位同時使用，代表player的各種情況。例如:(df['player']=='Player A' & df['type']=='殺球') -> Player A的殺球
-### `opponent`
-**說明**: 對手球員姓名
-- **Note**: 每個rally中雙方交替擊球
-### `server`
-**說明**: 發球狀態
-- **Mapping**: 1:player發球, 2:對打中
-### `type`
-**說明**: 該球player打出的球種名稱(中文)，非接到的球種
-- **Note**: 參照shot_types。發球球種:發短球/發長球；大部分指的球種是扣掉發球球種保留[長球、殺球、切球、挑球、平球、網前球、推撲球、接殺防守、接不到]，依題目篩選兩者
-- **Usage**: 可使用df['type'].shift()獲取前後拍的球種
-### `player_type`
-**說明**: 該球player打出的球種代碼，等價於df['opponent_type'].shift(-1)。與type欄位對應，用df['type']為佳
-- **Data Type**: float
-- **Mapping**: 1-11 (見shot_types)，1、2為發球球種代碼，或0(未意義:出現在rally第一球與最後一球)，一般定義球種不包含發球球種
-- **Usage**: 若需要對手如何回擊player，參考下一筆的player_type，但必須確保在同個rally中
-### `opponent_type`
-**說明**: opponent前一球打出的球種代碼，等價於df['player_type'].shift(1)。與df['type'].shift(1)欄位對應，用df['type'].shift(1)為佳
-- **Mapping**: 1-11 (見shot_types)，或0(未意義:出現在rally第一球與最後一球)，一般定義球種不包含發球球種
-- **Note**: 不等價於opponent的回擊球種代碼
-### `hit_x`
-**說明**: player擊球點X座標
-### `hit_y`
-**說明**: player擊球點Y座標
-### `hit_area`
-**說明**: player擊球點所在區域代碼 (1-32)，等價於df['landing_area'].shift(1)
-### `landing_x`
-**說明**: 球的落點X座標，可視為下顆球對方的擊球點X座標
-### `landing_y`
-**說明**: 球的落點Y座標，可視為下顆球對方的擊球點Y座標
-### `landing_area`
-**說明**: 球的落點區域代碼 (1-32)(即為下顆球對方的擊球點區域代碼)，等價於df['hit_area'].shift(-1)
-### `player_location_x`
-**說明**: 球員所站點的 X 座標。
-### `player_location_y`
-**說明**: 球員所站點的 Y 座標。
-### `player_location_area`
-**說明**: 當前打擊者所站點的區域代碼，df['player_location_area'] == df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)
-### `player_move_x`
-**說明**: 擊球點到移動位置的X座標位移量。(moving_x-hit_x)
-### `player_move_y`
-**說明**: 擊球點到移動位置的Y座標位移量。(moving_y-hit_y)
-### `moving_x`
-**說明**: 球員擊完這一球後，移動到的X座標。
-### `moving_y`
-**說明**: 球員擊完這一球後，移動到的Y座標。
-### `player_moving_area`
-**說明**: 球員擊完這一球後，移動到的區域代碼
-- **Keyword**: 回位
-### `opponent_location_x`
-**說明**: 對手所站的位置X座標
-### `opponent_location_y`
-**說明**: 對手所站的位置Y座標
-### `opponent_location_area`
-**說明**: 當前對手所站的位置區域代碼，等價於df['opponent_location_area'] == df.groupby(['match_id', 'set', 'rally'])['player_location_area'].shift(-1)
-### `opponent_move_x`
-**說明**: 對手擊球點到移動位置的X座標位移量。
-### `opponent_move_y`
-**說明**: 對手擊球點到移動位置的Y座標位移量。
-### `ball_distance`
-**說明**: 飛行距離。球從擊球點 (hit) 到落點 (landing) 的直線距離。
-### `getpoint_player`
-**說明**: 只記錄在該回合結束的那一拍。該回合得分者，若正在擊球未結束為NULL
-- **Usage**: 若要觀察該回合的得分者使用.groupby(['match_id', 'set', 'rally']).last()，同時欄位有NULL存在，必要時可使用dropna()
-- **Note**: 此欄位有三種狀況: player主動得分、player主動失分(當opponent == getpoint_player)與player未得分也未失分(當getpoint_player==NULL)。
-- ⚠️ **Important**: getpoint_player != CHOU Tien Chen不代表周天成失分，getpoint_player == Kento MOMOTA代表周天成失分(正確邏輯)，因為getpoint_player可能為NULL。
-- ⚠️ **Warning**: 必要時可使用df.groupby(['match_id', 'set', 'rally'])['getpoint_player'].transform('last')
-### `win_reason`
-**說明**: player得分原因，其他為NULL無意義不代表任何得失分
-- **Note**: 搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手得分原因等
-### `lose_reason`
-**說明**: player失分原因，其他為NULL無意義不代表任何得失分
-- **Note**: 搭配ball_round查詢前後拍(e.x.回擊、造成原因)對手失分原因等
-- **Usage**: (relevant_df['player'] == 'Player_A') & (relevant_df['lose_reason'] == '未過網') -> Player_A自己失分原因為未過網的情況
-### `aroundhead`
-**說明**: 是否為繞頭擊球 (1: 是, 0: 否)
-### `backhand`
-**說明**: 是否為反手拍 (1: 是, 0: 否)
-### `hit_height`
-**說明**: 擊球時的高度
-### `landing_height`
-**說明**: 被接球時的高度
-### `landing_court_number`
-**說明**: 落點所在的場地編號
-### `ball_distance_x`
-**說明**: 球飛行路徑的 X 軸分量距離
-### `ball_distance_y`
-**說明**: 球飛行路徑的 Y 軸分量距離
-
-## 分析指南
-- **Core**: 使用 getpoint_player (Event) 統計得分，勿用 Kento MOMOTA_score (State) 加總。
-- **Rally Count**: df.groupby(['match_id', 'set', 'rally']).ngroups
-### Winning Logic
-  - **Active**: 球員(P1)擊球得分: df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]
-  - **Passive**: 球員(P1)對手失誤: df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]
-- **Win Rate**: 1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / getpoint_player非空的總回合數
-- **Success Rate**: 擊球球種成功率 = 某球種使用下的 (getpoint_player!=opponent / 使用次數)
-### Shot Analysis
-  - **Group**: 用 player_type (數字代碼)
-  - **Logic**: 分析「特定球種得分」時，必須篩選 player == getpoint_player (Active Win)。
-- **Match Score**: 找出每局最後一筆分數，贏家+1。
-- **Continuous Play**: 回球查詢應用: iloc + `index + 1`，注意對手回球是在下一列。
 
                     
 **最佳實踐:**
@@ -338,80 +192,122 @@ Total Rows: 5204
                     3. 繪圖前檢查 `if len(filtered_df) > 0:`。
                     
   <USER>
-請提供第一場比賽中每一局雙方的比分數據。
+分析周天成在比賽中當雙方比分都達到18分以上時，他所使用的不同球種的分布情況。
 
 [Output Response]:
-要分析第一場比賽中每一局雙方的比分數據，我們將根據數據中的 `match_id` 欄位來篩選出該場比賽，然後找到每局的最終比分。這可以通過在每個 `set` 中找到最後一拍的比分，因為 `Kento MOMOTA_score` 和 `CHOU Tien Chen_score` 分別代表了他們在當前局中的分數。
+要分析周天成在雙方比分都達到18分以上時，他所使用的不同球種的分布情況，我們需要首先篩選出符合條件的數據，然後計算這些情況下`type`的分布。以下是實現此分析的步驟：
 
-下面是完成這一任務的 Python 程式碼：
+1. **篩選數據**：找到`CHOU Tien Chen_score`和`Kento MOMOTA_score`都大於或等於18分的數據。
+2. **提取球種數據**：從篩選後的數據中提取`type`欄位。
+3. **計算頻率分布**：統計每種類型的出現次數。
+4. **可視化**：使用長條圖顯示結果。
+
+下面是實現的Python程式碼：
 
 ```python
-# Import necessary libraries
 import pandas as pd
+import matplotlib.pyplot as plt
+import platform
 
-# 確保數據長度大於0，且包含所需的數據
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame 不為空
 if len(df) > 0:
-    # 選擇第一場比賽 (match_id == 1)
-    match_df = df[df['match_id'] == 1.0]
+    # 篩選雙方比分都>=18的情況
+    filtered_df = df[(df['CHOU Tien Chen_score'] >= 18) & (df['Kento MOMOTA_score'] >= 18)]
 
-    # 對每局 (set) 找到最後一拍的數據，這樣可獲得每局的比分
-    final_scores_df = match_df.groupby('set').last()
+    # 確保過濾後的數據不為空
+    if len(filtered_df) > 0:
+        # 計算不同球種(type)的出現次數
+        type_counts = filtered_df['type'].value_counts()
 
-    # 提取每局的比分
-    scores = final_scores_df[['Kento MOMOTA_score', 'CHOU Tien Chen_score']]
+        # 可視化
+        fig, ax = plt.subplots(figsize=(10, 6))
+        type_counts.plot(kind='bar', ax=ax, color='skyblue')
+        ax.set_title('周天成在比分達到18分以上時使用的球種分布')
+        ax.set_xlabel('球種')
+        ax.set_ylabel('次數')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
 
-    # 打印每局比分
-    for s, row in scores.iterrows():
-        print(f"Set {s}: Kento MOMOTA - {row['Kento MOMOTA_score']}, CHOU Tien Chen - {row['CHOU Tien Chen_score']}")
-
+        # 打印分布數據
+        print(type_counts)
+    else:
+        print("篩選條件下，找不到符合的數據。")
 else:
-    print("數據集中沒有可用的記錄。")
+    print("DataFrame是空的。")
 ```
 
-這段程式碼會找出第一場比賽每一局的最終比分，並顯示給定的分數。其中 `match_id == 1.0` 是用來篩選第一場比賽。`groupby('set').last()` 用來確定每一局的最後一拍球，也就是該局的最終比分。
+### 分析說明：
+- **篩選條件**：只選取比賽中`CHOU Tien Chen_score`和`Kento MOMOTA_score`均大於或等於18分的數據。
+- **`type`欄位**：代表周天成使用的球種，最終計算其在特定比分條件下的頻率。
+- **視覺化長條圖**：提供圖形化的方式幫助理解哪種球種在該情況下被使用最頻繁。
 ==============================
 
 ==============================
-[2025-12-21 13:45:51] Step: Step 4: Logic Reflection
+[2025-12-31 12:23:36] Step: Step 4: Logic Reflection
 ------------------------------
 [Input Messages]:
   <USER>
 
                         [查核資料]
-                        1. 問題: "給我第一場各局雙方的比分"
+                        1. 問題: "分析周天成在雙方都達18分以上時的球種分布。"
                         2. 程式碼:
                         ```python
-                        # Import necessary libraries
-import pandas as pd
+                        import pandas as pd
+import matplotlib.pyplot as plt
+import platform
 
-# 確保數據長度大於0，且包含所需的數據
+# 設定字體
+s = platform.system()
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s == 'Darwin' else ['Microsoft JhengHei', 'SimHei'] if s == 'Windows' else ['WenQuanYi Zen Hei']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 確保 DataFrame 不為空
 if len(df) > 0:
-    # 選擇第一場比賽 (match_id == 1)
-    match_df = df[df['match_id'] == 1.0]
+    # 篩選雙方比分都>=18的情況
+    filtered_df = df[(df['CHOU Tien Chen_score'] >= 18) & (df['Kento MOMOTA_score'] >= 18)]
 
-    # 對每局 (set) 找到最後一拍的數據，這樣可獲得每局的比分
-    final_scores_df = match_df.groupby('set').last()
+    # 確保過濾後的數據不為空
+    if len(filtered_df) > 0:
+        # 計算不同球種(type)的出現次數
+        type_counts = filtered_df['type'].value_counts()
 
-    # 提取每局的比分
-    scores = final_scores_df[['Kento MOMOTA_score', 'CHOU Tien Chen_score']]
+        # 可視化
+        fig, ax = plt.subplots(figsize=(10, 6))
+        type_counts.plot(kind='bar', ax=ax, color='skyblue')
+        ax.set_title('周天成在比分達到18分以上時使用的球種分布')
+        ax.set_xlabel('球種')
+        ax.set_ylabel('次數')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
 
-    # 打印每局比分
-    for s, row in scores.iterrows():
-        print(f"Set {s}: Kento MOMOTA - {row['Kento MOMOTA_score']}, CHOU Tien Chen - {row['CHOU Tien Chen_score']}")
-
+        # 打印分布數據
+        print(type_counts)
+    else:
+        print("篩選條件下，找不到符合的數據。")
 else:
-    print("數據集中沒有可用的記錄。")
+    print("DataFrame是空的。")
                         ```
-                        3. 執行與變數: Set 1: Kento MOMOTA - 21.0, CHOU Tien Chen - 15.0
-Set 2: Kento MOMOTA - 17.0, CHOU Tien Chen - 21.0
-Set 3: Kento MOMOTA - 21.0, CHOU Tien Chen - 18.0
+                        3. 執行與變數: type
+網前球     43
+接殺防守    20
+推撲球     18
+殺球      16
+發短球      9
+長球       8
+挑球       8
+平球       7
+切球       5
+Name: count, dtype: int64
 
-                        _generated_figures_count: 0
-match_df: DataFrame/Series with 1549 rows
-final_scores_df: DataFrame/Series with 3 rows
-scores: DataFrame/Series with 3 rows
-s: 3
-row: DataFrame/Series with 2 rows
+                        _generated_figures_count: 1
+s: Windows
+filtered_df: DataFrame/Series with 134 rows
+type_counts: DataFrame/Series with 9 rows
 
 
                         你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請先**逐步推理 (Chain of Thought)**，找出程式碼邏輯與使用者問題不符之處，並列出具體錯誤，最後再決定是否修正。
@@ -445,64 +341,62 @@ row: DataFrame/Series with 2 rows
 
 [Output Response]:
 [Reasoning]
-1. **確認程式碼是否有明確解決問題**: 使用者問題是要求「第一場各局雙方的比分」，程式碼確實選擇了第一場比賽 (`match_id == 1.0`) 並計算了每局的比分。
-2. **確認程式碼內部邏輯是否有誤**: 程式碼使用 `groupby('set').last()` 來獲取每局的最後一拍數據，這是正確的，因為這樣可以獲得每局的最終比分。
-3. **執行結果是否合理**: 執行結果顯示了三局的比分，這與羽毛球比賽的規則一致（最多三局），並且數據看起來合理。
-4. **資料完整性**: 沒有不當覆蓋變數的情況，`match_df` 和 `final_scores_df` 都正確地從原始數據中提取了所需的信息。
-5. **統計正確性**: 使用 `groupby` 和 `last` 方法來獲取每局的最終比分是正確的。
-6. **欄位選用**: 程式碼正確地選擇了 `Kento MOMOTA_score` 和 `CHOU Tien Chen_score` 這兩個欄位來顯示比分。
-7. **異常檢測**: 沒有異常情況，數據集不為空，且 `_generated_figures_count` 不影響此問題，因為問題要求的是數據而非圖表。
+1. **確認問題**: 使用者問題是分析「周天成在雙方都達18分以上時的球種分布」。
+2. **資料篩選**: 程式碼正確地篩選了雙方比分都大於等於18的情況，這符合問題要求。
+3. **資料完整性**: 程式碼檢查了 DataFrame 是否為空，以及篩選後的 DataFrame 是否為空，這是正確的資料完整性檢查。
+4. **統計正確性**: 使用 `value_counts()` 來計算不同球種的出現次數，這符合題目要求。
+5. **視覺呈現**: 使用長條圖來展示球種分布，並且設置了標題和軸標籤，這是合理的視覺呈現方式。
+6. **視覺呈現潛在問題**: 如果球種類別過多，可能會導致 X 軸標籤擁擠，但目前的數據顯示只有 9 種球種，這應該不會造成問題。
+7. **執行結果**: `_generated_figures_count` 為 1，表示圖表成功生成，`type_counts` 也顯示了 9 種球種的分布，這是合理的。
 
 [Conclusion]
 PASS
 ==============================
 
 ==============================
-[2025-12-21 13:45:55] Step: Step 6: Insight Generation
+[2025-12-31 12:23:41] Step: Step 6: Insight Generation
 ------------------------------
 [Input Messages]:
   <SYSTEM>
 你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。
   <USER>
 
-                        你是羽球教練。問題: "給我第一場各局雙方的比分"
+                        你是羽球教練。問題: "分析周天成在雙方都達18分以上時的球種分布。"
                         數據:
                         --- 程式執行輸出 (Stdout) ---
-Set 1: Kento MOMOTA - 21.0, CHOU Tien Chen - 15.0
-Set 2: Kento MOMOTA - 17.0, CHOU Tien Chen - 21.0
-Set 3: Kento MOMOTA - 21.0, CHOU Tien Chen - 18.0
+type
+網前球     43
+接殺防守    20
+推撲球     18
+殺球      16
+發短球      9
+長球       8
+挑球       8
+平球       7
+切球       5
+Name: count, dtype: int64
 
 
 程式碼執行後，擷取出以下核心變數與其值：
 
 ### 變數 `_generated_figures_count` (型別: `int`)
 ```
-0
+1
 ```
 
-### 變數 `match_df` (型別: `str`)
+### 變數 `s` (型別: `str`)
 ```
-DataFrame/Series with 1549 rows
-```
-
-### 變數 `final_scores_df` (型別: `str`)
-```
-DataFrame/Series with 3 rows
+Windows
 ```
 
-### 變數 `scores` (型別: `str`)
+### 變數 `filtered_df` (型別: `str`)
 ```
-DataFrame/Series with 3 rows
-```
-
-### 變數 `s` (型別: `int`)
-```
-3
+DataFrame/Series with 134 rows
 ```
 
-### 變數 `row` (型別: `str`)
+### 變數 `type_counts` (型別: `str`)
 ```
-DataFrame/Series with 2 rows
+DataFrame/Series with 9 rows
 ```
 
 
@@ -522,11 +416,9 @@ DataFrame/Series with 2 rows
                         
 
 [Output Response]:
-在這場比賽中，Kento Momota 和 Chou Tien Chen 的比分顯示出兩位選手在不同局的表現差異。第一局，Kento Momota 以 21 比 15 取勝，這表明他在這一局中控制了比賽節奏，可能是通過精準的擊球和有效的戰術運用來壓制對手。
+在比賽的關鍵時刻，當雙方都達到18分以上時，周天成的球種分布顯示出他在網前球的使用頻率最高，達到43次，這表明他在關鍵分上更傾向於控制網前，試圖以細膩的手法壓制對手。接下來是接殺防守和推撲球，分別為20次和18次，顯示他在防守端也保持穩定，並且善於利用推撲球轉守為攻。
 
-第二局，Chou Tien Chen 以 21 比 17 扳回一城，這顯示他在這一局中找到了突破 Momota 防線的方法，可能是通過增加進攻的多樣性和強化防守來實現的。
+殺球的使用次數為16次，這表明他在關鍵時刻仍然會選擇主動進攻，尋找一擊致命的機會。發短球和長球的使用次數相對較少，分別為9次和8次，這可能表明他在發球策略上更注重穩定性和變化，而非冒險。
 
-第三局，Momota 以 21 比 18 再次取勝，這表明他在關鍵時刻能夠調整策略，重新掌握比賽的主動權。這可能是通過提高擊球的精準度和增加變化來打亂對手的節奏。
-
-總體來看，Momota 的勝利在於他能夠在關鍵時刻保持穩定的表現，而 Chou Tien Chen 則需要在關鍵分上提高應對能力。這場比賽的數據顯示，Momota 在多數情況下能夠有效地控制比賽節奏，這是他獲勝的關鍵因素。
+整體來看，周天成在關鍵分上展現出良好的控場能力，特別是在網前的細膩操作和防守反擊的能力，這些都是他在高壓情況下保持競爭力的關鍵。這樣的數據分布反映出他在比賽中對節奏的掌控以及對不同球種的靈活運用。
 ==============================
