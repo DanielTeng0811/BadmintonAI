@@ -61,23 +61,29 @@ court_place_info = load_court_info()
 # --- 輔助函數：紀錄 LLM 互動 ---
 def log_llm_interaction(step_name, messages, response_content):
     """
-    將 LLM 的輸入與輸出紀錄到檔案中，方便除錯。
+    將 LLM 的輸入與輸出紀錄到 session state 中，方便除錯。
+
+    改用 session_state 儲存 log，避免 Streamlit Cloud 的檔案寫入權限問題。
     """
-    log_file = "llm_debug_log.txt"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(f"\n{'='*30}\n")
-        f.write(f"[{timestamp}] Step: {step_name}\n")
-        f.write(f"{'-'*30}\n")
-        f.write("[Input Messages]:\n")
-        for msg in messages:
-            role = msg.get("role", "unknown")
-            content = msg.get("content", "")
-            f.write(f"  <{role.upper()}>\n{content}\n")
-        
-        f.write(f"\n[Output Response]:\n{response_content}\n")
-        f.write(f"{'='*30}\n")
+
+    # 初始化 debug_log 如果不存在
+    if "debug_log" not in st.session_state:
+        st.session_state.debug_log = []
+
+    # 建立 log entry
+    log_entry = {
+        "timestamp": timestamp,
+        "step": step_name,
+        "messages": messages,
+        "response": response_content
+    }
+
+    st.session_state.debug_log.append(log_entry)
+
+    # 可選：限制 log 數量避免記憶體過大 (保留最近 50 筆)
+    if len(st.session_state.debug_log) > 50:
+        st.session_state.debug_log = st.session_state.debug_log[-50:]
 
 # --- 資料載入 ---
 df, data_schema_info, column_definitions_info = load_all_data()
@@ -228,9 +234,8 @@ for idx, message in enumerate(st.session_state.messages):
 use_history = st.toggle("🔗 接續前文 (Track History)", value=False, help="開啟後，AI 將參考最近的對話紀錄來回答問題。")
 
 if prompt := st.chat_input("請輸入你的數據分析問題..."):
-    # Clear debug log on new input (create if not exists, truncate if exists)
-    with open("llm_debug_log.txt", "w", encoding="utf-8") as f:
-        pass # Truncate file to 0 bytes
+    # Clear debug log on new input (改用 session_state 而非檔案)
+    st.session_state.debug_log = []
 
     if df is None:
         st.error("❌ 找不到 'all_dataset.csv'。")

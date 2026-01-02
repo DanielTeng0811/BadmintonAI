@@ -1,0 +1,17 @@
+[theme]
+# 自訂主題配色 (可選)
+primaryColor = "#FF6B6B"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#262730"
+font = "sans serif"
+
+[server]
+# 伺服器設定
+headless = true
+enableCORS = false
+port = 8501
+
+[browser]
+# 瀏覽器設定
+gatherUsageStats = false

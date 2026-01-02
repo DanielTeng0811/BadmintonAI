@@ -85,10 +85,14 @@ desktop.ini
 *.swp
 *.swo
 *~
+llm_debug_log.txt
 
 # Environment variables
 .env
 .env.example
+
+# Streamlit Cloud 設定 (不要上傳包含 API keys 的機密檔案)
+.streamlit/secrets.toml
 
 test_questions.md
 
