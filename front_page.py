@@ -759,7 +759,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         
                         
                         messages_6 = [
-                                {"role": "system", "content": "你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，需精簡回答。"},
+                                {"role": "system", "content": "你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，不要有統計術語，需精簡回答。"},
                                 {"role": "user", "content": insight_prompt},
                             ]
                         insight = client.chat.completions.create(

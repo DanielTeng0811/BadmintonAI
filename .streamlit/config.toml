@@ -9,7 +9,7 @@ font = "sans serif"
 [server]
 # 伺服器設定
 headless = true
-enableCORS = false
+# enableCORS = false
 port = 8501
 
 [browser]

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "description": "羽球比賽數據欄位定義",
-    "structure": "比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`。getpoint_player、lose_reason、win_reason只有每回合最後一球(得分球)才會記+1。"
+    "structure": "比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`，謹慎考慮上層邏輯。getpoint_player、lose_reason、win_reason只有每回合最後一球(得分球)才會記+1。"
   },
   "shot_types": {
     "1": "發短球",
@@ -205,7 +205,6 @@
     }
   ],
   "analysis_guidelines": {
-    "core": "使用 getpoint_player (Event) 統計得分，勿用 player_score (State) 加總。",
     "rally_count": "df.groupby(['match_id', 'set', 'rally']).ngroups",
     "winning_logic": {
       "active": "球員(P1)擊球得分: df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]",
