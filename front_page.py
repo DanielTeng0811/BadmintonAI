@@ -79,6 +79,37 @@ def log_llm_interaction(step_name, messages, response_content):
         f.write(f"\n[Output Response]:\n{response_content}\n")
         f.write(f"{'='*30}\n")
 
+# --- 🔒 通關密碼保護 (Simple Auth) ---
+# 這是為了讓 App 可公開網址 (方便分享)，但只讓知道密碼的人使用 (保護 API Key)
+def check_password():
+    """Returns `True` if the user had the correct password."""
+
+    # 1. 如果已經驗證過，直接回傳 True
+    if st.session_state.get("password_correct", False):
+        return True
+
+    # 2. 設定你的通關密碼 (預設: badminton2024)
+    # 也可以從 Secrets 讀取: st.secrets.get("APP_PASSWORD", "badminton2024")
+    CORRECT_PASSWORD = os.getenv("APP_PASSWORD", "badminton2024")
+
+    # 3. 顯示輸入框
+    st.header("🔒 請輸入通關密碼")
+    st.write("此應用程式受密碼保護，以避免 API Key 被濫用。")
+    password_input = st.text_input("密碼", type="password")
+
+    if st.button("登入"):
+        if password_input == CORRECT_PASSWORD:
+            st.session_state["password_correct"] = True
+            st.rerun() # 重新整理以進入主畫面
+        else:
+            st.error("❌ 密碼錯誤")
+    
+    return False
+
+# 如果密碼驗證未通過，則停止執行後續程式碼
+if not check_password():
+    st.stop()
+
 # --- 資料載入 ---
 df, data_schema_info, column_definitions_info = load_all_data()
 
@@ -356,9 +387,30 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     # --- [Step 1: 轉化使用者問題] ---
                     status.update(label="Step 1/6: 正在釐清您的問題...")
+
+                    # [新增]: 提前準備歷史對話 (供 Step 1 與 Step 2 共用)
+                    recent_history = []
+                    if use_history and len(st.session_state.messages) > 1:
+                        # 1. 先收集所有有效的歷史訊息
+                        # 邏輯: 倒序遍歷，遇到 "tracked=False" 的訊息則立即停止 (Chain Breaking)
+                        valid_history = []
+                        
+                        # 從倒數第二則訊息開始往回看 (排除當前最新訊息)
+                        for m in reversed(st.session_state.messages[:-1]):
+                            # 如果遇到沒有開啟追蹤的訊息，視為斷點，停止收集更早的歷史
+                            if not m.get("tracked", True): 
+                                break
+                                
+                            if m.get("content") and "🤔" not in m.get("content", ""):
+                                # 插入到最前面以保持時間順序
+                                valid_history.insert(0, {"role": m["role"], "content": m["content"]})
+                        
+                        # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
+                        recent_history = valid_history[-8:]
+
                     
                     enhancement_system_prompt = f"""
-                    你是資料分析輔助系統。請分析使用者問題：
+                    你是羽球資料分析輔助系統，比賽階層: 場次 -> 局數 -> 回合 -> 第幾球，若跳階層查詢必須給予中間的階層，融入於問題中。請分析使用者問題：
                     1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
                     2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
                        - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
@@ -370,10 +422,13 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     }}
                     """
                     
-                    messages_1 = [
-                            {"role": "system", "content": enhancement_system_prompt},
-                            {"role": "user", "content": prompt}
-                        ]
+                    messages_1 = [{"role": "system", "content": enhancement_system_prompt}]
+                    
+                    # [新增] 注入歷史紀錄，讓 Step 1 能理解「圓餅圖」是指「上一題的圓餅圖」
+                    if recent_history:
+                        messages_1.extend(recent_history)
+
+                    messages_1.append({"role": "user", "content": prompt})
                     enhancement_response = client.chat.completions.create(
                         model=model_choice,
                         messages=messages_1,
@@ -429,26 +484,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     conversation = [{"role": "system", "content": system_prompt}]
                     
-                    # [修改點]：根據 toggle 決定是否加入歷史訊息
-                    if use_history and len(st.session_state.messages) > 1:
-                        # 1. 先收集所有有效的歷史訊息
-                        # 邏輯: 倒序遍歷，遇到 "tracked=False" 的訊息則立即停止 (Chain Breaking)
-                        valid_history = []
-                        
-                        # 從倒數第二則訊息開始往回看 (排除當前最新訊息)
-                        for m in reversed(st.session_state.messages[:-1]):
-                            # 如果遇到沒有開啟追蹤的訊息，視為斷點，停止收集更早的歷史
-                            if not m.get("tracked", True): # 舊訊息預設 True (或視需求改 False)
-                                break
-                                
-                            if m.get("content") and "🤔" not in m.get("content", ""):
-                                # 插入到最前面以保持時間順序
-                                valid_history.insert(0, {"role": m["role"], "content": m["content"]})
-                        
-                        # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
-                        recent_history = valid_history[-8:]
-                        
-                        # 3. 加入對話 Context
+                    # [修改點]：直接使用早已準備好的 recent_history
+                    if recent_history:
                         conversation.extend(recent_history)
                     
                     conversation.append({"role": "user", "content": enhanced_prompt})
@@ -578,7 +615,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請先**逐步推理 (Chain of Thought)**，找出程式碼邏輯與使用者問題不符之處，並列出具體錯誤，最後再決定是否修正。
                         **重要檢查清單:**
                         - 確認程式碼是否有明確解決問題
-                        - 確認程式碼內部邏輯是否有誤
+                        - 確認程式碼在實作細節上和邏輯上是否合理
                         - 執行結果是否合理
 
                         **邏輯錯誤案例:**

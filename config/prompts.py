@@ -23,7 +23,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - 分析「某球員如何得分」或「贏球手段」(如：靠殺球得分) 時，**必須**檢查 `df['player'] == df['getpoint_player']` (Active Win)。僅檢查 `getpoint_player` 與 `type` 會錯誤包含對手失誤。
    - IMPORTANT: 若使用 `player_type` 或 `opponent_type`，在輸出附上數值與名稱對照表。
    - 若使用 `area` 欄位，需提供 Court Grid Definitions。
-   - 時序分析 (Temporal Analysis):若需查詢比較前後ball_round(e.x. 調動、造成、導致、前後球比較等)，IMPORTANT:「先對完整數據(df)的某欄做位移 (shift) 後再篩選」：位移: 務必在 groupby(['match_id', 'set', 'rally']) 後，於完整資料集(df)上執行 shift(n) 建立新欄位。篩選: 欄位建立後才進行條件篩選 (filter)，嚴禁先篩選後位移，特例除外。(錯誤範例:篩選(df_A = df[(df['player'] == 'Player_A')]) then 位移(df_A.groupby(['match_id', 'set', 'rally'])['player_type'].shift(1)))
+   - 時序分析 (Temporal Analysis):分析比較前後拍資訊，對特定欄位正確使用shift()
    - 分析造成原因使用df.groupby(['match_id', 'set', 'rally']).shift(1) (前一球)，分析導致結果使用df.groupby(['match_id', 'set', 'rally'])shift(-1) (後一球)，分析同個球員前一球表現df.groupby(['match_id', 'set', 'rally'])['player'=='球員名'].shift(1)。
    - IMPORTANT: 主客關係邏輯務必清晰。若該球player='玩家A'為主opponent='玩家A的對手'為客，下一球player='玩家A的對手'為主opponent='玩家A'為客，輪流交替。
 
@@ -38,14 +38,21 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - IMPORTANT: 用繁體中文的圖表標籤
 
 4. **字體設定 (程式碼開頭必寫)**:
-```python
 import platform
 import matplotlib.pyplot as plt
-s = platform.system()
-plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC'] if s=='Darwin' else ['Microsoft JhengHei', 'SimHei'] if s=='Windows' else ['WenQuanYi Zen Hei']
+import matplotlib.font_manager as fm
+
+system = platform.system()
+if system == 'Darwin':  # macOS
+    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC']
+elif system == 'Windows':  # Windows
+    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial']
+else:  # Linux (Hugging Face Spaces / Docker)
+    # 這是最穩定的設定：直接使用我們在 Dockerfile 中安裝的系統字體
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'AR PL UMing CN']
+
 plt.rcParams['axes.unicode_minus'] = False
 ```
-
 **回覆模式**:
 - 對象不明: 反問 (不寫 Code)。
 - 明確: 完整文字思考過程 + Code (詢問數值需 `print()` 結果)。

@@ -1,7 +1,7 @@
 {
   "metadata": {
     "description": "羽球比賽數據欄位定義",
-    "structure": "比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`，謹慎考慮上層邏輯。getpoint_player、lose_reason、win_reason只有每回合最後一球(得分球)才會記+1。"
+    "structure": "這份數據集是**「每一拍 (Stroke-level) 的詳細紀錄表」。請將它想像成一個事件串流 (Event Stream)**，每一列 (Row) 代表場上發生了一次「擊球」。比賽階層: `match_id` -> `set` -> `rally` -> `ball_round`，謹慎考慮上層邏輯。getpoint_player、lose_reason、win_reason只有每回合最後一球(得分球)才會記錄。"
   },
   "shot_types": {
     "1": "發短球",
@@ -207,16 +207,15 @@
   "analysis_guidelines": {
     "rally_count": "df.groupby(['match_id', 'set', 'rally']).ngroups",
     "winning_logic": {
-      "active": "球員(P1)擊球得分: df[(df['getpoint_player'] == 'P1') & (df['player'] == 'P1')]",
-      "passive": "球員(P1)對手失誤: df[(df['getpoint_player'] == 'P1') & (df['player'] != 'P1')]"
+      "active": "主動得分：擊球者擊出致勝球。df['getpoint_player'] == df['player']",
+      "passive": "受迫性得分：對手失誤導致我方得分。df['getpoint_player'] == df['opponent']"
     },
-    "win_rate": "1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / getpoint_player非空的總回合數",
-    "success rate": "擊球球種成功率 = 某球種使用下的 (getpoint_player!=opponent / 使用次數)",
+    "win_rate": "特定選手得分率。1.GroupBy ['match_id', 'set', 'rally']取 getpoint_player 2.選手贏得的回合數 / getpoint_player非空的總回合數(必須排除getpoint_player == NULL的情況)",
+    "shot_success_rate": "擊球球種成功率。該球種擊出未直接導致失分 (getpoint_player!=opponent / 使用次數)",
     "shot_analysis": {
       "group": "用 player_type (數字代碼)",
-      "logic": "分析「特定球種得分」時，必須篩選 player == getpoint_player (Active Win)。"
+      "logic": "分析「特定球種得分」時，僅計算 player == getpoint_player (Active Win)。"
     },
-    "match_score": "找出每局最後一筆分數，贏家+1。",
-    "continuous_play": "回球查詢應用: iloc + `index + 1`，注意對手回球是在下一列。"
+    "continuous_play": "連續回球查詢。使用 df.shift(-1) 或 df.iloc[idx + 1] 獲取下一拍資訊。"
   }
 }

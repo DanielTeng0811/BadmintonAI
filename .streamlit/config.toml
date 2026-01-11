@@ -9,11 +9,12 @@ font = "sans serif"
 [server]
 # 伺服器設定
 headless = true
-# enableCORS = false
-port = 8501
+enableCORS = false
+enableXsrfProtection = false
+# port = 8501
 
 [browser]
 # 瀏覽器設定
-serverAddress = "localhost"
+# serverAddress = "localhost"
 gatherUsageStats = false
-serverPort = 8501
+# serverPort = 8501

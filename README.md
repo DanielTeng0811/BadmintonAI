@@ -1,3 +1,14 @@
+---
+title: BadmintonAI
+emoji: 🏸
+colorFrom: red
+colorTo: blue
+sdk: docker
+sdk_version: 1.32.0
+app_file: front_page.py
+pinned: false
+---
+
 # 🏸 BadmintonAI - 羽球 AI 數據分析師
 
 > 透過自然語言，直接生成專業的羽球數據分析與戰術洞察
