@@ -37,22 +37,9 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str) ->
    - 謹慎使用堆疊長條圖。
    - IMPORTANT: 用繁體中文的圖表標籤
 
-4. **字體設定 (程式碼開頭必寫)**:
-import platform
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
-
-system = platform.system()
-if system == 'Darwin':  # macOS
-    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC']
-elif system == 'Windows':  # Windows
-    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial']
-else:  # Linux (Hugging Face Spaces / Docker)
-    # 這是最穩定的設定：直接使用我們在 Dockerfile 中安裝的系統字體
-    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'AR PL UMing CN']
-
-plt.rcParams['axes.unicode_minus'] = False
-```
+4. **環境預設**:
+   - **字體**: 系統已預先設定好 Matplotlib 中文字體 (plt.rcParams)，直接畫圖即可。
+   - **import**: `pd`, `df`, `plt`, `sns`, `platform`, `io` 已在執行環境中預載，無需 import。僅在使用 `numpy` 等額外套件時才需 import。
 **回覆模式**:
 - 對象不明: 反問 (不寫 Code)。
 - 明確: 完整文字思考過程 + Code (詢問數值需 `print()` 結果)。

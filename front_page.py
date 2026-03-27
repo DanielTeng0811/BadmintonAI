@@ -17,6 +17,22 @@ from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
 from utils.data_processor import process_badminton_data
 
+# --- 字體設定 ---
+_FONT_SETUP_CODE = """
+import platform as _plat
+import matplotlib.pyplot as plt
+
+_sys = _plat.system()
+if _sys == 'Darwin':
+    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC']
+elif _sys == 'Windows':
+    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial']
+else:
+    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'AR PL UMing CN']
+
+plt.rcParams['axes.unicode_minus'] = False
+"""
+
 # --- 初始設定與環境變數載入 ---
 load_dotenv()
 
@@ -159,6 +175,22 @@ with st.sidebar:
 
     st.divider()
 
+    # --- 📊 Token 消耗儀表板 ---
+    st.header("📊 Token 消耗追蹤")
+    if "total_tokens" not in st.session_state:
+        st.session_state.total_tokens = 0
+    if "last_turn_tokens" not in st.session_state:
+        st.session_state.last_turn_tokens = 0
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        metric_total = st.empty()
+        metric_total.metric("累積消耗", f"{st.session_state.total_tokens:,}")
+    with col_t2:
+        metric_last = st.empty()
+        metric_last.metric("最新一輪", f"{st.session_state.last_turn_tokens:,}")
+
+    st.divider()
+
     # 多輪問答開關
     enable_clarification = st.checkbox("啟用多輪問答（問題不明確時會主動詢問）", value=False)
 
@@ -172,47 +204,23 @@ with st.sidebar:
     """)
     st.divider()
 
-    # --- ZIP 匯出功能 ---
-    zip_buffer = io.BytesIO()
-    has_messages = "messages" in st.session_state and st.session_state.messages
-    if has_messages:
-        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_f:
-            markdown_content = f"# 🏸 羽球 AI 數據分析師 - 分析報告\n"
-            markdown_content += f"**儲存時間:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n---\n\n"
-            chart_counter = 0
-            for message in st.session_state.messages:
-                role_emoji = "👤" if message["role"] == "user" else "🤖"
-                role_title = "使用者提問" if message["role"] == "user" else "AI 分析師回覆"
-                content_to_save = message["content"]
-                
-                # 在儲存時，將程式碼區塊保留
-                markdown_content += f"### {role_emoji} {role_title}\n{content_to_save.strip()}\n\n"
-                
-                figures = message.get("figures", [])
-                if not figures and message.get("figure"):
-                    figures = [message["figure"]]
-
-                for fig in figures:
-                    chart_counter += 1
-                    chart_filename = f"chart_{chart_counter}.png"
-                    img_buffer = io.BytesIO()
-                    fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
-                    img_buffer.seek(0)
-                    zip_f.writestr(chart_filename, img_buffer.getvalue())
-                    markdown_content += f"![產生的圖表 {chart_counter}]({chart_filename})\n\n"
-                markdown_content += "---\n\n"
-            zip_f.writestr("分析報告.md", markdown_content.encode('utf-8'))
-
-    st.download_button(
+    # --- ZIP 匯出功能 (佔位符) ---
+    zip_download_placeholder = st.empty()
+    # 預設顯示一個 disabled 的按鈕，避免畫面閃爍或空白
+    zip_download_placeholder.download_button(
         label="💾 下載分析報告 (ZIP)",
-        data=zip_buffer.getvalue(),
-        file_name=f"羽球分析報告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
-        mime="application/zip",
-        disabled=not has_messages
+        data=b"",
+        file_name="empty.zip",
+        disabled=True,
+        key="initial_zip_button"
     )
+    st.divider()
 
     if st.button("🗑️ 清除對話"):
         st.session_state.messages = []
+        # 清除 Token 計數器
+        st.session_state.total_tokens = 0
+        st.session_state.last_turn_tokens = 0
         st.rerun()
 
 # 初始化 client 與對話
@@ -385,6 +393,9 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 # JSON 解析失敗，繼續正常流程
                                 pass
 
+                    # --- Token 計數器：本輪累加 ---
+                    _turn_tokens = 0
+
                     # --- [Step 1: 轉化使用者問題] ---
                     status.update(label="Step 1/6: 正在釐清您的問題...")
 
@@ -412,6 +423,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     enhancement_system_prompt = f"""
                     你是羽球資料分析輔助系統，比賽階層: 場次 -> 局數 -> 回合 -> 第幾球，若跳階層查詢必須給予中間的階層，融入於問題中。請分析使用者問題：
                     1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
+                        - 如果使用者沒有特別指定「哪一場比賽」，請預設為「所有資料/所有場次」，不要自行腦補加上「在某場比賽中」這類限制條件。
                     2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
                        - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
 
@@ -437,6 +449,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     
                     # 解析回應
                     raw_content = enhancement_response.choices[0].message.content.strip()
+                    if hasattr(enhancement_response, 'usage') and enhancement_response.usage:
+                        _turn_tokens += getattr(enhancement_response.usage, 'total_tokens', 0)
                     log_llm_interaction("Step 1: Enhancement", messages_1, raw_content)
                     enhanced_prompt = raw_content
                     needs_court_info = False
@@ -494,6 +508,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         model=model_choice, messages=conversation
                     )
                     ai_response = response.choices[0].message.content
+                    if hasattr(response, 'usage') and response.usage:
+                        _turn_tokens += getattr(response.usage, 'total_tokens', 0)
                     log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
 
                     # 取出 Python code
@@ -536,7 +552,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 }
                                 f = io.StringIO()
                                 with redirect_stdout(f):
-                                    exec(code_to_execute, exec_globals)
+                                    exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
                                 execution_output = f.getvalue()
                                 success = True
                                 break 
@@ -551,6 +567,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 
                                 correction_response = client.chat.completions.create(model=model_choice, messages=conversation)
                                 ai_correction = correction_response.choices[0].message.content
+                                if hasattr(correction_response, 'usage') and correction_response.usage:
+                                    _turn_tokens += getattr(correction_response.usage, 'total_tokens', 0)
                                 log_llm_interaction(f"Step 3: Error Fix (Retry {retry_count})", conversation, ai_correction)
                                 
                                 if "```python" in ai_correction:
@@ -647,6 +665,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             temperature=0.1
                         )
                         reflection_content = reflection_response.choices[0].message.content.strip()
+                        if hasattr(reflection_response, 'usage') and reflection_response.usage:
+                            _turn_tokens += getattr(reflection_response.usage, 'total_tokens', 0)
                         log_llm_interaction("Step 4: Logic Reflection", messages_4, reflection_content)
 
                         if "```python" in reflection_content:
@@ -672,7 +692,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 }
                                 f = io.StringIO()
                                 with redirect_stdout(f):
-                                    exec(new_code, exec_globals)
+                                    exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
                                 execution_output = f.getvalue()
                                 
                                 code_to_execute = new_code 
@@ -700,7 +720,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     }
                                     f = io.StringIO()
                                     with redirect_stdout(f):
-                                        exec(code_to_execute, exec_globals)
+                                        exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
                                     execution_output = f.getvalue()
                                 except:
                                     pass
@@ -800,6 +820,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             temperature=0.4,
                         )
                         summary_text = insight.choices[0].message.content
+                        if hasattr(insight, 'usage') and insight.usage:
+                            _turn_tokens += getattr(insight.usage, 'total_tokens', 0)
                         log_llm_interaction("Step 6: Insight Generation", messages_6, summary_text)
                         st.markdown(summary_text)
 
@@ -820,10 +842,19 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         "role": "assistant",
                         "content": final_content_for_history.strip(),
                         "figures": final_figs,
-                        "enhanced_prompt": enhanced_prompt # [修改點]：儲存優化後的提問邏輯
+                        "enhanced_prompt": enhanced_prompt,
+                        "turn_tokens": _turn_tokens
                     })
 
-                    status.update(label="分析完成！", state="complete")
+                    # --- Token 追蹤：寫入本輪與累積 ---
+                    st.session_state.last_turn_tokens = _turn_tokens
+                    st.session_state.total_tokens += _turn_tokens
+
+                    # 即時更新頂端的儀表板 (避免要等下一次對話才更新)
+                    metric_total.metric("累積消耗", f"{st.session_state.total_tokens:,}")
+                    metric_last.metric("最新一輪", f"{st.session_state.last_turn_tokens:,}")
+
+                    status.update(label=f"分析完成！(本輪 Token: {_turn_tokens:,})", state="complete")
 
                 except Exception as e:
                     status.update(label="分析失敗", state="error")
@@ -831,3 +862,44 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     st.session_state.messages.append({
                         "role": "assistant", "content": str(e), "figure": None
                     })
+
+# --- 更新 ZIP 下載按鈕 (確保包含最新對話) ---
+has_messages = "messages" in st.session_state and len(st.session_state.messages) > 0
+if has_messages:
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_f:
+        markdown_content = f"# 🏸 羽球 AI 數據分析師 - 分析報告\n"
+        markdown_content += f"**儲存時間:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n---\n\n"
+        chart_counter = 0
+        for message in st.session_state.messages:
+            role_emoji = "👤" if message["role"] == "user" else "🤖"
+            role_title = "使用者提問" if message["role"] == "user" else "AI 分析師回覆"
+            content_to_save = message["content"]
+            markdown_content += f"### {role_emoji} {role_title}\n{content_to_save.strip()}\n\n"
+            
+            # --- 加入 Token 資訊 ---
+            if "turn_tokens" in message:
+                markdown_content += f"*(🔖 本次回答消耗 Token: {message['turn_tokens']:,})*\n\n"
+
+            figures = message.get("figures", [])
+            if not figures and message.get("figure"):
+                figures = [message["figure"]]
+
+            for fig in figures:
+                chart_counter += 1
+                chart_filename = f"chart_{chart_counter}.png"
+                img_buffer = io.BytesIO()
+                fig.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight')
+                img_buffer.seek(0)
+                zip_f.writestr(chart_filename, img_buffer.getvalue())
+                markdown_content += f"![產生的圖表 {chart_counter}]({chart_filename})\n\n"
+            markdown_content += "---\n\n"
+        zip_f.writestr("分析報告.md", markdown_content.encode('utf-8'))
+
+    zip_download_placeholder.download_button(
+        label="💾 下載分析報告 (ZIP)",
+        data=zip_buffer.getvalue(),
+        file_name=f"羽球分析報告_{datetime.now().strftime('%Y%m%d_%H%M%S')}.zip",
+        mime="application/zip",
+        key="final_zip_button"
+    )
