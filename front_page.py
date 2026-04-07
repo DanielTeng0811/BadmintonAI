@@ -12,7 +12,13 @@ import matplotlib.pyplot as plt # 確保 matplotlib 被導入
 import seaborn as sns # 引入 seaborn 提供更多繪圖選擇，但不強制使用
 
 # 自訂模組 (請確保 config/prompts.py 裡面沒有 circular import)
-from config.prompts import create_system_prompt
+from config.prompts import (
+    create_system_prompt,
+    create_enhancement_system_prompt,
+    create_reflection_prompt,
+    create_insight_prompt,
+    create_clarification_check_prompt
+)
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
 from utils.data_processor import process_badminton_data
@@ -322,17 +328,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         status.update(label="Step 0/6: 檢查問題是否需要澄清...")
 
                         import json
-                        clarification_check_prompt = f"""
-                        檢查問題是否明確 (含球員/時間/比較對象)。無法判斷則回傳 JSON 請求澄清。
-                        問題: "{prompt}"
-                        欄位: {data_schema_info}
-                        輸出: "CLEAR" 或 JSON:
-                        {{
-                        "need_clarification": true,
-                        "question": "請問您要...",
-                        "options": ["選項1...", "選項2..."]
-                        }}
-                        """
+                        clarification_check_prompt = create_clarification_check_prompt(prompt, data_schema_info)
 
                         messages_0 = [{"role": "user", "content": clarification_check_prompt}]
                         clarification_response = client.chat.completions.create(
@@ -399,46 +395,47 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     # --- [Step 1: 轉化使用者問題] ---
                     status.update(label="Step 1/6: 正在釐清您的問題...")
 
-                    # [新增]: 提前準備歷史對話 (供 Step 1 與 Step 2 共用)
-                    recent_history = []
+                    # [新增]: 提前準備兩種歷史對話 (供 Step 1 與 Step 2 分別使用)
+                    step1_history = []
+                    step2_history_candidate = []
+                    
                     if use_history and len(st.session_state.messages) > 1:
-                        # 1. 先收集所有有效的歷史訊息
-                        # 邏輯: 倒序遍歷，遇到 "tracked=False" 的訊息則立即停止 (Chain Breaking)
-                        valid_history = []
-                        
-                        # 從倒數第二則訊息開始往回看 (排除當前最新訊息)
+                        # 1. 收集有效的歷史訊息 (遇到 tracked=False 就斷掉)
+                        last_seen_enhanced_prompt = ""
                         for m in reversed(st.session_state.messages[:-1]):
                             # 如果遇到沒有開啟追蹤的訊息，視為斷點，停止收集更早的歷史
                             if not m.get("tracked", True): 
                                 break
                                 
                             if m.get("content") and "🤔" not in m.get("content", ""):
-                                # 插入到最前面以保持時間順序
-                                valid_history.insert(0, {"role": m["role"], "content": m["content"]})
+                                role = m["role"]
+                                if role == "user":
+                                    step1_history.insert(0, {"role": "user", "content": m["content"]})
+                                    # Step 2 傳入的前文提問改使用優化後的 (若有)
+                                    prompt_for_step2 = last_seen_enhanced_prompt if last_seen_enhanced_prompt else m["content"]
+                                    step2_history_candidate.insert(0, {"role": "user", "content": prompt_for_step2})
+                                elif role == "assistant":
+                                    last_seen_enhanced_prompt = m.get("enhanced_prompt", "")
+                                    # Step 1 只看之前的優化問題，不看程式碼
+                                    step1_history.insert(0, {"role": "assistant", "content": m.get("enhanced_prompt", "AI處理完成")})
+                                    
+                                    # Step 2 只給程式碼，不給洞見文字
+                                    code = m.get("code_to_execute", "")
+                                    code_str = f"```python\n{code}\n```" if code else "(沒有生成程式碼)"
+                                    step2_history_candidate.insert(0, {"role": "assistant", "content": code_str})
                         
                         # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
-                        recent_history = valid_history[-8:]
+                        step1_history = step1_history[-8:]
+                        step2_history_candidate = step2_history_candidate[-8:]
 
                     
-                    enhancement_system_prompt = f"""
-                    你是羽球資料分析輔助系統，比賽階層: 場次 -> 局數 -> 回合 -> 第幾球，若跳階層查詢必須給予中間的階層，融入於問題中。請分析使用者問題：
-                    1. 將簡短問題轉化為精準完整的數據分析問題 (Enhanced Prompt)，勿過度詮釋，用繁體中文。
-                        - 如果使用者沒有特別指定「哪一場比賽」，請預設為「所有資料/所有場次」，不要自行腦補加上「在某場比賽中」這類限制條件。
-                    2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
-                       - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
-
-                    輸出 JSON (No Markdown):
-                    {{
-                        "enhanced_prompt": "完整的問題",
-                        "needs_court_info": true/false
-                    }}
-                    """
+                    enhancement_system_prompt = create_enhancement_system_prompt()
                     
                     messages_1 = [{"role": "system", "content": enhancement_system_prompt}]
                     
-                    # [新增] 注入歷史紀錄，讓 Step 1 能理解「圓餅圖」是指「上一題的圓餅圖」
-                    if recent_history:
-                        messages_1.extend(recent_history)
+                    # [優化] Step 1 注入純文字邏輯歷史
+                    if step1_history:
+                        messages_1.extend(step1_history)
 
                     messages_1.append({"role": "user", "content": prompt})
                     enhancement_response = client.chat.completions.create(
@@ -454,6 +451,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     log_llm_interaction("Step 1: Enhancement", messages_1, raw_content)
                     enhanced_prompt = raw_content
                     needs_court_info = False
+                    is_related_to_previous_code = False
 
                     try:
                         import json
@@ -471,6 +469,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         parsed = json.loads(json_str)
                         enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
                         needs_court_info = parsed.get("needs_court_info", False)
+                        is_related_to_previous_code = parsed.get("is_related_to_previous_code", False)
                     except:
                         print(f"Enhancement JSON parse failed, using raw text. Content: {raw_content[:50]}...")
                         # Fallback: 如果解析失敗，假設不需要場地資訊，或者如果關鍵字出現則設為True
@@ -479,28 +478,21 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     print(f"Enhanced Prompt: {enhanced_prompt}")
                     print(f"Needs Court Info: {needs_court_info}")
+                    print(f"Is Related To Previous Code: {is_related_to_previous_code}")
 
                     # --- [Step 2: 生成分析程式碼] ---
                     status.update(label="Step 2/6: 正在生成分析程式碼...")
-                    system_prompt = create_system_prompt(data_schema_info, column_definitions_info)
-                    
-                    # 動態注入場地資訊
-                    if needs_court_info and court_place_info:
-                        system_prompt += f"\n\n**場地位置參考資訊 (Court Grid Definitions):**\n{court_place_info}\n"
-
-                    # [修改點]：注入通用且穩健的視覺化指導原則，而非強制特定方法
-                    system_prompt += """
-                    \n**最佳實踐:**
-                    1. 區分連續數值(Float)與類別。座標勿直接 groupby。
-                    2. 軸標籤避免大量浮點數。
-                    3. 繪圖前檢查 `if len(filtered_df) > 0:`。
-                    """
+                    system_prompt = create_system_prompt(
+                        data_schema_info, 
+                        column_definitions_info, 
+                        court_place_info if needs_court_info else None
+                    )
 
                     conversation = [{"role": "system", "content": system_prompt}]
                     
-                    # [修改點]：直接使用早已準備好的 recent_history
-                    if recent_history:
-                        conversation.extend(recent_history)
+                    # [優化] 只有當 Step 1 判定與上一題相關時，才將單純的程式碼歷史 (step2_history_candidate) 傳給 Step 2
+                    if is_related_to_previous_code and step2_history_candidate:
+                        conversation.extend(step2_history_candidate)
                     
                     conversation.append({"role": "user", "content": enhanced_prompt})
 
@@ -620,44 +612,9 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         
                         if not reflection_context:
                             reflection_context = "(無特定輸出變數，這通常表示沒有計算出任何數據)"
-                        reflection_prompt = f"""
-                        [查核資料]
-                        1. 問題: "{prompt}"
-                        2. 程式碼:
-                        ```python
-                        {code_to_execute}
-                        ```
-                        3. 執行與變數: {execution_output}
-                        {reflection_context}
-
-                        你是嚴格的「程式碼邏輯審計員 (Code Auditor)」。請先**逐步推理 (Chain of Thought)**，找出程式碼邏輯與使用者問題不符之處，並列出具體錯誤，最後再決定是否修正。
-                        **重要檢查清單:**
-                        - 確認程式碼是否有明確解決問題
-                        - 確認程式碼在實作細節上和邏輯上是否合理
-                        - 執行結果是否合理
-
-                        **邏輯錯誤案例:**
-                        - 🐛 **邏輯潛在錯誤**: 
-                            - 資料完整性: 變數是否被不當覆蓋？dropna 是否刪除了過多資料？
-                            - 統計正確性: groupby + sum/mean/count 是否符合題目語意？(如：求次數卻用 sum, 求總分卻用 count)
-                            - 欄位選用: 是否選錯欄位？ (如: player A vs player B)
-                        - 🎯 **意圖相符性**: 程式碼產出的圖表/數據，是否直接回答了使用者的問題？
-                        - ❌ **異常檢測**: 是否產生 `Empty/0 rows`？圖表是否空白 (`_generated_figures_count`=0)？
-                        - ⚠️ **視覺呈現**: 
-                            - 圓餅圖: 若小於 5% 的類別過多，**必須**合併為「其他 (Others)」。
-                            - 長條圖: X 軸標籤若過多導致擁擠難讀，應調整為水平長條圖或篩選 Top N。
-                        - 時間序是否搞錯: shift()邏輯需要使用嗎?是否使用正確?
-                        **回覆格式 (Format):**
-                        請嚴格遵守以下格式回覆：
-                        
-                        [Reasoning]
-                        1. (觀察到的問題或確認正確的事實...)
-                        2. ...
-
-                        [Conclusion]
-                        (若需修正，請提供完整 Python 程式碼，包含必要的 import，並務必用 ```python 包裹)
-                        (若無需修正，請僅回覆單字: PASS)
-                        """
+                        reflection_prompt = create_reflection_prompt(
+                            enhanced_prompt, code_to_execute, execution_output, reflection_context
+                        )
                         messages_4 = [{"role": "user", "content": reflection_prompt}]
                         reflection_response = client.chat.completions.create(
                             model=model_choice,
@@ -790,24 +747,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                 else:
                                     analysis_context_str += f"```\n{str(val)}\n```\n\n"
                         
-                        insight_prompt = f"""
-                        你是羽球教練。問題: "{prompt}"
-                        數據:
-                        {analysis_context_str}
-                        規定:
-                        1. 若圖表含 "player_type"/"opponent_type"，必須輸出 Mapping: 1:發短球, 2:發長球, 3:長球, 4:殺球, 5:切球, 6:挑球, 7:平球, 8:網前球, 9:推撲球, 10:接殺防守, 11:接不到。
-                        2. 若圖表含 "area" (landing_area...)，必須輸出:
-| Row/Col | Col A (Left) | Col B (C-Left) | Col C (C-Right) | Col D (Right) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Row 6 (Front)** | 21 | 22 | 23 | 24 |
-| **Row 5 (Front)** | 17 | 18 | 19 | 20 |
-| **Row 4 (Mid)** | 13 | 14 | 15 | 16 |
-| **Row 3 (Mid)** | 9 | 10 | 11 | 12 |
-| **Row 2 (Mid)** | 5 | 6 | 7 | 8 |
-| **Row 1 (Back)** | 1 | 2 | 3 | 4 |
-
-                        用教練口吻，基於數據精簡提供戰術洞察。說明數字背後的意義，只說事實。
-                        """
+                        insight_prompt = create_insight_prompt(enhanced_prompt, analysis_context_str)
                         
                         
                         messages_6 = [
@@ -843,6 +783,7 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         "content": final_content_for_history.strip(),
                         "figures": final_figs,
                         "enhanced_prompt": enhanced_prompt,
+                        "code_to_execute": code_to_execute,
                         "turn_tokens": _turn_tokens
                     })
 
