@@ -22,22 +22,17 @@ from config.prompts import (
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
 from utils.data_processor import process_badminton_data
+from utils.analysis_workflow import (
+    extract_conversation_context,
+    run_clarification_check,
+    run_prompt_enhancement,
+    run_code_generation,
+    run_code_execution,
+    run_code_execution_loop,
+    run_logic_reflection,
+    run_insight_generation
+)
 
-# --- 字體設定 ---
-_FONT_SETUP_CODE = """
-import platform as _plat
-import matplotlib.pyplot as plt
-
-_sys = _plat.system()
-if _sys == 'Darwin':
-    plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'PingFang TC', 'Heiti TC']
-elif _sys == 'Windows':
-    plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei', 'SimHei', 'Arial']
-else:
-    plt.rcParams['font.sans-serif'] = ['WenQuanYi Zen Hei', 'AR PL UMing CN']
-
-plt.rcParams['axes.unicode_minus'] = False
-"""
 
 # --- 初始設定與環境變數載入 ---
 load_dotenv()
@@ -80,26 +75,6 @@ def load_court_info():
 
 court_place_info = load_court_info()
 
-# --- 輔助函數：紀錄 LLM 互動 ---
-def log_llm_interaction(step_name, messages, response_content):
-    """
-    將 LLM 的輸入與輸出紀錄到檔案中，方便除錯。
-    """
-    log_file = "llm_debug_log.txt"
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    with open(log_file, "a", encoding="utf-8") as f:
-        f.write(f"\n{'='*30}\n")
-        f.write(f"[{timestamp}] Step: {step_name}\n")
-        f.write(f"{'-'*30}\n")
-        f.write("[Input Messages]:\n")
-        for msg in messages:
-            role = msg.get("role", "unknown")
-            content = msg.get("content", "")
-            f.write(f"  <{role.upper()}>\n{content}\n")
-        
-        f.write(f"\n[Output Response]:\n{response_content}\n")
-        f.write(f"{'='*30}\n")
 
 # --- 🔒 通關密碼保護 (Simple Auth) ---
 # 這是為了讓 App 可公開網址 (方便分享)，但只讓知道密碼的人使用 (保護 API Key)
@@ -326,159 +301,59 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     # --- [Step 0: 問題檢查與澄清] ---
                     if not skip_clarification and enable_clarification:
                         status.update(label="Step 0/6: 檢查問題是否需要澄清...")
+                        # 取得 Prompt
+                        clarification_prompt = create_clarification_check_prompt(prompt, data_schema_info)
+                        # 執行工作流
+                        clarification_data = run_clarification_check(client, model_choice, clarification_prompt)
 
-                        import json
-                        clarification_check_prompt = create_clarification_check_prompt(prompt, data_schema_info)
+                        if clarification_data.get("need_clarification"):
+                            # 設定澄清狀態
+                            st.session_state.awaiting_clarification = True
+                            st.session_state.clarification_data = clarification_data
+                            st.session_state.original_prompt = prompt
 
-                        messages_0 = [{"role": "user", "content": clarification_check_prompt}]
-                        clarification_response = client.chat.completions.create(
-                            model=model_choice,
-                            messages=messages_0,
-                            temperature=0.3
-                        )
-                        clarification_content = clarification_response.choices[0].message.content.strip()
-                        log_llm_interaction("Step 0: Clarification Check", messages_0, clarification_content)
+                            # 顯示澄清問題
+                            st.markdown(f"### 🤔 {clarification_data['question']}")
+                            st.info("請在下方輸入框中選擇以下選項之一（輸入選項編號或完整描述），或直接輸入您的補充說明：")
 
-                        # 檢查是否需要澄清
-                        if "CLEAR" not in clarification_content:
-                            try:
-                                # 提取 JSON
-                                json_str = clarification_content
-                                if "```json" in clarification_content:
-                                    start = clarification_content.find("```json") + 7
-                                    end = clarification_content.find("```", start)
-                                    json_str = clarification_content[start:end].strip()
-                                elif "```" in clarification_content:
-                                    start = clarification_content.find("```") + 3
-                                    end = clarification_content.find("```", start)
-                                    json_str = clarification_content[start:end].strip()
+                            options_text = ""
+                            for i, option in enumerate(clarification_data['options'], 1):
+                                option_line = f"**{i}.** {option}"
+                                st.markdown(option_line)
+                                options_text += f"{i}. {option}\n"
 
-                                clarification_data = json.loads(json_str)
+                                # 儲存助手回應到歷史
+                                clarification_msg = f"### 🤔 {clarification_data['question']}\n\n"
+                                clarification_msg += "請選擇以下選項之一，或直接提供補充說明：\n\n"
+                                clarification_msg += options_text
 
-                                if clarification_data.get("need_clarification"):
-                                    # 設定澄清狀態
-                                    st.session_state.awaiting_clarification = True
-                                    st.session_state.clarification_data = clarification_data
-                                    st.session_state.original_prompt = prompt
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": clarification_msg,
+                                "figures": []
+                            })
 
-                                    # 顯示澄清問題
-                                    st.markdown(f"### 🤔 {clarification_data['question']}")
-                                    st.info("請在下方輸入框中選擇以下選項之一（輸入選項編號或完整描述），或直接輸入您的補充說明：")
-
-                                    options_text = ""
-                                    for i, option in enumerate(clarification_data['options'], 1):
-                                        option_line = f"**{i}.** {option}"
-                                        st.markdown(option_line)
-                                        options_text += f"{i}. {option}\n"
-
-                                    # 儲存助手回應到歷史
-                                    clarification_msg = f"### 🤔 {clarification_data['question']}\n\n"
-                                    clarification_msg += "請選擇以下選項之一，或直接提供補充說明：\n\n"
-                                    clarification_msg += options_text
-
-                                    st.session_state.messages.append({
-                                        "role": "assistant",
-                                        "content": clarification_msg,
-                                        "figures": []
-                                    })
-
-                                    status.update(label="等待您的補充資訊...", state="complete")
-                                    st.stop()
-
-                            except json.JSONDecodeError:
-                                # JSON 解析失敗，繼續正常流程
-                                pass
+                            status.update(label="等待您的補充資訊...", state="complete")
+                            st.stop()
 
                     # --- Token 計數器：本輪累加 ---
                     _turn_tokens = 0
 
                     # --- [Step 1: 轉化使用者問題] ---
                     status.update(label="Step 1/6: 正在釐清您的問題...")
-
-                    # [新增]: 提前準備兩種歷史對話 (供 Step 1 與 Step 2 分別使用)
-                    step1_history = []
-                    step2_history_candidate = []
                     
-                    if use_history and len(st.session_state.messages) > 1:
-                        # 1. 收集有效的歷史訊息 (遇到 tracked=False 就斷掉)
-                        last_seen_enhanced_prompt = ""
-                        for m in reversed(st.session_state.messages[:-1]):
-                            # 如果遇到沒有開啟追蹤的訊息，視為斷點，停止收集更早的歷史
-                            if not m.get("tracked", True): 
-                                break
-                                
-                            if m.get("content") and "🤔" not in m.get("content", ""):
-                                role = m["role"]
-                                if role == "user":
-                                    step1_history.insert(0, {"role": "user", "content": m["content"]})
-                                    # Step 2 傳入的前文提問改使用優化後的 (若有)
-                                    prompt_for_step2 = last_seen_enhanced_prompt if last_seen_enhanced_prompt else m["content"]
-                                    step2_history_candidate.insert(0, {"role": "user", "content": prompt_for_step2})
-                                elif role == "assistant":
-                                    last_seen_enhanced_prompt = m.get("enhanced_prompt", "")
-                                    # Step 1 只看之前的優化問題，不看程式碼
-                                    step1_history.insert(0, {"role": "assistant", "content": m.get("enhanced_prompt", "AI處理完成")})
-                                    
-                                    # Step 2 只給程式碼，不給洞見文字
-                                    code = m.get("code_to_execute", "")
-                                    code_str = f"```python\n{code}\n```" if code else "(沒有生成程式碼)"
-                                    step2_history_candidate.insert(0, {"role": "assistant", "content": code_str})
-                        
-                        # 2. 僅保留最後 4 輪問答 (4 * 2 = 8 則訊息)
-                        step1_history = step1_history[-8:]
-                        step2_history_candidate = step2_history_candidate[-8:]
-
-                    
-                    enhancement_system_prompt = create_enhancement_system_prompt()
-                    
-                    messages_1 = [{"role": "system", "content": enhancement_system_prompt}]
-                    
-                    # [優化] Step 1 注入純文字邏輯歷史
-                    if step1_history:
-                        messages_1.extend(step1_history)
-
-                    messages_1.append({"role": "user", "content": prompt})
-                    enhancement_response = client.chat.completions.create(
-                        model=model_choice,
-                        messages=messages_1,
-                        temperature=0.2
+                    # 提前準備兩種歷史對話 (供 Step 1 與 Step 2 分別使用)
+                    step1_history, step2_history_candidate = extract_conversation_context(
+                        st.session_state.messages, use_history
                     )
+
+                    enhancement_system_prompt = create_enhancement_system_prompt()
+                    enhancement_result = run_prompt_enhancement(client, model_choice, enhancement_system_prompt, prompt, step1_history)
                     
-                    # 解析回應
-                    raw_content = enhancement_response.choices[0].message.content.strip()
-                    if hasattr(enhancement_response, 'usage') and enhancement_response.usage:
-                        _turn_tokens += getattr(enhancement_response.usage, 'total_tokens', 0)
-                    log_llm_interaction("Step 1: Enhancement", messages_1, raw_content)
-                    enhanced_prompt = raw_content
-                    needs_court_info = False
-                    is_related_to_previous_code = False
-
-                    try:
-                        import json
-                        # 嘗試移除 Markdown 標記
-                        json_str = raw_content
-                        if "```json" in raw_content:
-                            start = raw_content.find("```json") + 7
-                            end = raw_content.rfind("```")
-                            json_str = raw_content[start:end].strip()
-                        elif "```" in raw_content:
-                            start = raw_content.find("```") + 3
-                            end = raw_content.rfind("```")
-                            json_str = raw_content[start:end].strip()
-                        
-                        parsed = json.loads(json_str)
-                        enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
-                        needs_court_info = parsed.get("needs_court_info", False)
-                        is_related_to_previous_code = parsed.get("is_related_to_previous_code", False)
-                    except:
-                        print(f"Enhancement JSON parse failed, using raw text. Content: {raw_content[:50]}...")
-                        # Fallback: 如果解析失敗，假設不需要場地資訊，或者如果關鍵字出現則設為True
-                        if any(k in prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
-                            needs_court_info = True
-
-                    print(f"Enhanced Prompt: {enhanced_prompt}")
-                    print(f"Needs Court Info: {needs_court_info}")
-                    print(f"Is Related To Previous Code: {is_related_to_previous_code}")
+                    enhanced_prompt = enhancement_result["enhanced_prompt"]
+                    needs_court_info = enhancement_result["needs_court_info"]
+                    is_related_to_previous_code = enhancement_result["is_related"]
+                    _turn_tokens += enhancement_result["tokens"]
 
                     # --- [Step 2: 生成分析程式碼] ---
                     status.update(label="Step 2/6: 正在生成分析程式碼...")
@@ -487,216 +362,67 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         column_definitions_info, 
                         court_place_info if needs_court_info else None
                     )
-
-                    conversation = [{"role": "system", "content": system_prompt}]
                     
-                    # [優化] 只有當 Step 1 判定與上一題相關時，才將單純的程式碼歷史 (step2_history_candidate) 傳給 Step 2
-                    if is_related_to_previous_code and step2_history_candidate:
-                        conversation.extend(step2_history_candidate)
+                    history_for_step2 = step2_history_candidate if is_related_to_previous_code else []
+                    gen_result = run_code_generation(client, model_choice, system_prompt, enhanced_prompt, history_for_step2)
                     
-                    conversation.append({"role": "user", "content": enhanced_prompt})
-
-                    response = client.chat.completions.create(
-                        model=model_choice, messages=conversation
-                    )
-                    ai_response = response.choices[0].message.content
-                    if hasattr(response, 'usage') and response.usage:
-                        _turn_tokens += getattr(response.usage, 'total_tokens', 0)
-                    log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
-
-                    # 取出 Python code
-                    code_to_execute = None
-                    if "```python" in ai_response:
-                        start = ai_response.find("```python") + len("```python\n")
-                        end = ai_response.rfind("```")
-                        code_to_execute = ai_response[start:end].strip()
+                    code_to_execute = gen_result["code"]
+                    _turn_tokens += gen_result["tokens"]
 
                     # --- [Step 3: 執行程式 (Runtime Error Fix Loop)] ---
                     status.update(label="Step 3/6: 正在執行程式碼...")
                     
                     final_figs = []
                     summary_info = {}
-                    exec_globals = {} # 初始化環境變數
-                    execution_output = "" # [Fix] Ensure variable is defined even if no code is generated
+                    execution_output = ""
                     
                     if code_to_execute:
-                        max_retries = 3
-                        retry_count = 0
-                        success = False
-                        last_error = None
+                        # 定義 UI 更新回調
+                        def execution_status_callback(msg):
+                            status.update(label=msg, state="running")
+
+                        loop_result = run_code_execution_loop(
+                            client, model_choice, code_to_execute, df, 
+                            system_prompt, enhanced_prompt, 
+                            max_retries=3, 
+                            status_callback=execution_status_callback,
+                            extended_globals={"st": st}
+                        )
                         
-                        # 迴圈 1: 處理語法/執行錯誤 (Syntax/Runtime Errors)
-                        while retry_count <= max_retries:
-                            try:
-                                # 重要：每次執行前清除 Matplotlib 狀態，避免上一張圖殘留或干擾
-                                plt.close('all')
-                                
-                                # 準備執行環境，確保 df 存在
-                                # 加入 sns 到執行環境，提供更多彈性
-                                exec_globals = {
-                                    "pd": pd, 
-                                    "df": df.copy(), 
-                                    "st": st, 
-                                    "platform": platform, 
-                                    "io": io, 
-                                    "plt": plt,
-                                    "sns": sns 
-                                }
-                                f = io.StringIO()
-                                with redirect_stdout(f):
-                                    exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
-                                execution_output = f.getvalue()
-                                success = True
-                                break 
-                            except Exception as e:
-                                retry_count += 1
-                                last_error = e
-                                status.update(label=f"Step 3/6: 程式執行錯誤，AI 正在修復語法 (嘗試 {retry_count}/{max_retries})...", state="running")
-                                
-                                conversation.append({"role": "assistant", "content": f"```python\n{code_to_execute}\n```"})
-                                error_feedback = f"執行上述程式碼時發生錯誤: {str(e)}。請修正錯誤並重新輸出完整程式碼 (包含必要的 import)。"
-                                conversation.append({"role": "user", "content": error_feedback})
-                                
-                                correction_response = client.chat.completions.create(model=model_choice, messages=conversation)
-                                ai_correction = correction_response.choices[0].message.content
-                                if hasattr(correction_response, 'usage') and correction_response.usage:
-                                    _turn_tokens += getattr(correction_response.usage, 'total_tokens', 0)
-                                log_llm_interaction(f"Step 3: Error Fix (Retry {retry_count})", conversation, ai_correction)
-                                
-                                if "```python" in ai_correction:
-                                    start = ai_correction.find("```python") + len("```python\n")
-                                    end = ai_correction.rfind("```")
-                                    code_to_execute = ai_correction[start:end].strip() # 更新代碼
-
-                        if not success:
-                            raise last_error
-
-                        # --- 提取變數 (供下一步邏輯檢查使用) ---
-                        ignore_list = ['df', 'pd', 'st', 'platform', 'io', 'fig', 'np', 'plt', 'sns']
+                        code_to_execute = loop_result["final_code"]
+                        _turn_tokens += loop_result["tokens"]
                         
-                        # 檢查生成的圖表數量
-                        created_figs = [plt.figure(n) for n in plt.get_fignums()]
-                        if not created_figs and "fig" in exec_globals:
-                             created_figs = [exec_globals["fig"]]
+                        exec_result = loop_result["exec_result"]
+                        execution_output = exec_result["stdout"]
+                        summary_info = exec_result["summary_info"]
+                        final_figs = exec_result["figs"]
                         
-                        summary_info["_generated_figures_count"] = len(created_figs)
-
-                        for name, val in exec_globals.items():
-                            if name.startswith('_') or name in ignore_list: continue
-                            
-                            try:
-                                # [Fix] 避免 class 物件觸發 object of type 'type' has no len()
-                                if isinstance(val, type):
-                                    continue
-
-                                if isinstance(val, (int, float, str, bool)):
-                                    summary_info[name] = val
-                                elif isinstance(val, (pd.DataFrame, pd.Series)):
-                                    # 強制讓 LLM 知道資料是空的
-                                    if val.empty:
-                                        summary_info[name] = "⚠️ Empty DataFrame/Series (0 rows)"
-                                    else:
-                                        # 如果資料太大，只告訴 LLM 大小，不傳全部內容
-                                        summary_info[name] = f"DataFrame/Series with {len(val)} rows"
-                                elif hasattr(val, '__len__') and len(val) < 20:
-                                    summary_info[name] = val
-                            except Exception:
-                                pass
+                        if not loop_result["success"]:
+                            st.error(f"❌ 無法修復程式碼執行錯誤。\n{exec_result['error']}")
 
                         # --- [Step 4: 邏輯反饋與修正 (Logic Reflection Loop)] ---
                         status.update(label="Step 4/6: AI 正在檢查分析結果的邏輯性...")
                         
-                        reflection_context = ""
-                        for name, val in summary_info.items():
-                            reflection_context += f"{name}: {val}\n"
-                        
-                        if not reflection_context:
-                            reflection_context = "(無特定輸出變數，這通常表示沒有計算出任何數據)"
-                        reflection_prompt = create_reflection_prompt(
-                            enhanced_prompt, code_to_execute, execution_output, reflection_context
-                        )
-                        messages_4 = [{"role": "user", "content": reflection_prompt}]
-                        reflection_response = client.chat.completions.create(
-                            model=model_choice,
-                            messages=messages_4,
-                            temperature=0.1
-                        )
-                        reflection_content = reflection_response.choices[0].message.content.strip()
-                        if hasattr(reflection_response, 'usage') and reflection_response.usage:
-                            _turn_tokens += getattr(reflection_response.usage, 'total_tokens', 0)
-                        log_llm_interaction("Step 4: Logic Reflection", messages_4, reflection_content)
+                        reflection_prompt = create_reflection_prompt(enhanced_prompt, code_to_execute, execution_output, summary_info)
+                        reflection_result = run_logic_reflection(client, model_choice, reflection_prompt)
+                        _turn_tokens += reflection_result["tokens"]
 
-                        if "```python" in reflection_content:
-                            # 觸發邏輯修正
-                            status.update(label="Step 4/6: AI 發現資料為空或邏輯瑕疵，正在修正程式碼...", state="running")
-                            print(">>> Logic Refinement Triggered (Empty Data or Logic Error)")
-                            
-                            start = reflection_content.find("```python") + len("```python\n")
-                            end = reflection_content.rfind("```")
-                            new_code = reflection_content[start:end].strip()
-                            
-                            try:
-                                plt.close('all') 
-                                # 重新初始化環境
-                                exec_globals = {
-                                    "pd": pd, 
-                                    "df": df.copy(), 
-                                    "st": st, 
-                                    "platform": platform, 
-                                    "io": io, 
-                                    "plt": plt,
-                                    "sns": sns 
-                                }
-                                f = io.StringIO()
-                                with redirect_stdout(f):
-                                    exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
-                                execution_output = f.getvalue()
-                                
-                                code_to_execute = new_code 
-                                success = True 
-                                
-                                summary_info = {}
-                                for name, val in exec_globals.items():
-                                    if name.startswith('_') or name in ignore_list: continue
-                                    if isinstance(val, (int, float, str, bool)):
-                                        summary_info[name] = val
-                                    elif isinstance(val, (pd.DataFrame, pd.Series)):
-                                         summary_info[name] = f"DataFrame/Series with {len(val)} rows"
-                                    elif hasattr(val, '__len__') and len(val) < 20:
-                                        summary_info[name] = val
-                                        
-                            except Exception as logic_fix_error:
-                                print(f"Logic refinement failed: {logic_fix_error}")
-                                st.warning(f"⚠️ 嘗試優化圖表顯示時發生錯誤 ({logic_fix_error})，將顯示原始結果。")
-                                # Fallback: 重新執行原始程式碼以恢復圖表
-                                try:
-                                    plt.close('all')
-                                    exec_globals = {
-                                        "pd": pd, "df": df.copy(), "st": st, "platform": platform, 
-                                        "io": io, "plt": plt, "sns": sns
-                                    }
-                                    f = io.StringIO()
-                                    with redirect_stdout(f):
-                                        exec(_FONT_SETUP_CODE + "\n" + code_to_execute, exec_globals)
-                                    execution_output = f.getvalue()
-                                except:
-                                    pass
+                        if reflection_result["new_code"]:
+                            status.update(label="Step 4/6: AI 發現邏輯瑕疵，正在修正程式碼...")
+                            old_code = code_to_execute
+                            code_to_execute = reflection_result["new_code"]
+                            # 重新執行修正後的代碼
+                            exec_result = run_code_execution(code_to_execute, df, extended_globals={"st": st})
+                            if exec_result["success"]:
+                                summary_info = exec_result["summary_info"]
+                                final_figs = exec_result["figs"]
+                                execution_output = exec_result["stdout"]
+                            else:
+                                st.warning(f"⚠️ 嘗試優化圖表顯示時發生錯誤 ({exec_result['error']})，將顯示原始結果。")
+                                code_to_execute = old_code # 回滾到修改前的代碼
 
-                        final_figs = [plt.figure(n) for n in plt.get_fignums()]
-                        if not final_figs:
-                             fig_var = exec_globals.get("fig", None)
-                             if fig_var:
-                                 final_figs = [fig_var]
-
-                    # --- [Step 5: 確保一定有摘要資訊] ---
-                    if not summary_info:
-                        summary_info = {
-                            "提示": "AI 未輸出可供分析的統計變數，請根據圖表與提問邏輯生成洞察。"
-                        }
-
-                    # --- [Step 5: 顯示分析內容] ---
+                    # --- [Step 5: 顯示結果] ---
                     if code_to_execute:
-                        # [Step 1 結果展示]
                         with st.expander("🧠 查看 AI 優化後的提問邏輯 (Step 1)", expanded=False):
                             st.markdown(f"**優化導引 (Enhanced Prompt):**\n{enhanced_prompt}")
 
@@ -721,7 +447,6 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
 
                     # --- [Step 6: 生成數據洞察] ---
                     status.update(label="Step 5/6: 正在撰寫數據洞察...")
-                    summary_text = ""
                     st.markdown("### 📊 數據洞察")
                     
                     if execution_output:
@@ -730,8 +455,8 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                         st.divider()
 
                     try:
+                        insight_system_prompt = "你是一位專業的羽球數據分析師與教練，請根據使用者的提問與程式執行結果，提供精煉且具戰術意義的洞察。"
                         analysis_context_str = ""
-                        
                         # 加入執行輸出 (stdout) 到分析上下文
                         if execution_output:
                             analysis_context_str += f"--- 程式執行輸出 (Stdout) ---\n{execution_output}\n\n"
@@ -746,23 +471,12 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                                     analysis_context_str += f"```markdown\n{val.to_markdown()}\n```\n\n"
                                 else:
                                     analysis_context_str += f"```\n{str(val)}\n```\n\n"
-                        
+                            
                         insight_prompt = create_insight_prompt(enhanced_prompt, analysis_context_str)
                         
-                        
-                        messages_6 = [
-                                {"role": "system", "content": "你是一位專業羽球教練與數據戰術大師。請針對使用者問題與核心數據結果，用教練的口吻撰寫精準的戰術洞察，提供有深度的分析，不要有統計術語，需精簡回答。"},
-                                {"role": "user", "content": insight_prompt},
-                            ]
-                        insight = client.chat.completions.create(
-                            model=model_choice,
-                            messages=messages_6,
-                            temperature=0.4,
-                        )
-                        summary_text = insight.choices[0].message.content
-                        if hasattr(insight, 'usage') and insight.usage:
-                            _turn_tokens += getattr(insight.usage, 'total_tokens', 0)
-                        log_llm_interaction("Step 6: Insight Generation", messages_6, summary_text)
+                        insight_result = run_insight_generation(client, model_choice, insight_system_prompt, insight_prompt)
+                        summary_text = insight_result["insight"]
+                        _turn_tokens += insight_result["tokens"]
                         st.markdown(summary_text)
 
                     except Exception as e:
