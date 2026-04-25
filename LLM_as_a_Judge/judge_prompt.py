@@ -1,10 +1,20 @@
 # AI 裁判 Prompt
 
-def create_judge_prompt(question_text: str, code_generated: str, insight_generated: str, column_definitions: str) -> str:
+def create_judge_prompt(question_text: str, code_generated: str, insight_generated: str, column_definitions: str, few_shot_examples: str = "") -> str:
+    # 如果有提供範例，則構建範例區塊
+    example_section = ""
+    if few_shot_examples:
+        example_section = f"""
+    [評分範例 (Few-Shot Examples)]
+    以下是過去的評分範例，請參考其中的評分邏輯：
+    {few_shot_examples}
+    ---
+    """
+
     return f"""
     你現在是一位嚴格且專業的「羽球數據分析裁判」。
     你的任務是針對特定的題目，衡量 AI 生成的「Python 程式碼」與「數據洞察」的整體品質。
-    
+    {example_section}
     [重要前提]
     評估的 AI 已經內建了專案特定的資料欄位定義 (Schema) 與場地座標資訊 (Court Info)。
     請假設基本的錯誤處理已經是合理的，你應專注於「判斷邏輯」的嚴謹性。
@@ -30,7 +40,7 @@ def create_judge_prompt(question_text: str, code_generated: str, insight_generat
     【A. 程式碼評估 (Code Evaluation, 滿分 20 分)】
     1. 正確性 (Correctness, 1-5分)：邏輯是否符合羽球數據分析的基礎事實？（例如：主動得分是否過濾正確？）
     2. 完整性 (Completeness, 1-5分)：是否涵蓋了題目要求的所有面向？
-    3. 資料處理合理性 (Rationality, 1-5分)：篩選條件是否精確？有無數據污染（如：計算佔比時分母誤加對手失誤，或使用 shift 時發生跨回合的錯亂）？嚴格檢查公式的分子分母邏輯一致性。
+    3. 資料處理合理性 (Rationality, 1-5分)：篩選條件是否精確？有無數據污染？（例如：計算佔比時分母誤加對手失誤）
     4. 可執行性 (Executability, 1-5分)：代碼是否具備實質意義，能否產出預期結果？是否使用了資料集實存的欄位，而非幻想欄位？
 
     【B. 數據洞察評估 (Insight Evaluation, 滿分 25 分)】

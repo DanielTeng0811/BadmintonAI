@@ -93,9 +93,49 @@ class LLMAsAJudge:
         self.results = []
         self.notebook = self._create_notebook_structure()
         
+        # 載入 Few-Shot 範例
+        self.few_shot_examples = self._load_few_shot_examples()
+        
         # Token 累計計數器
         self.total_pipeline_tokens = 0
         self.total_judge_tokens = 0
+
+    def _load_few_shot_examples(self):
+        """從 example.ipynb 載入評分範例"""
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        if not os.path.exists(example_path):
+            print("⚠️ 找不到 example.ipynb，將不使用 Few-Shot 範例。")
+            return ""
+        
+        try:
+            with open(example_path, "r", encoding="utf-8") as f:
+                nb = json.load(f)
+            
+            examples = []
+            current_ex = []
+            capture = False
+            
+            for cell in nb["cells"]:
+                content = "".join(cell["source"]).strip()
+                if cell["cell_type"] == "markdown" and content.startswith("## EX"):
+                    if current_ex:
+                        examples.append("\n".join(current_ex))
+                    current_ex = [content]
+                    capture = True
+                elif capture:
+                    if cell["cell_type"] == "code":
+                        current_ex.append(f"[程式碼]\n{content}")
+                    else:
+                        current_ex.append(content)
+            
+            if current_ex:
+                examples.append("\n".join(current_ex))
+            
+            return "\n\n" + "="*30 + "\n" + "\n\n".join(examples) + "\n" + "="*30 + "\n"
+            
+        except Exception as e:
+            print(f"⚠️ 載入範例失敗: {e}")
+            return ""
 
     def _create_notebook_structure(self):
         """建立 Jupyter Notebook 基本結構"""
@@ -334,7 +374,7 @@ class LLMAsAJudge:
                 "insight_eval": {"reasoning": "無代碼可供分析。", "alignment": 0, "correctness": 0, "support": 0, "depth": 0, "feasibility": 0, "total": 0}
             }
             
-        judge_prompt = create_judge_prompt(question, code, insight, self.column_definitions_info)
+        judge_prompt = create_judge_prompt(question, code, insight, self.column_definitions_info, self.few_shot_examples)
         messages = [{"role": "user", "content": judge_prompt}]
         judge_tokens = 0
         
@@ -538,7 +578,7 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1, 3]
+    QUESTIONS_TO_RUN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     
     # 選擇使用的 API 與模型
     API_MODE = "OpenAI 官方" 
