@@ -421,8 +421,9 @@ class LLMAsAJudge:
                 "judge_tokens": judge_tokens
             }
 
-    def run(self, skip_logic_reflection=False):
+    def run(self, skip_logic_reflection=False, only_generation=False):
         """執行完整的批量評估流程"""
+        self.only_generation = only_generation
         if self.target_questions:
             # --- 生成並評估 ---
             questions = self._load_target_questions()
@@ -445,50 +446,57 @@ class LLMAsAJudge:
                 # 執行分析流程
                 code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
                 
-                # AI 裁判給分
-                eval_res = self._judge_result(q_text, code, insight)
-                judge_tokens = eval_res.get("judge_tokens", 0)
-                
-                # 儲存結果到記憶體
-                res_item = {
-                    "question_id": self._current_q_num,
-                    "question_text": q_text,
-                    "pipeline_tokens": pipeline_tokens,
-                    "judge_tokens": judge_tokens,
-                    "total_tokens": pipeline_tokens + judge_tokens
-                }
-                
-                # 累計總 Token
-                self.total_pipeline_tokens += pipeline_tokens
-                self.total_judge_tokens += judge_tokens
-                
-                # 展開 Code Eval
-                code_eval = eval_res.get("code_eval", {})
-                for k, v in code_eval.items():
-                    if k != "reasoning": res_item[f"code_{k}"] = v
-                res_item["code_reasoning"] = code_eval.get("reasoning", "")
-                
-                # 展開 Insight Eval
-                insight_eval = eval_res.get("insight_eval", {})
-                for k, v in insight_eval.items():
-                    if k != "reasoning": res_item[f"insight_{k}"] = v
-                res_item["insight_reasoning"] = insight_eval.get("reasoning", "")
-                
-                self.results.append(res_item)
-                
-                print(f"🏁 評分結果: Code {code_eval.get('code_total', 0)}/20 | Insight {insight_eval.get('insight_total', 0)}/25")
-                print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
+                if not only_generation:
+                    # AI 裁判給分
+                    eval_res = self._judge_result(q_text, code, insight)
+                    judge_tokens = eval_res.get("judge_tokens", 0)
+                    
+                    # 儲存結果到記憶體
+                    res_item = {
+                        "question_id": self._current_q_num,
+                        "question_text": q_text,
+                        "pipeline_tokens": pipeline_tokens,
+                        "judge_tokens": judge_tokens,
+                        "total_tokens": pipeline_tokens + judge_tokens
+                    }
+                    
+                    # 累計總 Token
+                    self.total_pipeline_tokens += pipeline_tokens
+                    self.total_judge_tokens += judge_tokens
+                    
+                    # 展開 Code Eval
+                    code_eval = eval_res.get("code_eval", {})
+                    for k, v in code_eval.items():
+                        if k != "reasoning": res_item[f"code_{k}"] = v
+                    res_item["code_reasoning"] = code_eval.get("reasoning", "")
+                    
+                    # 展開 Insight Eval
+                    insight_eval = eval_res.get("insight_eval", {})
+                    for k, v in insight_eval.items():
+                        if k != "reasoning": res_item[f"insight_{k}"] = v
+                    res_item["insight_reasoning"] = insight_eval.get("reasoning", "")
+                    
+                    self.results.append(res_item)
+                    
+                    print(f"🏁 評分結果: Code {code_eval.get('code_total', 0)}/20 | Insight {insight_eval.get('insight_total', 0)}/25")
+                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
+                else:
+                    # 僅生成模式
+                    self.total_pipeline_tokens += pipeline_tokens
+                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
                 
                 # 構建 IPYNB 結構
                 self._add_notebook_markdown(f"## 題號 {self._current_q_num}\n**問題**: {q_text}")
                 if code:
                     self._add_notebook_code(code, b64_images)
                 
-                judge_md = f"### 🤖 AI 裁判評分報告\n\n"
-                judge_md += f"#### 💻 程式碼評核: {code_eval.get('code_total')}/20\n> **分析意見**: {code_eval.get('reasoning')}\n\n"
-                judge_md += f"#### 💡 數據洞察評核: {insight_eval.get('insight_total')}/25\n> **分析意見**: {insight_eval.get('reasoning')}\n"
-                
-                self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{judge_md}")
+                if not only_generation:
+                    judge_md = f"### 🤖 AI 裁判評分報告\n\n"
+                    judge_md += f"#### 💻 程式碼評核: {code_eval.get('code_total')}/20\n> **分析意見**: {code_eval.get('reasoning')}\n\n"
+                    judge_md += f"#### 💡 數據洞察評核: {insight_eval.get('insight_total')}/25\n> **分析意見**: {insight_eval.get('reasoning')}\n"
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{judge_md}")
+                else:
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight}")
                 
                 time.sleep(2)
         else:
@@ -576,9 +584,10 @@ class LLMAsAJudge:
 
     def _export_files(self):
         """匯出 CSV, IPYNB"""
-        # CSV
-        df_res = pd.DataFrame(self.results)
-        df_res.to_csv(self.csv_file, index=False, encoding='utf-8-sig')
+        # CSV (僅在非僅生成模式下匯出)
+        if not getattr(self, 'only_generation', False):
+            df_res = pd.DataFrame(self.results)
+            df_res.to_csv(self.csv_file, index=False, encoding='utf-8-sig')
              
         # IPYNB
         with open(self.ipynb_file, "w", encoding='utf-8') as f:
@@ -600,6 +609,7 @@ if __name__ == "__main__":
     
     # --- 3. 流程控制 ---
     SKIP_LOGIC_REFLECTION = True  # 設定為 True 即可略過 Step 4 邏輯審查
+    ONLY_GENERATION = False       # 設定為 True 則只生成內容而不進行 AI 評分 (也不會產出 CSV)
     
     evaluator = LLMAsAJudge(
         target_questions=QUESTIONS_TO_RUN,
@@ -609,4 +619,7 @@ if __name__ == "__main__":
         judge_model=JUDGE_MODEL
     )
     
-    evaluator.run(skip_logic_reflection=SKIP_LOGIC_REFLECTION)
+    evaluator.run(
+        skip_logic_reflection=SKIP_LOGIC_REFLECTION,
+        only_generation=ONLY_GENERATION
+    )
