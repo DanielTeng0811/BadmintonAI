@@ -117,8 +117,9 @@ st.markdown("#### 透過自然語言，直接生成數據分析圖表")
 # 側邊欄
 with st.sidebar:
     st.header("⚙️ API 設定")
-    api_mode = st.selectbox("API 模式", ["Gemini", "OpenAI 官方", "交大伺服器"], index=1)
-    api_key_env_var = "GEMINI_API_KEY" if api_mode == "Gemini" else "OPENAI_API_KEY"
+    api_mode = st.selectbox("API 模式", ["Gemini", "OpenAI 官方", "交大伺服器", "Claude"], index=1)
+    _env_var_map = {"Gemini": "GEMINI_API_KEY", "Claude": "ANTHROPIC_API_KEY"}
+    api_key_env_var = _env_var_map.get(api_mode, "OPENAI_API_KEY")
 
     # 使用 get_api_key 函數安全讀取 API Key
     default_api_key = get_api_key(api_key_env_var)
@@ -151,8 +152,15 @@ with st.sidebar:
 
     if api_mode == "Gemini":
         model_choice = st.selectbox("選擇模型",["gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash"], index=0)
+    elif api_mode == "Claude":
+        model_choice = st.selectbox("選擇模型", ["claude-sonnet-4-6", "claude-3-opus-20240229"], index=0)
     else:
         model_choice = st.selectbox("選擇模型", ["gpt-4o-mini", "gpt-4o"], index=1)
+
+    st.divider()
+
+    st.header("⚡ 流程控制")
+    skip_logic_reflection = st.checkbox("略過邏輯檢查 (加速)", value=False, help="打勾後將跳過 AI 自我審查與修復步驟，以換取更快的生成速度。")
 
     st.divider()
 
@@ -401,25 +409,29 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                             st.error(f"❌ 無法修復程式碼執行錯誤。\n{exec_result['error']}")
 
                         # --- [Step 4: 邏輯反饋與修正 (Logic Reflection Loop)] ---
-                        status.update(label="Step 4/6: AI 正在檢查分析結果的邏輯性...")
-                        
-                        reflection_prompt = create_reflection_prompt(enhanced_prompt, code_to_execute, execution_output, summary_info)
-                        reflection_result = run_logic_reflection(client, model_choice, reflection_prompt)
-                        _turn_tokens += reflection_result["tokens"]
+                        if skip_logic_reflection:
+                            st.info("⚡ 已選擇略過邏輯審查", icon="⚡")
+                            status.update(label="⚡ 略過邏輯審查", state="running")
+                        else:
+                            status.update(label="Step 4/6: AI 正在檢查分析結果的邏輯性...")
+                            
+                            reflection_prompt = create_reflection_prompt(enhanced_prompt, code_to_execute, execution_output, summary_info)
+                            reflection_result = run_logic_reflection(client, model_choice, reflection_prompt)
+                            _turn_tokens += reflection_result["tokens"]
 
-                        if reflection_result["new_code"]:
-                            status.update(label="Step 4/6: AI 發現邏輯瑕疵，正在修正程式碼...")
-                            old_code = code_to_execute
-                            code_to_execute = reflection_result["new_code"]
-                            # 重新執行修正後的代碼
-                            exec_result = run_code_execution(code_to_execute, df, extended_globals={"st": st})
-                            if exec_result["success"]:
-                                summary_info = exec_result["summary_info"]
-                                final_figs = exec_result["figs"]
-                                execution_output = exec_result["stdout"]
-                            else:
-                                st.warning(f"⚠️ 嘗試優化圖表顯示時發生錯誤 ({exec_result['error']})，將顯示原始結果。")
-                                code_to_execute = old_code # 回滾到修改前的代碼
+                            if reflection_result["new_code"]:
+                                status.update(label="Step 4/6: AI 發現邏輯瑕疵，正在修正程式碼...")
+                                old_code = code_to_execute
+                                code_to_execute = reflection_result["new_code"]
+                                # 重新執行修正後的代碼
+                                exec_result = run_code_execution(code_to_execute, df, extended_globals={"st": st})
+                                if exec_result["success"]:
+                                    summary_info = exec_result["summary_info"]
+                                    final_figs = exec_result["figs"]
+                                    execution_output = exec_result["stdout"]
+                                else:
+                                    st.warning(f"⚠️ 嘗試優化圖表顯示時發生錯誤 ({exec_result['error']})，將顯示原始結果。")
+                                    code_to_execute = old_code # 回滾到修改前的代碼
 
                     # --- [Step 5: 顯示結果] ---
                     if code_to_execute:

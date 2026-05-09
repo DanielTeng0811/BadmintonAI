@@ -56,10 +56,14 @@ env_path = os.path.join(parent_dir, '.env')
 load_dotenv(dotenv_path=env_path)
 
 class LLMAsAJudge:
-    def __init__(self, target_questions=[1], api_mode='OpenAI 官方', model='gpt-4o'):
+    def __init__(self, target_questions=[1], 
+                 gen_api_mode='OpenAI 官方', gen_model='gpt-4o',
+                 judge_api_mode='Claude', judge_model='claude-sonnet-4-6'):
         self.target_questions = target_questions
-        self.api_mode = api_mode
-        self.model = model
+        self.gen_api_mode = gen_api_mode
+        self.gen_model = gen_model
+        self.judge_api_mode = judge_api_mode
+        self.judge_model = judge_model
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # 設置輸出路徑 (與腳本放在同一資料夾)
@@ -73,9 +77,14 @@ class LLMAsAJudge:
         self.ipynb_file = os.path.join(self.run_dir, "eval_notebook.ipynb")
 
         # 初始化 API
-        print("🔧 正在初始化 API Client...")
-        api_key = os.getenv('OPENAI_API_KEY' if 'OpenAI' in api_mode else 'GEMINI_API_KEY')
-        self.client = initialize_client(api_mode, api_key)
+        print("🔧 正在初始化 生成 API Client...")
+        _key_map = {"Claude": "ANTHROPIC_API_KEY", "Gemini": "GEMINI_API_KEY"}
+        gen_api_key = os.getenv(_key_map.get(gen_api_mode, "OPENAI_API_KEY"))
+        self.gen_client = initialize_client(gen_api_mode, gen_api_key)
+
+        print("⚖️ 正在初始化 裁判 API Client...")
+        judge_api_key = os.getenv(_key_map.get(judge_api_mode, "OPENAI_API_KEY"))
+        self.judge_client = initialize_client(judge_api_mode, judge_api_key)
 
         # 載入數據
         print("📦 正在載入羽球數據...")
@@ -255,14 +264,14 @@ class LLMAsAJudge:
         print(f"🔍 解析完成，自「{filepath}」中提取到 {len(parsed_results)} 組對話。")
         return parsed_results
 
-    def _run_pipeline(self, prompt):
+    def _run_pipeline(self, prompt, skip_logic_reflection=False):
         """執行 BadmintonAI 的核心邏輯 (與 front_page.py / analysis_workflow 同步)"""
         
         # --- Step 1: 轉化與優化使用者問題 ---
         print("▶ Step 1: 分析與優化問題...")
         pipeline_tokens = 0
         enhancement_system_prompt = create_enhancement_system_prompt()
-        enhance_res = run_prompt_enhancement(self.client, self.model, enhancement_system_prompt, prompt, [])
+        enhance_res = run_prompt_enhancement(self.gen_client, self.gen_model, enhancement_system_prompt, prompt, [])
         enhanced_prompt = enhance_res["enhanced_prompt"]
         needs_court_info = enhance_res["needs_court_info"]
         pipeline_tokens += enhance_res.get("tokens", 0)
@@ -274,7 +283,7 @@ class LLMAsAJudge:
             self.column_definitions_info, 
             self.court_place_info if needs_court_info else None
         )
-        gen_res = run_code_generation(self.client, self.model, system_prompt, enhanced_prompt, [])
+        gen_res = run_code_generation(self.gen_client, self.gen_model, system_prompt, enhanced_prompt, [])
         code_to_execute = gen_res["code"]
         pipeline_tokens += gen_res.get("tokens", 0)
         
@@ -282,7 +291,7 @@ class LLMAsAJudge:
         print("▶ Step 3: 執行程式...")
         
         exec_loop_res = run_code_execution_loop(
-            self.client, self.model, code_to_execute, self.df, system_prompt, enhanced_prompt,
+            self.gen_client, self.gen_model, code_to_execute, self.df, system_prompt, enhanced_prompt,
             max_retries=3
         )
         pipeline_tokens += exec_loop_res.get("tokens", 0)
@@ -290,27 +299,30 @@ class LLMAsAJudge:
         code_to_execute = exec_loop_res["final_code"]
         exec_result = exec_loop_res["exec_result"]
         
-        # 如果執行成功，進行邏輯反饋與修正 (Step 4)
-        print("▶ Step 4: 邏輯審查...")
-        if exec_loop_res["success"] and exec_result:
-            summary_info = exec_result["summary_info"]
-            execution_output = exec_result["stdout"]
-            
-            reflection_context = "\n".join([f"{k}: {v}" for k, v in summary_info.items()])
-            if not reflection_context:
-                reflection_context = "(無特定輸出變數，指沒有計算出任何數據)"
+        # 如果執行成功，判斷是否略過邏輯審查 (Step 4)
+        if not skip_logic_reflection:
+            print("▶ Step 4: 邏輯審查...")
+            if exec_loop_res["success"] and exec_result:
+                summary_info = exec_result["summary_info"]
+                execution_output = exec_result["stdout"]
                 
-            reflection_prompt = create_reflection_prompt(enhanced_prompt, code_to_execute, execution_output, reflection_context)
-            
-            ref_res = run_logic_reflection(self.client, self.model, reflection_prompt)
-            pipeline_tokens += ref_res.get("tokens", 0)
-            
-            if ref_res["new_code"]:
-                print("-> 發現邏輯瑕疵，重新執行 AI 自主修正代碼...")
-                code_to_execute = ref_res["new_code"]
-                # 再次執行修正後的代碼 (不再進入重試迴圈)
-                from utils.analysis_workflow import run_code_execution
-                exec_result = run_code_execution(code_to_execute, self.df)
+                reflection_context = "\n".join([f"{k}: {v}" for k, v in summary_info.items()])
+                if not reflection_context:
+                    reflection_context = "(無特定輸出變數，指沒有計算出任何數據)"
+                    
+                reflection_prompt = create_reflection_prompt(enhanced_prompt, code_to_execute, execution_output, reflection_context)
+                
+                ref_res = run_logic_reflection(self.gen_client, self.gen_model, reflection_prompt)
+                pipeline_tokens += ref_res.get("tokens", 0)
+                
+                if ref_res["new_code"]:
+                    print("-> 發現邏輯瑕疵，重新執行 AI 自主修正代碼...")
+                    code_to_execute = ref_res["new_code"]
+                    # 再次執行修正後的代碼 (不再進入重試迴圈)
+                    from utils.analysis_workflow import run_code_execution
+                    exec_result = run_code_execution(code_to_execute, self.df)
+        else:
+            print("▶ Step 4: 略過邏輯審查...")
                 
         # 抓取最終產生的圖片
         final_figs = []
@@ -355,7 +367,7 @@ class LLMAsAJudge:
              
         insight_prompt = create_insight_prompt(enhanced_prompt, analysis_context_str)
         insight_res = run_insight_generation(
-            self.client, self.model, 
+            self.gen_client, self.gen_model, 
             "你是一位專業羽球教練與數據戰術大師。精簡提供戰術洞察。", 
             insight_prompt
         )
@@ -379,10 +391,8 @@ class LLMAsAJudge:
         judge_tokens = 0
         
         try:
-            judge_model = "gpt-4o" if "OpenAI" in self.api_mode else "gemini-2.5-pro" 
-            
-            response = self.client.chat.completions.create(
-                model=self.model,
+            response = self.judge_client.chat.completions.create(
+                model=self.judge_model,
                 messages=messages,
                 temperature=0.0
             )
@@ -411,8 +421,8 @@ class LLMAsAJudge:
                 "judge_tokens": judge_tokens
             }
 
-    def run(self):
-        """執行評估主流程"""
+    def run(self, skip_logic_reflection=False):
+        """執行完整的批量評估流程"""
         if self.target_questions:
             # --- 生成並評估 ---
             questions = self._load_target_questions()
@@ -424,7 +434,7 @@ class LLMAsAJudge:
 
             print(f"\n🚀 啟動 LLM-as-a-Judge: 生成 + 評核...")
             print(f"📌 目標題數: {total_items} 題")
-            print(f"📊 模型: {self.model}\n{'-'*50}")
+            print(f"📊 生成模型: {self.gen_model} | 裁判模型: {self.judge_model}\n{'-'*50}")
 
             for idx, q_dict in enumerate(questions, 1):
                 self._current_q_num = q_dict["編號"]
@@ -432,8 +442,8 @@ class LLMAsAJudge:
                 
                 print(f"\n[{idx}/{total_items}] 處理問題 {self._current_q_num}: {q_text[:30]}...")
                 
-                # 執行核心管線產出
-                code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline(q_text)
+                # 執行分析流程
+                code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
                 
                 # AI 裁判給分
                 eval_res = self._judge_result(q_text, code, insight)
@@ -578,16 +588,25 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    QUESTIONS_TO_RUN = [1]
     
-    # 選擇使用的 API 與模型
-    API_MODE = "OpenAI 官方" 
-    MODEL_NAME = "gpt-4o"
+    # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
+    GEN_API_MODE =  "Claude"
+    GEN_MODEL = "claude-sonnet-4-6"
+    
+    # --- 2. 選擇評估 (Judge) 用的 API 與模型 ---
+    JUDGE_API_MODE = "OpenAI 官方"
+    JUDGE_MODEL = "gpt-4o"
+    
+    # --- 3. 流程控制 ---
+    SKIP_LOGIC_REFLECTION = True  # 設定為 True 即可略過 Step 4 邏輯審查
     
     evaluator = LLMAsAJudge(
         target_questions=QUESTIONS_TO_RUN,
-        api_mode=API_MODE,
-        model=MODEL_NAME
+        gen_api_mode=GEN_API_MODE,
+        gen_model=GEN_MODEL,
+        judge_api_mode=JUDGE_API_MODE,
+        judge_model=JUDGE_MODEL
     )
     
-    evaluator.run()
+    evaluator.run(skip_logic_reflection=SKIP_LOGIC_REFLECTION)
