@@ -85,7 +85,9 @@
     },
     {
       "column": "hit_area",
-      "description": "player擊球點所在區域代碼 (1-32)，等價於df['landing_area'].shift(1)"
+      "description": "player擊球點所在區域代碼 (1-32)，等價於df['landing_area'].shift(1)",
+      "keyword": "擊球點, hit point, hit area",
+      "note": "此欄位代表「球」的物理座標。如果題目詢問球員站在哪裡擊球，代表詢問的是球員身體的站位，此時必須改用 player_location_area。"
     },
     {
       "column": "landing_x",
@@ -109,15 +111,21 @@
     },
     {
       "column": "player_location_area",
-      "description": "當前打擊者所站點的區域代碼，df['player_location_area'] == df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)"
+      "description": "當前打擊者所站點的區域代碼，df['player_location_area'] == df.groupby(['match_id', 'set', 'rally'])['opponent_location_area'].shift(1)",
+      "keyword": "站位, stance, position",
+      "note": "當題目出現「球員站在哪裡擊球」、「在某區(如前/中/後場)擊球」等描述球員身體位置的詞彙時，必須優先使用此欄位，而非 `hit_area`。"
     },
     {
       "column": "player_move_x",
-      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)"
+      "description": "擊球點到移動位置的X座標位移量。(moving_x-hit_x)",
+      "keyword": "移動距離, 跑動距離, movement distance",
+      "note": "適用於計算球員的「移動距離」或「跑動距離」時。"
     },
     {
       "column": "player_move_y",
-      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)"
+      "description": "擊球點到移動位置的Y座標位移量。(moving_y-hit_y)",
+      "keyword": "移動距離, 跑動距離, movement distance",
+      "note": "適用於計算球員的「移動距離」或「跑動距離」時。"
     },
     {
       "column": "moving_x",

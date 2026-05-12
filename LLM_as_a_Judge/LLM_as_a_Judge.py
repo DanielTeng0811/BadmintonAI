@@ -108,6 +108,7 @@ class LLMAsAJudge:
         # Token 累計計數器
         self.total_pipeline_tokens = 0
         self.total_judge_tokens = 0
+        self.flagged_questions = [] # 儲存低分標註的題號
 
     def _load_few_shot_examples(self):
         """從 example.ipynb 載入評分範例"""
@@ -476,6 +477,23 @@ class LLMAsAJudge:
                         if k != "reasoning": res_item[f"insight_{k}"] = v
                     res_item["insight_reasoning"] = insight_eval.get("reasoning", "")
                     
+                    # 檢查標註條件
+                    is_flagged = False
+                    # 條件 1: 任何小項分數 (score_*) <= 3
+                    for k, v in res_item.items():
+                        if (k.startswith("code_score_") or k.startswith("insight_score_")) and isinstance(v, (int, float)) and v <= 3:
+                            is_flagged = True
+                            break
+                    # 條件 2: 程式碼總分 (code_total) <= 18
+                    if not is_flagged:
+                        code_total = res_item.get("code_code_total", 20)
+                        if isinstance(code_total, (int, float)) and code_total <= 18:
+                            is_flagged = True
+                    
+                    res_item["needs_review"] = is_flagged
+                    if is_flagged:
+                        self.flagged_questions.append(self._current_q_num)
+                    
                     self.results.append(res_item)
                     
                     print(f"🏁 評分結果: Code {code_eval.get('code_total', 0)}/20 | Insight {insight_eval.get('insight_total', 0)}/25")
@@ -486,7 +504,10 @@ class LLMAsAJudge:
                     print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
                 
                 # 構建 IPYNB 結構
-                self._add_notebook_markdown(f"## 題號 {self._current_q_num}\n**問題**: {q_text}")
+                q_header = f"## 題號 {self._current_q_num}"
+                if not only_generation and self._current_q_num in self.flagged_questions:
+                    q_header += " (*)"
+                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
                 if code:
                     self._add_notebook_code(code, b64_images)
                 
@@ -545,13 +566,33 @@ class LLMAsAJudge:
                     if k != "reasoning": res_item[f"insight_{k}"] = v
                 res_item["insight_reasoning"] = insight_eval.get("reasoning", "")
                 
+                # 檢查標註條件
+                is_flagged = False
+                # 條件 1: 任何小項分數 (score_*) <= 3
+                for k, v in res_item.items():
+                    if (k.startswith("code_score_") or k.startswith("insight_score_")) and isinstance(v, (int, float)) and v <= 3:
+                        is_flagged = True
+                        break
+                # 條件 2: 程式碼總分 (code_total) <= 18
+                if not is_flagged:
+                    code_total = res_item.get("code_code_total", 20)
+                    if isinstance(code_total, (int, float)) and code_total <= 18:
+                        is_flagged = True
+                
+                res_item["needs_review"] = is_flagged
+                if is_flagged:
+                    self.flagged_questions.append(idx)
+                    
                 self.results.append(res_item)
                 
                 print(f"🏁 評分結果: Code {code_eval.get('code_total', 0)}/20 | Insight {insight_eval.get('insight_total', 0)}/25")
                 print(f"💰 消耗 Token: 評分 {judge_tokens:,}")
                 
                 # 構建輸出結構
-                self._add_notebook_markdown(f"## 項目 {idx}\n**問題**: {q_text}")
+                q_header = f"## 項目 {idx}"
+                if res_item.get("needs_review"):
+                    q_header += " (*)"
+                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
                 if code:
                     self._add_notebook_code(code)
                     
@@ -581,6 +622,13 @@ class LLMAsAJudge:
             print(f"{'='*50}")
 
         self._export_files()
+        
+        # 顯示標註題目總結
+        if not only_generation and self.flagged_questions:
+            print(f"\n{'='*50}")
+            print(f"發現低評分項目 (小項 <= 3 或 Code 總分 <= 18)")
+            print(f"建議人工檢視以下題目: {', '.join(map(str, self.flagged_questions))}")
+            print(f"{'='*50}")
 
     def _export_files(self):
         """匯出 CSV, IPYNB"""
