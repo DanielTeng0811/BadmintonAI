@@ -22,7 +22,7 @@ git log --all --full-history -- .streamlit/secrets.toml
 - `.env`
 - `.streamlit/secrets.toml`
 - `*.log`
-- `llm_debug_log.txt`
+- `logs/llm_debug_log.txt`
 
 ### ✅ 3. 準備 API Keys
 您需要準備以下 API Keys（至少一個）：
@@ -158,7 +158,7 @@ git push
 # #*.csv  (已註解，CSV 會被上傳)
 
 # 加入資料檔案並推送
-git add all_dataset.csv processed_new_3.csv processed_new_3.db court_place.txt
+git add data/raw/all_dataset.csv data/processed/processed_new_3.csv data/processed/processed_new_3.db data/metadata/court_place.txt
 git commit -m "Add data files for deployment"
 git push
 ```

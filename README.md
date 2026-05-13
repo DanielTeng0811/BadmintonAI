@@ -37,10 +37,27 @@ OPENAI_API_KEY=sk-proj-你的key
 
 # 或使用 Gemini（免費額度高）
 GEMINI_API_KEY=AIza你的key
+
+# 或使用 Claude
+ANTHROPIC_API_KEY=sk-ant-你的key
 ```
 
 ### 3. 啟動系統
+
+#### macOS 一鍵啟動
+
+直接雙擊專案根目錄的 `start_app.command`。
+
+此腳本會自動：
+- 進入專案目錄
+- 若沒有 `venv` 則建立虛擬環境
+- 安裝/更新 `requirements.txt`
+- 啟動 Streamlit
+
+#### 命令列啟動
+
 ```bash
+source venv/bin/activate
 streamlit run front_page.py
 ```
 
@@ -152,12 +169,14 @@ Step 6: 生成戰術洞察
 | **OpenAI 官方** | `gpt-4o` | 品質最高、邏輯最強 | 正式分析、重要決策 |
 | **OpenAI 官方** | `gpt-4o-mini` | 便宜、快速 | 開發測試、簡單查詢 |
 | **Gemini** | `gemini-2.0-flash` | 免費額度高 | 預算有限、測試環境 |
+| **Claude** | `claude-sonnet-4-6` | 長文理解與審查能力佳 | 複雜邏輯檢查、評估流程 |
 
 ### 成本估算（參考）
 
 - `gpt-4o`: ~$0.05-0.15 / 次查詢
 - `gpt-4o-mini`: ~$0.005-0.015 / 次查詢
 - `gemini-2.0-flash`: 免費（有配額限制）
+- `claude-sonnet-4-6`: 依 Anthropic 帳戶方案與用量計費
 
 ---
 
@@ -211,7 +230,7 @@ Step 6: 生成戰術洞察
 
 ### 4. Debug 日誌
 
-**檔案：** `llm_debug_log.txt`
+**檔案：** `logs/llm_debug_log.txt`
 
 **內容：** 完整 AI 對話紀錄，方便除錯
 
@@ -221,18 +240,27 @@ Step 6: 生成戰術洞察
 
 ```
 BadmintonAI/
-├── front_page.py              # 主程式（Streamlit UI）
+├── front_page.py              # Streamlit 主程式
 ├── config/
 │   └── prompts.py             # AI 提示詞系統
 ├── utils/
 │   ├── ai_client.py           # AI 客戶端
 │   ├── data_loader.py         # 資料載入
-│   └── data_processor.py      # 資料處理 ⭐
-├── court_place.txt            # 場地區域定義
-├── all_dataset.csv            # 原始資料
-├── processed_new_3.csv        # 處理後資料
-├── processed_new_3.db         # SQLite 資料庫
-├── .env                       # API Key 設定
+│   ├── data_processor.py      # 資料處理
+│   ├── analysis_workflow.py   # AI 分析流程
+│   └── paths.py               # 專案路徑集中管理
+├── data/
+│   ├── raw/all_dataset.csv
+│   ├── processed/processed_new_3.csv
+│   ├── processed/processed_new_3.db
+│   └── metadata/
+│       ├── column_definition.json
+│       └── court_place.txt
+├── notebooks/                 # 歷史實驗與輸出 Notebook
+├── scripts/                   # 批次與維護工具
+├── docs/                      # 部署說明、報告、簡報文件
+├── LLM_as_a_Judge/            # 自動評估工具
+├── .env                       # 本地 API Key 設定
 └── requirements.txt           # Python 依賴
 ```
 

@@ -54,7 +54,7 @@ runs/
 wandb/
 
 # Data
-data/
+# Project sample data is tracked under data/.
 dataset/
 datasets/
 #*.csv
@@ -80,6 +80,7 @@ desktop.ini
 
 # Temporary files
 *.log
+logs/*
 *.tmp
 *.temp
 *.swp

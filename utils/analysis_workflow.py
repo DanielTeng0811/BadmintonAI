@@ -2,17 +2,81 @@ import pandas as pd
 import io
 import json
 import platform
+import builtins
+import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from contextlib import redirect_stdout
 from datetime import datetime
+from utils.llm_parsing import extract_code_block, extract_json_object
+from utils.paths import LLM_DEBUG_LOG, ensure_runtime_dirs
+
+
+_ALLOWED_IMPORT_ROOTS = {
+    "collections",
+    "datetime",
+    "io",
+    "itertools",
+    "math",
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "platform",
+    "plotly",
+    "seaborn",
+    "statistics",
+}
+
+
+def _safe_import(name, globals=None, locals=None, fromlist=(), level=0):
+    root_name = name.split(".", 1)[0]
+    if root_name not in _ALLOWED_IMPORT_ROOTS:
+        raise ImportError(f"Import '{name}' is not allowed in generated analysis code.")
+    return builtins.__import__(name, globals, locals, fromlist, level)
+
+
+_SAFE_BUILTINS = {
+    "__import__": _safe_import,
+    "abs": abs,
+    "all": all,
+    "any": any,
+    "bool": bool,
+    "dict": dict,
+    "enumerate": enumerate,
+    "Exception": Exception,
+    "filter": filter,
+    "float": float,
+    "format": format,
+    "int": int,
+    "isinstance": isinstance,
+    "len": len,
+    "list": list,
+    "map": map,
+    "max": max,
+    "min": min,
+    "print": print,
+    "range": range,
+    "reversed": reversed,
+    "round": round,
+    "set": set,
+    "slice": slice,
+    "sorted": sorted,
+    "str": str,
+    "sum": sum,
+    "tuple": tuple,
+    "type": type,
+    "ValueError": ValueError,
+    "zip": zip,
+}
+
 
 # --- 輔助函數 ---
 def log_llm_interaction(step_name, messages, response_content):
     """
     將 LLM 的輸入與輸出紀錄到檔案中，方便除錯。
     """
-    log_file = "llm_debug_log.txt"
+    ensure_runtime_dirs()
+    log_file = LLM_DEBUG_LOG
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     with open(log_file, "a", encoding="utf-8") as f:
@@ -88,19 +152,8 @@ def run_clarification_check(client, model, full_prompt):
         return {"need_clarification": False}
     
     try:
-        # 嘗試解析 JSON (處理 Markdown 區塊)
-        json_str = content
-        if "```json" in content:
-            start = content.find("```json") + 7
-            end = content.find("```", start)
-            json_str = content[start:end].strip()
-        elif "```" in content:
-            start = content.find("```") + 3
-            end = content.find("```", start)
-            json_str = content[start:end].strip()
-        
-        return json.loads(json_str)
-    except:
+        return extract_json_object(content)
+    except Exception:
         return {"need_clarification": False}
 
 def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
@@ -128,21 +181,11 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
     is_related_to_previous_code = False
     
     try:
-        json_str = raw_content
-        if "```json" in raw_content:
-            start = raw_content.find("```json") + 7
-            end = raw_content.rfind("```")
-            json_str = raw_content[start:end].strip()
-        elif "```" in raw_content:
-            start = raw_content.find("```") + 3
-            end = raw_content.rfind("```")
-            json_str = raw_content[start:end].strip()
-        
-        parsed = json.loads(json_str)
+        parsed = extract_json_object(raw_content)
         enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
         needs_court_info = parsed.get("needs_court_info", False)
         is_related_to_previous_code = parsed.get("is_related_to_previous_code", False)
-    except:
+    except Exception:
         # 備援邏輯：如果解析失敗，根據關鍵字判斷
         if any(k in user_prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
             needs_court_info = True
@@ -171,11 +214,7 @@ def run_code_generation(client, model, system_prompt, enhanced_prompt, history):
     tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
     log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
     
-    code = None
-    if "```python" in ai_response:
-        start = ai_response.find("```python") + len("```python\n")
-        end = ai_response.rfind("```")
-        code = ai_response[start:end].strip()
+    code = extract_code_block(ai_response)
     
     return {"code": code, "tokens": tokens, "raw_response": ai_response}
 
@@ -200,11 +239,13 @@ plt.rcParams['axes.unicode_minus'] = False
 """
     plt.close('all')
     exec_globals = {
+        "__builtins__": _SAFE_BUILTINS,
         "pd": pd, 
         "df": df.copy(), 
         "platform": platform, 
         "io": io, 
         "plt": plt,
+        "np": np,
         "sns": sns 
     }
     if extended_globals:
@@ -231,7 +272,7 @@ plt.rcParams['axes.unicode_minus'] = False
         
     # 提取摘要變數 (複製原本的變數擷取邏輯)
     summary_info = {"_generated_figures_count": len(figs)}
-    ignore_list = ['df', 'pd', 'platform', 'io', 'fig', 'plt', 'sns', '_sys', '_plat', 'st', 'np']
+    ignore_list = ['df', 'pd', 'platform', 'io', 'fig', 'plt', 'sns', '_sys', '_plat', 'np']
     for name, val in exec_globals.items():
         if name.startswith('_') or name in ignore_list: continue
         try:
@@ -292,10 +333,9 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
             total_tokens += getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
             log_llm_interaction(f"Step 3: Fix Loop (Retry {retry_count})", fix_messages, fix_content)
             
-            if "```python" in fix_content:
-                s = fix_content.find("```python") + 9
-                e = fix_content.rfind("```")
-                code_to_execute = fix_content[s:e].strip()
+            fixed_code = extract_code_block(fix_content)
+            if fixed_code:
+                code_to_execute = fixed_code
 
     return {
         "final_code": code_to_execute,
@@ -319,11 +359,7 @@ def run_logic_reflection(client, model, full_prompt):
     tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
     log_llm_interaction("Step 4: Logic Reflection", messages, content)
     
-    new_code = None
-    if "```python" in content:
-        start = content.find("```python") + len("```python\n")
-        end = content.rfind("```")
-        new_code = content[start:end].strip()
+    new_code = extract_code_block(content)
         
     return {"new_code": new_code, "tokens": tokens}
 

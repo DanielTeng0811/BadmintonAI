@@ -42,6 +42,8 @@ from config.prompts import (
 )
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
+from utils.llm_parsing import extract_json_object
+from utils.paths import COURT_PLACE_FILE
 from utils.analysis_workflow import (
     run_prompt_enhancement,
     run_code_generation,
@@ -49,7 +51,10 @@ from utils.analysis_workflow import (
     run_logic_reflection,
     run_insight_generation
 )
-from judge_prompt import create_judge_prompt
+try:
+    from .judge_prompt import create_judge_prompt
+except ImportError:
+    from judge_prompt import create_judge_prompt
 
 # 載入環境變數
 env_path = os.path.join(parent_dir, '.env')
@@ -92,8 +97,7 @@ class LLMAsAJudge:
 
         # 載入場地資訊
         try:
-            court_file_path = os.path.join(parent_dir, "court_place.txt")
-            with open(court_file_path, "r", encoding="utf-8") as f:
+            with open(COURT_PLACE_FILE, "r", encoding="utf-8") as f:
                 self.court_place_info = f.read()
         except:
             self.court_place_info = ""
@@ -112,7 +116,7 @@ class LLMAsAJudge:
 
     def _load_few_shot_examples(self):
         """從 example.ipynb 載入評分範例"""
-        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "examples", "example.ipynb")
         if not os.path.exists(example_path):
             print("⚠️ 找不到 example.ipynb，將不使用 Few-Shot 範例。")
             return ""
@@ -179,7 +183,9 @@ class LLMAsAJudge:
         }
         self.notebook["cells"].append(cell)
 
-    def _add_notebook_code(self, code, b64_images=[]):
+    def _add_notebook_code(self, code, b64_images=None):
+        if b64_images is None:
+            b64_images = []
         source = [line + "\n" for line in code.split("\n")]
         cell = {
             "cell_type": "code",
@@ -201,7 +207,7 @@ class LLMAsAJudge:
             
         self.notebook["cells"].append(cell)
 
-    def _load_target_questions(self, filepath="評估問題.txt"):
+    def _load_target_questions(self, filepath=os.path.join("questions", "評估問題.txt")):
         """讀取問題集並篩選出 target_questions 中的問題 (保證與腳本在同一資料夾)"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
         fullpath = os.path.join(script_dir, filepath)
@@ -226,7 +232,7 @@ class LLMAsAJudge:
             
         return questions
 
-    def _parse_analysis_report(self, filepath="分析報告.md"):
+    def _parse_analysis_report(self, filepath=os.path.join("reports", "分析報告.md")):
         """解析 Markdown 報告中的問題、程式碼與洞察 (格式參考 front_page.py)"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
         fullpath = os.path.join(script_dir, filepath)
@@ -400,17 +406,7 @@ class LLMAsAJudge:
             raw_eval = response.choices[0].message.content.strip()
             judge_tokens += getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
             
-            # 安全清理與 Parse JSON
-            if "```json" in raw_eval:
-                start = raw_eval.find("```json") + 7
-                end = raw_eval.rfind("```")
-                raw_eval = raw_eval[start:end].strip()
-            elif "```" in raw_eval:
-                 start = raw_eval.find("```") + 3
-                 end = raw_eval.rfind("```")
-                 raw_eval = raw_eval[start:end].strip()
-                 
-            eval_dict = json.loads(raw_eval)
+            eval_dict = extract_json_object(raw_eval)
             eval_dict["judge_tokens"] = judge_tokens
             return eval_dict
             
@@ -522,7 +518,7 @@ class LLMAsAJudge:
                 time.sleep(2)
         else:
             # --- 直接評核現有報告 ---
-            print(f"\n🚀 啟動 LLM-as-a-Judge: 讀取分析報告.md...")
+            print(f"\n🚀 啟動 LLM-as-a-Judge: 讀取 reports/分析報告.md...")
             parsed_items = self._parse_analysis_report()
             total_items = len(parsed_items)
             
@@ -644,7 +640,7 @@ class LLMAsAJudge:
         print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
 
 if __name__ == "__main__":
-    # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
+    # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 reports/分析報告.md 進行評估
     QUESTIONS_TO_RUN = [1]
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
