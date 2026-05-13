@@ -158,6 +158,8 @@ def load_all_data():
     column_definitions_info = ""
 
     if df is not None and not df.empty:
+        column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
+        
         # [Dynamic Column Renaming]
         # 根據第一筆資料的 player/opponent 決定欄位名稱
         # 假設資料已排序: match_id -> set -> rally -> ball_round
