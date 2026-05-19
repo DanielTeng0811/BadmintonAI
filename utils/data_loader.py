@@ -98,22 +98,20 @@ def load_column_definitions(filepath):
             output_parts.append("")
 
         # 3. Data Columns
-        output_parts.append("## 欄位定義")
+        output_parts.append("## 欄位定義 (高密度格式)")
         for item in full_definitions.get("data_columns", []):
             col = item.get("column", "Unknown")
             desc = item.get("description", "")
-            output_parts.append(f"### `{col}`")
-            output_parts.append(f"**說明**: {desc}")
             
-            # Generic loop for other attributes
+            notes = []
             for k, v in item.items():
-                if k in ["column", "description"]: continue
-                
+                if k in ["column", "description", "group"]: continue
                 label = k.replace("_", " ").title()
-                if k == "warning" or k == "IMPORTANT":
-                    output_parts.append(f"- ⚠️ **{label}**: {v}")
-                else:
-                    output_parts.append(f"- **{label}**: {v}")
+                prefix = "⚠️ " if k in ["warning", "IMPORTANT"] else ""
+                notes.append(f"{prefix}{label}: {v}")
+            note_str = f" | Note: {' '.join(notes)}" if notes else ""
+            
+            output_parts.append(f"- `{col}` | {desc}{note_str}")
 
         # 4. Analysis Guidelines
         if "analysis_guidelines" in full_definitions:
@@ -202,3 +200,58 @@ def load_all_data():
         column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
 
     return df, data_schema_info, column_definitions_info
+
+def filter_schema_and_definitions(required_groups, data_schema_info, column_definitions_info):
+    """
+    根據 LLM 決策的 required_groups 過濾不需要的欄位。
+    將欄位從 Data Schema 和 Column Definitions 中完全移除，避免 LLM 盲猜。
+    """
+    if not required_groups:
+        return data_schema_info, column_definitions_info
+        
+    try:
+        # 1. 取得對應群組允許的基礎欄位名稱
+        with open(COLUMN_DEFINITION_FILE, "r", encoding="utf-8") as f:
+            full_definitions = json.load(f)
+            
+        allowed_base_columns = set()
+        for item in full_definitions.get("data_columns", []):
+            groups = item.get("group", [])
+            # 只要有一個群組符合就保留
+            if any(g in required_groups for g in groups):
+                allowed_base_columns.add(item.get("column"))
+                
+        # 例外：如果需要保留 _score 動態欄位，且 'player_score' 或 'opponent_score' 被允許
+        score_allowed = 'player_score' in allowed_base_columns or 'opponent_score' in allowed_base_columns
+        
+        # 2. 過濾 column_definitions_info (高密度格式每一行開頭為 "- `欄位名` |")
+        filtered_def_lines = []
+        for line in column_definitions_info.split('\n'):
+            if line.startswith("- `"):
+                col_name = line.split("`")[1]
+                # 若 col_name 在 allowed_base_columns，或它是動態 _score 且分數允許，則保留
+                if col_name in allowed_base_columns or (score_allowed and col_name.endswith('_score')):
+                    filtered_def_lines.append(line)
+            else:
+                # 保留標題與其他非欄位定義區塊
+                filtered_def_lines.append(line)
+        
+        # 3. 過濾 data_schema_info (每一欄位區塊開頭為 "### `欄位名`")
+        filtered_schema_lines = []
+        keep_current_block = True
+        for line in data_schema_info.split('\n'):
+            if line.startswith("### `"):
+                col_name = line.split("`")[1]
+                if col_name in allowed_base_columns or (score_allowed and col_name.endswith('_score')):
+                    keep_current_block = True
+                else:
+                    keep_current_block = False
+            
+            if keep_current_block:
+                filtered_schema_lines.append(line)
+                
+        return "\n".join(filtered_schema_lines), "\n".join(filtered_def_lines)
+        
+    except Exception as e:
+        print(f"Error during schema filtering: {e}")
+        return data_schema_info, column_definitions_info

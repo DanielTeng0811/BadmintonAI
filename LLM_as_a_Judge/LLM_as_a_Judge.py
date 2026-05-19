@@ -275,13 +275,20 @@ class LLMAsAJudge:
         enhance_res = run_prompt_enhancement(self.gen_client, self.gen_model, enhancement_system_prompt, prompt, [])
         enhanced_prompt = enhance_res["enhanced_prompt"]
         needs_court_info = enhance_res["needs_court_info"]
+        required_column_groups = enhance_res.get("required_column_groups", [])
         pipeline_tokens += enhance_res.get("tokens", 0)
         
         # --- Step 2: 生成分析程式碼 ---
         print("▶ Step 2: 生成程式碼...")
-        system_prompt = create_system_prompt(
+        from utils.data_loader import filter_schema_and_definitions
+        filtered_schema, filtered_defs = filter_schema_and_definitions(
+            required_column_groups, 
             self.data_schema_info, 
-            self.column_definitions_info, 
+            self.column_definitions_info
+        )
+        system_prompt = create_system_prompt(
+            filtered_schema, 
+            filtered_defs, 
             self.court_place_info if needs_court_info else None
         )
         gen_res = run_code_generation(self.gen_client, self.gen_model, system_prompt, enhanced_prompt, [])
@@ -375,7 +382,7 @@ class LLMAsAJudge:
         insight_text = insight_res["insight"]
         pipeline_tokens += insight_res.get("tokens", 0)
         
-        return code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens
+        return code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups
 
     def _judge_result(self, question, code, insight):
         """呼叫 LLM 進行評分判斷"""
@@ -445,7 +452,7 @@ class LLMAsAJudge:
                 print(f"\n[{idx}/{total_items}] 處理問題 {self._current_q_num}: {q_text[:30]}...")
                 
                 # 執行分析流程
-                code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
+                code, insight, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
                 
                 if not only_generation:
                     # AI 裁判給分
@@ -507,7 +514,9 @@ class LLMAsAJudge:
                 q_header = f"## 題號 {self._current_q_num}"
                 if not only_generation and self._current_q_num in self.flagged_questions:
                     q_header += " (*)"
-                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
+                
+                group_info = f"\n> **使用的資料欄位群組**: `{', '.join(required_column_groups) if required_column_groups else '全欄位 (Fallback)'}`"
+                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}{group_info}")
                 if code:
                     self._add_notebook_code(code, b64_images)
                 
@@ -645,7 +654,7 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1]
+    QUESTIONS_TO_RUN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     GEN_API_MODE =  "Claude"

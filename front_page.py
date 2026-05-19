@@ -361,13 +361,20 @@ if prompt := st.chat_input("請輸入你的數據分析問題..."):
                     enhanced_prompt = enhancement_result["enhanced_prompt"]
                     needs_court_info = enhancement_result["needs_court_info"]
                     is_related_to_previous_code = enhancement_result["is_related"]
+                    required_column_groups = enhancement_result.get("required_column_groups", [])
                     _turn_tokens += enhancement_result["tokens"]
 
                     # --- [Step 2: 生成分析程式碼] ---
                     status.update(label="Step 2/6: 正在生成分析程式碼...")
-                    system_prompt = create_system_prompt(
+                    from utils.data_loader import filter_schema_and_definitions
+                    filtered_schema, filtered_defs = filter_schema_and_definitions(
+                        required_column_groups, 
                         data_schema_info, 
-                        column_definitions_info, 
+                        column_definitions_info
+                    )
+                    system_prompt = create_system_prompt(
+                        filtered_schema, 
+                        filtered_defs, 
                         court_place_info if needs_court_info else None
                     )
                     

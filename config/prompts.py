@@ -21,8 +21,8 @@ _BASE_SYSTEM_PROMPT = """
     - IMPORTANT: 若使用 `player_type` 或 `opponent_type`，在輸出附上數值與名稱對照表。
     - 若使用 `area` 欄位，需提供 Court Grid Definitions。
     - 時序分析 (Temporal Analysis):分析比較前後拍資訊，對特定欄位正確使用shift()
-    - 分析造成原因使用df.groupby(['match_id', 'set', 'rally']).shift(1) (前一球)，分析導致結果使用df.groupby(['match_id', 'set', 'rally'])shift(-1) (後一球)，分析同個球員前一球表現df.groupby(['match_id', 'set', 'rally'])['player'=='球員名'].shift(1)。
-    - IMPORTANT: 主客關係邏輯務必清晰。若該球player='玩家A'為主opponent='玩家A的對手'為客，下一球player='玩家A的對手'為主opponent='玩家A'為客，輪流交替。
+    - 分析造成原因使用df.groupby(['match_id', 'set', 'rally']).shift(1) (前一球)，分析導致結果使用df.groupby(['match_id', 'set', 'rally']).shift(-1) (後一球)。跨拍分析**極易發生跨回合污染**，務必加上 groupby 或判斷 `df['rally'] == df['rally'].shift(-1)`。
+    - IMPORTANT: 主客關係邏輯務必清晰。尋找「對手回擊」或「下一拍」時，切記**同一回合的下一拍，player 必定變成對手**。不要用 `player` 的同一列去找對手的打擊資訊。
 
 3. **視覺化 (Matplotlib/Seaborn)**:
     - 用最適合解決問題的視覺畫圖表呈現(考慮視覺效果，讓圖表更好讀)
@@ -77,12 +77,23 @@ def create_enhancement_system_prompt() -> str:
 2. 判斷問題是否可能用到場地資訊。若不確定，輸出true
    - 若問題可能需要用到場地資訊：前場/中場/後場、網前/底線/邊線、落點、站位、區域 (Area/Zone/Location)... -> true
 3. 判斷本次問題是否與前一回合高度相關，且需要參考上一回合的程式碼或資料狀態才能實作。若是（比如：『幫我把這張圖改成圓餅圖』、『那選手A的數據呢』），輸出 true；若是全新的非延伸問題，輸出 false。
+4. 判斷回答該問題所需要的資料欄位群組 (required_column_groups)。系統將會根據你輸出的群組，動態過濾並提供對應的欄位定義給後續模型，請精準挑選以減少雜訊。
+   - 可選群組如下 (必須且僅能從中挑選)：
+     - "game_structure": 賽局結構與參賽者 (match_id, rally, player, server 等)
+     - "shot_type": 球種名稱與代碼 (type, player_type 等)
+     - "coordinates": 球的物理擊球點、落點與飛行距離 (hit_area, landing_area, ball_distance 等)
+     - "player_location": 雙方「站位」(前/中/後場) 與站點 (player_location_area 等)
+     - "player_movement": 雙方跑動距離與位移 (player_move_x/y 等)
+     - "scoring_reason": 得分狀態與原因 (getpoint_player, win_reason 等)
+     - "stroke_details": 擊球動作細節 (aroundhead, backhand, height 等)
+   - 若題目描述「在某區擊球」(例如：在後場擊球)，這通常指「球被擊打時的物理位置」，必須選 "coordinates" (對應 hit_area)；只有當題目明確強調球員的「站位」時，才選 "player_location"；若詢問「移動/跑動距離」，選 "player_movement"。
 
 輸出 JSON (No Markdown):
 {
     "enhanced_prompt": "完整的問題",
     "needs_court_info": true/false,
-    "is_related_to_previous_code": true/false
+    "is_related_to_previous_code": true/false,
+    "required_column_groups": ["game_structure", ...]
 }"""
 
 def create_reflection_prompt(prompt: str, code_to_execute: str, execution_output: str, reflection_context: str) -> str:

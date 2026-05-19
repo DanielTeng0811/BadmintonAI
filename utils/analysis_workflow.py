@@ -126,6 +126,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
     enhanced_prompt = raw_content
     needs_court_info = False
     is_related_to_previous_code = False
+    required_column_groups = []
     
     try:
         json_str = raw_content
@@ -142,6 +143,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
         enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
         needs_court_info = parsed.get("needs_court_info", False)
         is_related_to_previous_code = parsed.get("is_related_to_previous_code", False)
+        required_column_groups = parsed.get("required_column_groups", [])
     except:
         # 備援邏輯：如果解析失敗，根據關鍵字判斷
         if any(k in user_prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
@@ -151,6 +153,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
         "enhanced_prompt": enhanced_prompt,
         "needs_court_info": needs_court_info,
         "is_related": is_related_to_previous_code,
+        "required_column_groups": required_column_groups,
         "tokens": tokens
     }
 
