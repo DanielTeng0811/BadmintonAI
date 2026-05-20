@@ -18,6 +18,7 @@ _BASE_SYSTEM_PROMPT = """
 2. **邏輯判斷 (CRITICAL)**:
     - 分析「某球員如何得分」或「贏球手段」(如：靠殺球得分) 時，**必須**檢查 `df['player'] == df['getpoint_player']` (Active Win)。僅檢查 `getpoint_player` 與 `type` 會錯誤包含對手失誤。
         - **特別注意，當計算特定得分手段的「佔比（百分比）」時，其分母（總得分）也必須是「主動得分 (Active Win)」（即 `df['player'] == df['getpoint_player']`），以確保分子與分母比較基準一致。**
+    - 區分「失分」與「失誤」: 「失分」代表對手得分 (例如 `df['getpoint_player'] == '對手'`)，這包含了對手主動得分與我方失誤；「失誤」則**特指**我方擊球失敗導致對手得分 (即最後一拍為我方擊球：`df['player'] == '我方' & df['getpoint_player'] == '對手'`)。請嚴格根據題目語意 (問失分還是問失誤) 撰寫過濾條件，切勿混淆。
     - IMPORTANT: 若使用 `player_type` 或 `opponent_type`，在輸出附上數值與名稱對照表。
     - 若使用 `area` 欄位，需提供 Court Grid Definitions。
     - 時序分析 (Temporal Analysis):分析比較前後拍資訊，對特定欄位正確使用shift()

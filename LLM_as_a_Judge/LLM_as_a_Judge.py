@@ -103,7 +103,7 @@ class LLMAsAJudge:
         self.notebook = self._create_notebook_structure()
         
         # 載入標準答案
-        self.reference_answers = self._load_reference_answers()
+        self.reference_answers = self._load_reference_answers_with_duplicates()
         
         # Token 累計計數器
         self.total_pipeline_tokens = 0
@@ -128,7 +128,7 @@ class LLMAsAJudge:
                 content = "".join(cell["source"]).strip()
                 if cell["cell_type"] == "markdown":
                     # 尋找題號，例如 "1. 周天成..."
-                    match = re.match(r'^(\d+)\.\s', content)
+                    match = re.match(r'^\s*(\d+)\.\s*', content)
                     if match:
                         current_q_num = int(match.group(1))
                 elif cell["cell_type"] == "code" and current_q_num is not None:
@@ -141,6 +141,34 @@ class LLMAsAJudge:
             
         except Exception as e:
             print(f"⚠️ 載入標準答案失敗: {e}")
+            return {}
+
+    def _load_reference_answers_with_duplicates(self):
+        """從 example.ipynb 載入各題標準答案，支援同題號多個 code cell。"""
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+
+        try:
+            with open(example_path, "r", encoding="utf-8") as f:
+                nb = json.load(f)
+
+            ref_dict = {}
+            current_q_num = None
+
+            for cell in nb["cells"]:
+                content = "".join(cell.get("source", [])).strip()
+                if cell.get("cell_type") == "markdown":
+                    match = re.match(r'^\s*(\d+)\.\s*', content)
+                    if match:
+                        current_q_num = int(match.group(1))
+                elif cell.get("cell_type") == "code" and current_q_num is not None:
+                    if content:
+                        ref_dict.setdefault(current_q_num, []).append(content)
+                    current_q_num = None
+
+            return ref_dict
+
+        except Exception as e:
+            print(f"?? 頛璅?蝑?憭望?: {e}")
             return {}
 
     def _create_notebook_structure(self):
@@ -380,7 +408,7 @@ class LLMAsAJudge:
         
         return code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups
 
-    def _judge_result(self, question, code, ref_code):
+    def _judge_result(self, question, code, ref_codes):
         """呼叫 LLM 進行評分判斷"""
         print("▶ Step 6: AI 裁判正在評核...")
         
@@ -390,7 +418,7 @@ class LLMAsAJudge:
                 "reasoning": "未生成有效程式碼。"
             }
 
-        judge_prompt = create_judge_prompt(question, code, self.column_definitions_info, ref_code)
+        judge_prompt = create_judge_prompt(question, code, self.column_definitions_info, ref_codes)
         
         messages = [{"role": "user", "content": judge_prompt}]
         judge_tokens = 0
@@ -639,7 +667,7 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1, 2]
+    QUESTIONS_TO_RUN = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     # GEN_API_MODE =  "Claude"
