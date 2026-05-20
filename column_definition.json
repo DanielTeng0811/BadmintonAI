@@ -258,6 +258,24 @@
       ]
     },
     {
+      "column": "player_score",
+      "description": "當前列視角下，player 在此拍發生時所對應的當前比分。實際資料中通常會以動態欄位名稱呈現，例如 `CHOU Tien Chen_score`。",
+      "usage": "若資料中已提供 `{player_name}_score` / `{opponent_name}_score`，優先直接使用，不要自行從逐筆事件重新累積比分。",
+      "note": "這是比分欄位的通用基底定義，前端會依實際球員名稱替換成真正欄位名。",
+      "group": [
+        "game_structure"
+      ]
+    },
+    {
+      "column": "opponent_score",
+      "description": "當前列視角下，opponent 在此拍發生時所對應的當前比分。實際資料中通常會以動態欄位名稱呈現，例如 `Kento MOMOTA_score`。",
+      "usage": "若資料中已提供 `{player_name}_score` / `{opponent_name}_score`，優先直接使用，不要自行從逐筆事件重新累積比分。",
+      "note": "這是比分欄位的通用基底定義，前端會依實際球員名稱替換成真正欄位名。",
+      "group": [
+        "game_structure"
+      ]
+    },
+    {
       "column": "getpoint_player",
       "description": "只記錄在該回合結束的那一拍。該回合得分者，若正在擊球未結束為NULL",
       "usage": "若要觀察該回合的得分者使用.groupby(['match_id', 'set', 'rally']).last()，同時欄位有NULL存在，必要時可使用dropna()",

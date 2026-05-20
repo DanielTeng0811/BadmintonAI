@@ -49,6 +49,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 變數命名不同
 - 程式順序不同
 - 視覺化形式不同
+- 題目未要求視覺化時，candidate 額外畫圖或多做圖表，不應單獨成為判 false 的理由
 - 輸出文字措辭不同
 - 在不改變統計口徑的前提下，使用等價 Pandas 寫法
 
@@ -75,6 +76,8 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 4. 若同一個 rally 可能同時被算進短回合、中回合、長回合等多個分類，這是明顯統計口徑錯誤，通常應判 false。
 5. 若 reference 是先取得每個 rally 的最後一拍，再依最後一拍的資訊分類；candidate 若先對逐筆資料切片再統計，通常不等價。
 6. 若題目要的是「最終比分 / 最終勝率 / 每回合結果」，candidate 必須真的使用最終狀態，而不是用中途狀態或局部 shot 代替。
+7. 若 reference 或題目直接依賴資料中的現成比分欄位（例如 `CHOU Tien Chen_score`），candidate 卻改成在子資料上自行逐筆累積比分，必須特別檢查是否因此改變比分分布。
+8. 如果原始資料明明存在某個比分階段（例如關鍵分、18 分以上），candidate 卻因錯誤的自建比分邏輯讓該階段完全消失，這通常是明顯統計口徑錯誤，應判 false。
 
 [特別嚴格檢查：結果是否有效]
 1. 如果 candidate code 明確得到空資料、找不到符合條件、merge 後為空、無法分析、沒有有效結果，通常應判 false。
