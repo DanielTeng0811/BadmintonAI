@@ -102,50 +102,46 @@ class LLMAsAJudge:
         self.results = []
         self.notebook = self._create_notebook_structure()
         
-        # 載入 Few-Shot 範例
-        self.few_shot_examples = self._load_few_shot_examples()
+        # 載入標準答案
+        self.reference_answers = self._load_reference_answers()
         
         # Token 累計計數器
         self.total_pipeline_tokens = 0
         self.total_judge_tokens = 0
         self.flagged_questions = [] # 儲存低分標註的題號
 
-    def _load_few_shot_examples(self):
-        """從 example.ipynb 載入評分範例"""
+    def _load_reference_answers(self):
+        """從 example.ipynb 載入各題標準答案，回傳 dict {q_num: code_str}"""
         example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
         if not os.path.exists(example_path):
-            print("⚠️ 找不到 example.ipynb，將不使用 Few-Shot 範例。")
-            return ""
+            print("⚠️ 找不到 example.ipynb，無法進行標準答案比對。")
+            return {}
         
         try:
             with open(example_path, "r", encoding="utf-8") as f:
                 nb = json.load(f)
             
-            examples = []
-            current_ex = []
-            capture = False
+            ref_dict = {}
+            current_q_num = None
             
             for cell in nb["cells"]:
                 content = "".join(cell["source"]).strip()
-                if cell["cell_type"] == "markdown" and content.startswith("## EX"):
-                    if current_ex:
-                        examples.append("\n".join(current_ex))
-                    current_ex = [content]
-                    capture = True
-                elif capture:
-                    if cell["cell_type"] == "code":
-                        current_ex.append(f"[程式碼]\n{content}")
-                    else:
-                        current_ex.append(content)
+                if cell["cell_type"] == "markdown":
+                    # 尋找題號，例如 "1. 周天成..."
+                    match = re.match(r'^(\d+)\.\s', content)
+                    if match:
+                        current_q_num = int(match.group(1))
+                elif cell["cell_type"] == "code" and current_q_num is not None:
+                    # 當遇到題號後的下一個 code cell，視為標準答案
+                    if current_q_num not in ref_dict:
+                        ref_dict[current_q_num] = content
+                        current_q_num = None # 清空以等待下一題
             
-            if current_ex:
-                examples.append("\n".join(current_ex))
-            
-            return "\n\n" + "="*30 + "\n" + "\n\n".join(examples) + "\n" + "="*30 + "\n"
+            return ref_dict
             
         except Exception as e:
-            print(f"⚠️ 載入範例失敗: {e}")
-            return ""
+            print(f"⚠️ 載入標準答案失敗: {e}")
+            return {}
 
     def _create_notebook_structure(self):
         """建立 Jupyter Notebook 基本結構"""
@@ -384,17 +380,18 @@ class LLMAsAJudge:
         
         return code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups
 
-    def _judge_result(self, question, code, insight):
+    def _judge_result(self, question, code, ref_code):
         """呼叫 LLM 進行評分判斷"""
         print("▶ Step 6: AI 裁判正在評核...")
         
         if not code:
             return {
-                "code_eval": {"reasoning": "未生成有效程式碼。", "correctness": 0, "completeness": 0, "rationality": 0, "executability": 0, "total": 0},
-                "insight_eval": {"reasoning": "無代碼可供分析。", "alignment": 0, "correctness": 0, "support": 0, "depth": 0, "feasibility": 0, "total": 0}
+                "code_correct": False,
+                "reasoning": "未生成有效程式碼。"
             }
-            
-        judge_prompt = create_judge_prompt(question, code, insight, self.column_definitions_info, self.few_shot_examples)
+
+        judge_prompt = create_judge_prompt(question, code, self.column_definitions_info, ref_code)
+        
         messages = [{"role": "user", "content": judge_prompt}]
         judge_tokens = 0
         
@@ -413,10 +410,10 @@ class LLMAsAJudge:
                 end = raw_eval.rfind("```")
                 raw_eval = raw_eval[start:end].strip()
             elif "```" in raw_eval:
-                 start = raw_eval.find("```") + 3
-                 end = raw_eval.rfind("```")
-                 raw_eval = raw_eval[start:end].strip()
-                 
+                start = raw_eval.find("```") + 3
+                end = raw_eval.rfind("```")
+                raw_eval = raw_eval[start:end].strip()
+                
             eval_dict = json.loads(raw_eval)
             eval_dict["judge_tokens"] = judge_tokens
             return eval_dict
@@ -424,8 +421,8 @@ class LLMAsAJudge:
         except Exception as e:
             print(f"❌ 裁判評分失敗: {e}")
             return {
-                "code_eval": {"reasoning": f"評分解析錯誤: {e}", "correctness": -1, "completeness": -1, "rationality": -1, "executability": -1, "total": -1},
-                "insight_eval": {"reasoning": f"評分解析錯誤: {e}", "alignment": -1, "correctness": -1, "support": -1, "depth": -1, "feasibility": -1, "total": -1},
+                "code_correct": False,
+                "reasoning": f"評分解析錯誤: {e}",
                 "judge_tokens": judge_tokens
             }
 
@@ -452,58 +449,46 @@ class LLMAsAJudge:
                 print(f"\n[{idx}/{total_items}] 處理問題 {self._current_q_num}: {q_text[:30]}...")
                 
                 # 執行分析流程
-                code, insight, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
+                code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
                 
                 if not only_generation:
-                    # AI 裁判給分
-                    eval_res = self._judge_result(q_text, code, insight)
+                    ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
+                    if ref_code == "無標準答案":
+                        print(f"⚠️ 題號 {self._current_q_num} 在 example.ipynb 找不到標準答案，無法評估。")
+                        continue
+                        
+                    eval_res = self._judge_result(q_text, code_to_execute, ref_code)
                     judge_tokens = eval_res.get("judge_tokens", 0)
-                    
-                    # 儲存結果到記憶體
+
                     res_item = {
                         "question_id": self._current_q_num,
                         "question_text": q_text,
                         "pipeline_tokens": pipeline_tokens,
                         "judge_tokens": judge_tokens,
-                        "total_tokens": pipeline_tokens + judge_tokens
+                        "total_tokens": pipeline_tokens + judge_tokens,
+                        "required_groups": ", ".join(required_column_groups)
                     }
-                    
+
                     # 累計總 Token
                     self.total_pipeline_tokens += pipeline_tokens
                     self.total_judge_tokens += judge_tokens
+
+                    code_correct = eval_res.get("code_correct", False)
+                    reasoning = eval_res.get("reasoning", "")
                     
-                    # 展開 Code Eval
-                    code_eval = eval_res.get("code_eval", {})
-                    for k, v in code_eval.items():
-                        if k != "reasoning": res_item[f"code_{k}"] = v
-                    res_item["code_reasoning"] = code_eval.get("reasoning", "")
-                    
-                    # 展開 Insight Eval
-                    insight_eval = eval_res.get("insight_eval", {})
-                    for k, v in insight_eval.items():
-                        if k != "reasoning": res_item[f"insight_{k}"] = v
-                    res_item["insight_reasoning"] = insight_eval.get("reasoning", "")
-                    
-                    # 檢查標註條件
-                    is_flagged = False
-                    # 條件 1: 任何小項分數 (score_*) <= 3
-                    for k, v in res_item.items():
-                        if (k.startswith("code_score_") or k.startswith("insight_score_")) and isinstance(v, (int, float)) and v <= 3:
-                            is_flagged = True
-                            break
-                    # 條件 2: 程式碼總分 (code_total) <= 18
-                    if not is_flagged:
-                        code_total = res_item.get("code_code_total", 20)
-                        if isinstance(code_total, (int, float)) and code_total <= 18:
-                            is_flagged = True
-                    
+                    res_item["code_correct"] = code_correct
+                    res_item["code_reasoning"] = reasoning
+
+                    # 標記需要審查的題目
+                    is_flagged = not code_correct
                     res_item["needs_review"] = is_flagged
                     if is_flagged:
                         self.flagged_questions.append(self._current_q_num)
-                    
+
                     self.results.append(res_item)
                     
-                    print(f"🏁 評分結果: Code {code_eval.get('code_total', 0)}/20 | Insight {insight_eval.get('insight_total', 0)}/25")
+                    status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
+                    print(f"🏁 評分結果: {status_emoji}")
                     print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
                 else:
                     # 僅生成模式
@@ -517,16 +502,16 @@ class LLMAsAJudge:
                 
                 group_info = f"\n> **使用的資料欄位群組**: `{', '.join(required_column_groups) if required_column_groups else '全欄位 (Fallback)'}`"
                 self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}{group_info}")
-                if code:
-                    self._add_notebook_code(code, b64_images)
+                if code_to_execute:
+                    self._add_notebook_code(code_to_execute, b64_images)
                 
                 if not only_generation:
+                    status_text = "✅ 正確" if code_correct else "❌ 錯誤"
                     judge_md = f"### 🤖 AI 裁判評分報告\n\n"
-                    judge_md += f"#### 💻 程式碼評核: {code_eval.get('code_total')}/20\n> **分析意見**: {code_eval.get('reasoning')}\n\n"
-                    judge_md += f"#### 💡 數據洞察評核: {insight_eval.get('insight_total')}/25\n> **分析意見**: {insight_eval.get('reasoning')}\n"
-                    self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{judge_md}")
+                    judge_md += f"#### 💻 程式碼評核: {status_text}\n> **分析意見**: {reasoning}\n\n"
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight_text}\n\n---\n{judge_md}")
                 else:
-                    self._add_notebook_markdown(f"### 數據洞察\n{insight}")
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight_text}")
                 
                 time.sleep(2)
         else:
@@ -635,7 +620,7 @@ class LLMAsAJudge:
         # 顯示標註題目總結
         if not only_generation and self.flagged_questions:
             print(f"\n{'='*50}")
-            print(f"發現低評分項目 (小項 <= 3 或 Code 總分 <= 18)")
+            print(f"發現錯誤題目 (程式碼判定不正確)")
             print(f"建議人工檢視以下題目: {', '.join(map(str, self.flagged_questions))}")
             print(f"{'='*50}")
 
@@ -654,11 +639,13 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    QUESTIONS_TO_RUN = [1, 2]
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
-    GEN_API_MODE =  "Claude"
-    GEN_MODEL = "claude-sonnet-4-6"
+    # GEN_API_MODE =  "Claude"
+    # GEN_MODEL = "claude-sonnet-4-6"
+    GEN_API_MODE =  "OpenAI 官方"
+    GEN_MODEL = "gpt-4o"
     
     # --- 2. 選擇評估 (Judge) 用的 API 與模型 ---
     JUDGE_API_MODE = "OpenAI 官方"
