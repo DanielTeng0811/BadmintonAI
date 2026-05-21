@@ -8,10 +8,10 @@ import json
 import io
 import streamlit as st
 import numpy as np
+from utils.paths import COLUMN_DEFINITION_FILE, PROCESSED_CSV
 
 # 檔案路徑常數
-DATA_FILE = "processed_new_3.csv"
-COLUMN_DEFINITION_FILE = "column_definition.json"
+DATA_FILE = PROCESSED_CSV
 
 
 @st.cache_data
@@ -25,6 +25,7 @@ def load_data(filepath):
     Returns:
         pd.DataFrame or None: 載入的 DataFrame，若檔案不存在則回傳 None
     """
+    filepath = os.fspath(filepath)
     if os.path.exists(filepath):
         return pd.read_csv(filepath)
     return None
@@ -77,6 +78,7 @@ def load_column_definitions(filepath):
     載入並格式化欄位定義（支援新的結構化格式）
     """
     try:
+        filepath = os.fspath(filepath)
         with open(filepath, "r", encoding="utf-8") as f:
             full_definitions = json.load(f)
 
@@ -137,9 +139,9 @@ def load_column_definitions(filepath):
         return "\n".join(output_parts)
 
     except FileNotFoundError:
-        return "錯誤：找不到 'column_definition.json' 檔案。"
+        return f"錯誤：找不到 '{COLUMN_DEFINITION_FILE}' 檔案。"
     except json.JSONDecodeError:
-        return "錯誤：'column_definition.json' 檔案格式錯誤。"
+        return f"錯誤：'{COLUMN_DEFINITION_FILE}' 檔案格式錯誤。"
 
 
 def load_all_data():
@@ -196,7 +198,7 @@ def load_all_data():
             column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
             
     else:
-        data_schema_info = "錯誤：找不到 `all_dataset.csv` 或資料為空。"
+        data_schema_info = f"錯誤：找不到 `{PROCESSED_CSV}` 或資料為空。"
         column_definitions_info = load_column_definitions(COLUMN_DEFINITION_FILE)
 
     return df, data_schema_info, column_definitions_info

@@ -4,10 +4,21 @@
 
 import pandas as pd
 import sqlite3
-from config import CSV_FILE, DB_FILE, TABLE_NAME
+import os
+import sys
 
 
-def csv_to_sqlite(csv_file=CSV_FILE, db_file=DB_FILE, table_name=TABLE_NAME):
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+from utils.paths import PROCESSED_CSV, PROCESSED_DB
+
+
+TABLE_NAME = "match_data"
+
+
+def csv_to_sqlite(csv_file=PROCESSED_CSV, db_file=PROCESSED_DB, table_name=TABLE_NAME):
     """
     將 CSV 檔案轉換成 SQLite 資料庫
 
@@ -31,7 +42,7 @@ def csv_to_sqlite(csv_file=CSV_FILE, db_file=DB_FILE, table_name=TABLE_NAME):
     conn.close()
 
 
-def show_sample_data(db_file=DB_FILE, table_name=TABLE_NAME, limit=5):
+def show_sample_data(db_file=PROCESSED_DB, table_name=TABLE_NAME, limit=5):
     """
     顯示資料庫中的範例資料
 
@@ -53,7 +64,7 @@ def show_sample_data(db_file=DB_FILE, table_name=TABLE_NAME, limit=5):
     conn.close()
 
 
-def execute_query(sql_query, db_file=DB_FILE):
+def execute_query(sql_query, db_file=PROCESSED_DB):
     """
     執行 SQL 查詢
 

@@ -22,6 +22,12 @@ from config.prompts import (
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
 from utils.data_processor import process_badminton_data
+from utils.paths import (
+    COURT_PLACE_FILE,
+    LLM_DEBUG_LOG,
+    PROCESSED_CSV,
+    ensure_runtime_dirs,
+)
 from utils.analysis_workflow import (
     extract_conversation_context,
     run_clarification_check,
@@ -36,6 +42,7 @@ from utils.analysis_workflow import (
 
 # --- 初始設定與環境變數載入 ---
 load_dotenv()
+ensure_runtime_dirs()
 
 # 設定頁面
 st.set_page_config(
@@ -67,9 +74,8 @@ def get_api_key(key_name):
 @st.cache_data
 def load_court_info():
     try:
-        with open("court_place.txt", "r", encoding="utf-8") as f:
+        with open(COURT_PLACE_FILE, "r", encoding="utf-8") as f:
             return f.read()
-        print("Court info loaded successfully")
     except:
         return ""
 
@@ -257,11 +263,11 @@ use_history = st.toggle("🔗 接續前文 (Track History)", value=False, help="
 
 if prompt := st.chat_input("請輸入你的數據分析問題..."):
     # Clear debug log on new input (create if not exists, truncate if exists)
-    with open("llm_debug_log.txt", "w", encoding="utf-8") as f:
+    with open(LLM_DEBUG_LOG, "w", encoding="utf-8") as f:
         pass # Truncate file to 0 bytes
 
     if df is None:
-        st.error("❌ 找不到 'all_dataset.csv'。")
+        st.error(f"❌ 找不到處理後資料檔：{PROCESSED_CSV}")
     elif not api_key_input:
         st.error("⚠️ 請輸入 API Key。")
     else:

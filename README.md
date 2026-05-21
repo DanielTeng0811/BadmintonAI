@@ -211,7 +211,7 @@ Step 6: 生成戰術洞察
 
 ### 4. Debug 日誌
 
-**檔案：** `llm_debug_log.txt`
+**檔案：** `logs/llm_debug_log.txt`
 
 **內容：** 完整 AI 對話紀錄，方便除錯
 
@@ -227,11 +227,20 @@ BadmintonAI/
 ├── utils/
 │   ├── ai_client.py           # AI 客戶端
 │   ├── data_loader.py         # 資料載入
-│   └── data_processor.py      # 資料處理 ⭐
-├── court_place.txt            # 場地區域定義
-├── all_dataset.csv            # 原始資料
-├── processed_new_3.csv        # 處理後資料
-├── processed_new_3.db         # SQLite 資料庫
+│   ├── data_processor.py      # 資料處理 ⭐
+│   └── paths.py               # 專案路徑集中設定
+├── data/
+│   ├── raw/all_dataset.csv
+│   ├── processed/processed_new_3.csv
+│   ├── processed/processed_new_3.db
+│   └── metadata/
+│       ├── column_definition.json
+│       └── court_place.txt
+├── docs/                      # 部署與專案文件
+├── notebooks/                 # 實驗與產生結果 notebook
+├── evaluation/questions/      # 評測題目集
+├── scripts/                   # 批次處理與工具腳本
+├── logs/                      # 本機除錯日誌（不進 git）
 ├── .env                       # API Key 設定
 └── requirements.txt           # Python 依賴
 ```

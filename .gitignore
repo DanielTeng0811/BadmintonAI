@@ -54,7 +54,8 @@ runs/
 wandb/
 
 # Data
-data/
+data/uploads/
+data/tmp/
 dataset/
 datasets/
 #*.csv
@@ -97,3 +98,4 @@ llm_debug_log.txt
 test_questions.md
 
 analysis_context_output.txt
+LLM_as_a_Judge/eval_results/

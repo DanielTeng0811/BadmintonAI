@@ -7,7 +7,7 @@
 3. 將結果整理成 Jupyter Notebook 格式
 
 使用方式：
-    python auto_generate_answers.py
+    python scripts/auto_generate_answers.py
 """
 
 # 重要：必須在導入 matplotlib.pyplot 之前設定後端
@@ -26,21 +26,27 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+# 讓 scripts/ 底下的工具也能匯入專案根目錄模組
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 # 導入你的 BadmintonAI 核心模組
 from config.prompts import create_system_prompt
 from utils.data_loader import load_all_data
 from utils.ai_client import initialize_client
+from utils.paths import COURT_PLACE_FILE, EVALUATION_QUESTIONS_FILE, NOTEBOOKS_DIR
 
 # 載入環境變數
-load_dotenv()
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 
 class AutoQuestionAnswerer:
     """自動問答系統"""
 
     def __init__(self,
-                 questions_file='test_question_modified.json',
-                 output_file='question_ans_final_63to100.ipynb',
+                 questions_file=EVALUATION_QUESTIONS_FILE,
+                 output_file=NOTEBOOKS_DIR / 'question_ans_final_63to100.ipynb',
                  api_mode='OpenAI 官方',
                  model='gpt-4o'):
 
@@ -50,7 +56,8 @@ class AutoQuestionAnswerer:
         self.model = model
 
         # 初始化 API
-        api_key = os.getenv('OPENAI_API_KEY' if 'OpenAI' in api_mode else 'GEMINI_API_KEY')
+        _key_map = {"Claude": "ANTHROPIC_API_KEY", "Gemini": "GEMINI_API_KEY"}
+        api_key = os.getenv(_key_map.get(api_mode, "OPENAI_API_KEY"))
         self.client = initialize_client(api_mode, api_key)
 
         # 載入數據
@@ -59,7 +66,7 @@ class AutoQuestionAnswerer:
 
         # 載入場地資訊
         try:
-            with open("court_place.txt", "r", encoding="utf-8") as f:
+            with open(COURT_PLACE_FILE, "r", encoding="utf-8") as f:
                 self.court_place_info = f.read()
         except:
             self.court_place_info = ""
@@ -127,6 +134,7 @@ class AutoQuestionAnswerer:
 
     def _save_notebook(self):
         """儲存 notebook"""
+        os.makedirs(os.path.dirname(os.fspath(self.output_file)), exist_ok=True)
         with open(self.output_file, 'w', encoding='utf-8') as f:
             json.dump(self.notebook, f, ensure_ascii=False, indent=2)
         print(f"✓ Notebook 已儲存至: {self.output_file}")
@@ -476,8 +484,9 @@ def main():
     print("1. OpenAI 官方 (gpt-4o) - 推薦")
     print("2. OpenAI 官方 (gpt-4o-mini) - 較便宜")
     print("3. Gemini (gemini-2.0-flash)")
+    print("4. Claude (claude-sonnet-4-6)")
 
-    choice = input("\n請輸入選項 (1/2/3, 預設=1): ").strip() or "1"
+    choice = input("\n請輸入選項 (1/2/3/4, 預設=1): ").strip() or "1"
 
     if choice == "1":
         api_mode = "OpenAI 官方"
@@ -488,6 +497,9 @@ def main():
     elif choice == "3":
         api_mode = "Gemini"
         model = "gemini-2.0-flash"
+    elif choice == "4":
+        api_mode = "Claude"
+        model = "claude-sonnet-4-6"
     else:
         print("無效選項，使用預設: OpenAI 官方 (gpt-4o)")
         api_mode = "OpenAI 官方"

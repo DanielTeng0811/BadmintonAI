@@ -6,13 +6,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from contextlib import redirect_stdout
 from datetime import datetime
+from utils.paths import LLM_DEBUG_LOG, ensure_runtime_dirs
 
 # --- 輔助函數 ---
 def log_llm_interaction(step_name, messages, response_content):
     """
     將 LLM 的輸入與輸出紀錄到檔案中，方便除錯。
     """
-    log_file = "llm_debug_log.txt"
+    ensure_runtime_dirs()
+    log_file = LLM_DEBUG_LOG
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
     with open(log_file, "a", encoding="utf-8") as f:

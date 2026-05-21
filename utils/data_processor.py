@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import sqlite3
 import os
+from utils.paths import PROCESSED_CSV, PROCESSED_DB, RAW_DATA_CSV, ensure_runtime_dirs
 
-def process_badminton_data(input_source, output_csv_path="processed_new_3.csv", output_db_path="processed_new_3.db"):
+def process_badminton_data(input_source, output_csv_path=PROCESSED_CSV, output_db_path=PROCESSED_DB):
     """
     Processes raw badminton match data and saves it to CSV and SQLite.
     
@@ -16,6 +17,10 @@ def process_badminton_data(input_source, output_csv_path="processed_new_3.csv", 
         pd.DataFrame: The processed DataFrame.
     """
     
+    ensure_runtime_dirs()
+    output_csv_path = os.fspath(output_csv_path)
+    output_db_path = os.fspath(output_db_path)
+
     # 1. Load Data
     if isinstance(input_source, pd.DataFrame):
         df = input_source.copy()
@@ -158,8 +163,8 @@ def process_badminton_data(input_source, output_csv_path="processed_new_3.csv", 
     return new_df
 
 if __name__ == "__main__":
-    # 測試用：直接執行此檔案會嘗試處理 all_dataset.csv
-    if os.path.exists("all_dataset.csv"):
-        process_badminton_data("all_dataset.csv")
+    # 測試用：直接執行此檔案會嘗試處理 data/raw/all_dataset.csv
+    if os.path.exists(RAW_DATA_CSV):
+        process_badminton_data(RAW_DATA_CSV)
     else:
-        print("all_dataset.csv not found for testing.")
+        print(f"{RAW_DATA_CSV} not found for testing.")
