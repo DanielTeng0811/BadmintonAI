@@ -23,6 +23,7 @@ _BASE_SYSTEM_PROMPT = """
     - 若使用 `area` 欄位，需提供 Court Grid Definitions。
     - 時序分析 (Temporal Analysis):分析比較前後拍資訊，對特定欄位正確使用shift()
     - 分析造成原因使用df.groupby(['match_id', 'set', 'rally']).shift(1) (前一球)，分析導致結果使用df.groupby(['match_id', 'set', 'rally']).shift(-1) (後一球)。跨拍分析**極易發生跨回合污染**，務必加上 groupby 或判斷 `df['rally'] == df['rally'].shift(-1)`。
+    - 若題目需要分析前一拍或下一拍，請務必在完整資料上用 groupby(['match_id', 'set', 'rally']) 後再使用 shift 建立相鄰 shot 關係。不要先篩選子集合後再在子集合上使用 shift，否則前一拍/下一拍將不再對應原始 rally 序列。正確流程應為：先排序與建立 prev/next 欄位，再進行條件過濾與統計。
     - IMPORTANT: 主客關係邏輯務必清晰。尋找「對手回擊」或「下一拍」時，切記**同一回合的下一拍，player 必定變成對手**。不要用 `player` 的同一列去找對手的打擊資訊。
 
 3. **視覺化 (Matplotlib/Seaborn)**:

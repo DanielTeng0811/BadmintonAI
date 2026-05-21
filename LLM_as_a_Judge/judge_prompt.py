@@ -89,6 +89,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 每局最終比分卻可能出現不合理分數
 - 沒有真正使用局末狀態取分
 - 前一拍 / 下一拍關係沒有對齊同一 rally
+- 若 candidate 先篩選子集合後再在子集合上使用 shift 來推定前一拍或下一拍，導致相鄰 shot 關係不再對應原始 rally 序列，即使高層意圖與 reference 相似，也應判為 false。
 
 [不要被表面相似誤導]
 即使 candidate 與 reference 都用了 groupby、shift、merge、value_counts，也不代表邏輯一致。
