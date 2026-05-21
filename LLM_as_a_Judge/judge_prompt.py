@@ -51,7 +51,11 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 視覺化形式不同
 - 題目未要求視覺化時，candidate 額外畫圖或多做圖表，不應單獨成為判 false 的理由
 - 輸出文字措辭不同
-- 在不改變統計口徑的前提下，使用等價 Pandas 寫法
+- 在不改變分析對象、分析單位、統計口徑與最終答案語意的前提下，使用等價 Pandas 寫法
+- 欄位名稱不同但語意等價，例如 `type`、`player_type` 或其他等價球種欄位
+- 先在完整資料建立輔助欄位（例如 `prev_type`、`prev_player`），再對齊或指派到篩選後子集合使用
+- 額外的保守檢查，例如確認前一拍是否為對手、確認同一個 rally、或將名稱映射成更易讀格式
+- `value_counts()` 與 `value_counts(normalize=True)` 若最終只是呈現同一個分布（例如圓餅圖），不應單獨成為判 false 的理由
 
 [不可接受的差異]
 - 抓錯分析對象
@@ -60,8 +64,6 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 分組層級錯誤
 - 統計口徑錯誤
 - 題目要最終結果，卻只做中間統計
-- reference 算平均，candidate 算總和
-- reference 算每局最終比分，candidate 卻用逐筆事件計數硬湊結果
 - reference 需要前後拍關係，candidate 沒有正確對齊前後拍
 
 [特別嚴格檢查：分析單位與統計口徑]
@@ -89,7 +91,9 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 每局最終比分卻可能出現不合理分數
 - 沒有真正使用局末狀態取分
 - 前一拍 / 下一拍關係沒有對齊同一 rally
-- 若 candidate 先篩選子集合後再在子集合上使用 shift 來推定前一拍或下一拍，導致相鄰 shot 關係不再對應原始 rally 序列，即使高層意圖與 reference 相似，也應判為 false。
+- 若 candidate 雖未使用與 reference 完全相同的 `groupby(...).shift(...)` 寫法，但仍能在完整、已排序的資料上正確保證前後拍來自同一個 rally，則應視為合理等價。
+- 不要因欄位名稱、輔助欄位命名、實作順序、是否先算比例再畫圖、是否額外檢查對手名稱、或是否多做不影響答案語意的名稱映射而判 false；只有當這些差異實際改變分析對象、統計口徑、rally 對齊方式或最終答案語意時，才可作為判 false 的理由。
+- 對於「某拍之前一拍的對手球種分布」這類題目，若 candidate 已在完整資料上正確建立前一拍資訊，並在雙人交替擊球、同 rally 對齊成立的前提下統計前一拍球種分布，則即使沒有再額外寫出 `prev_player == 對手` 的保守檢查，也不應單獨因此判 false。
 
 [不要被表面相似誤導]
 即使 candidate 與 reference 都用了 groupby、shift、merge、value_counts，也不代表邏輯一致。

@@ -23,12 +23,13 @@ _BASE_SYSTEM_PROMPT = """
     - 若使用 `area` 欄位，需提供 Court Grid Definitions。
     - 時序分析 (Temporal Analysis):分析比較前後拍資訊，對特定欄位正確使用shift()
     - 分析造成原因使用df.groupby(['match_id', 'set', 'rally']).shift(1) (前一球)，分析導致結果使用df.groupby(['match_id', 'set', 'rally']).shift(-1) (後一球)。跨拍分析**極易發生跨回合污染**，務必加上 groupby 或判斷 `df['rally'] == df['rally'].shift(-1)`。
-    - 若題目需要分析前一拍或下一拍，請務必在完整資料上用 groupby(['match_id', 'set', 'rally']) 後再使用 shift 建立相鄰 shot 關係。不要先篩選子集合後再在子集合上使用 shift，否則前一拍/下一拍將不再對應原始 rally 序列。正確流程應為：先排序與建立 prev/next 欄位，再進行條件過濾與統計。
+    - 若題目需要分析前一拍或下一拍，請務必在完整資料上用 groupby(['match_id', 'set', 'rally']) 後再使用 shift 建立相鄰 shot 關係。不要先篩選子集合後再在子集合上使用 shift，否則前一拍/下一拍將不再對應原始 rally 序列。正確流程應為：先排序與建立 prev/next 欄位，再進行條件過濾與統計。若未使用 groupby(...).shift(...)，則必須額外明確檢查前後列是否屬於同一個 match_id、set、rally，否則不得視為有效的前一拍/下一拍分析。
     - IMPORTANT: 主客關係邏輯務必清晰。尋找「對手回擊」或「下一拍」時，切記**同一回合的下一拍，player 必定變成對手**。不要用 `player` 的同一列去找對手的打擊資訊。
 
 3. **視覺化 (Matplotlib/Seaborn)**:
     - 用最適合解決問題的視覺畫圖表呈現(考慮視覺效果，讓圖表更好讀)
     - 必須產生 `fig` 物件，**勿用** `plt.show()`。使用 `plt.tight_layout()` 確保不重疊。
+    - 即使有繪圖，也必須用 `print()` 輸出關鍵統計結果、核心表格或最終數值；不能只產生圖表而不輸出數據。
     - 避免資訊過載 (Information Overload)：# 判斷若微小比例可合併小比例的類別為 "其他"(確保類別為string)；圖表文字需清晰且符合常見展示方式。
     - 若欄位為代碼 (如 `player_type`)，**必須**在圖表中加入圖例。
     - **IMPORTANT**: 不限畫單一圖表，可繪製多張圖表。
