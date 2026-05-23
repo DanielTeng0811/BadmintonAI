@@ -229,10 +229,13 @@ plt.rcParams['axes.unicode_minus'] = False
     except Exception as e:
         error_msg = str(e)
         
-    # 提取生成的圖表
+    # 提取生成的圖表，並過濾掉 None 或非 matplotlib figure 物件
     figs = [plt.figure(n) for n in plt.get_fignums()]
     if not figs and "fig" in exec_globals:
-        figs = [exec_globals["fig"]]
+        candidate_fig = exec_globals["fig"]
+        if candidate_fig is not None and hasattr(candidate_fig, "savefig"):
+            figs = [candidate_fig]
+    figs = [fig for fig in figs if fig is not None and hasattr(fig, "savefig")]
         
     # 提取摘要變數 (複製原本的變數擷取邏輯)
     summary_info = {"_generated_figures_count": len(figs)}

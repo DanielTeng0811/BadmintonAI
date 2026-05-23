@@ -273,6 +273,8 @@ class LLMAsAJudgeSimple:
         b64_images = []
         plot_paths = []
         for i, fig in enumerate(final_figs):
+            if fig is None or not hasattr(fig, "savefig"):
+                continue
             buf = io.BytesIO()
             fig.savefig(buf, format="png", dpi=300, bbox_inches="tight")
             buf.seek(0)
