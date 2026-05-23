@@ -643,6 +643,12 @@ class LLMAsAJudge:
             print(f"  - 項目總計 Token: {total_tokens:,}")
             print(f"{'='*50}")
 
+        if not only_generation and self.results:
+            correct_count = sum(1 for item in self.results if not item.get("needs_review", False))
+            total_count = len(self.results)
+            correct_ratio = correct_count / total_count if total_count > 0 else 0
+            print(f" 正確比例: {correct_count}/{total_count} ({correct_ratio:.2%})")
+
         self._export_files()
         
         # 顯示標註題目總結
@@ -667,7 +673,7 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    QUESTIONS_TO_RUN = [1]
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     # GEN_API_MODE =  "Claude"
