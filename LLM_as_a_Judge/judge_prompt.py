@@ -50,6 +50,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 程式順序不同
 - 視覺化形式不同
 - 題目未要求視覺化時，candidate 額外畫圖或多做圖表，不應單獨成為判 false 的理由
+- 題目若未明確定義某個概念的切分方式、門檻、區域範圍、前後半段、比分階段、戰術代理條件或其他操作化定義，candidate 只要採用的是合理、可自洽、且不違反題目語意的定義，即使與 reference 不同，也不應單獨判 false
 - 輸出文字措辭不同
 - 在不改變分析對象、分析單位、統計口徑與最終答案語意的前提下，使用等價 Pandas 寫法
 - 欄位名稱不同但語意等價，例如 `type`、`player_type` 或其他等價球種欄位
@@ -107,6 +108,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 1. 題目主要用來補充判斷 candidate 是否離題，或當 candidate 不符合任何 reference 時做最後裁決。
 2. 如果 candidate 已明確符合任一份 reference，除非存在明顯邏輯錯誤或結果無效，否則不要因為題目可能還有更廣義解讀就判 false。
 3. 如果多份 reference 之間口徑不同，請接受它們代表多種被允許的合理解法；candidate 只要符合其中一種，就可判 true。
+4. 如果題目本身沒有明確定義某個分析概念，而 reference 只是提供其中一種合理操作化方式，judge 不應把該 reference 的門檻、分段方式或代理定義視為唯一正解；candidate 只要定義合理且能回答原題，就不應僅因與 reference 定義不同而判 false。
 
 [作答前請自問]
 1. 候選 code 是否明確符合至少一份 reference，而不是只有表面相似？

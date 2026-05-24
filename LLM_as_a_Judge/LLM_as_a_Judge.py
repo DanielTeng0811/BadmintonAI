@@ -675,7 +675,7 @@ class LLMAsAJudge:
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
-    QUESTIONS_TO_RUN = [1]
+    QUESTIONS_TO_RUN = list(range(1, 101))
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     # GEN_API_MODE =  "Claude"

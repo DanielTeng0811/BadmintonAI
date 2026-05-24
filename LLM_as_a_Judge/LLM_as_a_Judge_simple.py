@@ -40,6 +40,7 @@ from utils.analysis_workflow import (
     run_code_execution_loop,
     run_insight_generation
 )
+from utils.paths import COURT_PLACE_FILE
 from judge_prompt import create_judge_prompt
 
 # 載入環境變數
@@ -95,8 +96,7 @@ class LLMAsAJudgeSimple:
 
         # 載入場地資訊
         try:
-            court_file_path = os.path.join(parent_dir, "court_place.txt")
-            with open(court_file_path, "r", encoding="utf-8") as f:
+            with open(COURT_PLACE_FILE, "r", encoding="utf-8") as f:
                 self.court_place_info = f.read()
         except:
             self.court_place_info = ""
@@ -477,7 +477,7 @@ class LLMAsAJudgeSimple:
 
 
 if __name__ == "__main__":
-    QUESTIONS_TO_RUN = [1]
+    QUESTIONS_TO_RUN = list(range(1, 101))
 
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     GEN_API_MODE = "OpenAI 官方"
