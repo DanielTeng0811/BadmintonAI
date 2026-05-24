@@ -99,3 +99,4 @@ test_questions.md
 
 analysis_context_output.txt
 LLM_as_a_Judge/eval_results/
+LLM_as_a_Judge/eval_results_simple/

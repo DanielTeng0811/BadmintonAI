@@ -53,7 +53,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 題目若未明確定義某個概念的切分方式、門檻、區域範圍、前後半段、比分階段、戰術代理條件或其他操作化定義，candidate 只要採用的是合理、可自洽、且不違反題目語意的定義，即使與 reference 不同，也不應單獨判 false
 - 輸出文字措辭不同
 - 在不改變分析對象、分析單位、統計口徑與最終答案語意的前提下，使用等價 Pandas 寫法
-- 欄位名稱不同但語意等價，例如 `type`、`player_type` 或其他等價球種欄位
+- 欄位名稱不同但語意等價，例如 `type`、`player_type`、`opponent_type` 或其他等價球種欄位
 - 先在完整資料建立輔助欄位（例如 `prev_type`、`prev_player`），再對齊或指派到篩選後子集合使用
 - 額外的保守檢查，例如確認前一拍是否為對手、確認同一個 rally、或將名稱映射成更易讀格式
 - `value_counts()` 與 `value_counts(normalize=True)` 若最終只是呈現同一個分布（例如圓餅圖），不應單獨成為判 false 的理由
@@ -95,6 +95,10 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 若 candidate 雖未使用與 reference 完全相同的 `groupby(...).shift(...)` 寫法，但仍能在完整、已排序的資料上正確保證前後拍來自同一個 rally，則應視為合理等價。
 - 不要因欄位名稱、輔助欄位命名、實作順序、是否先算比例再畫圖、是否額外檢查對手名稱、或是否多做不影響答案語意的名稱映射而判 false；只有當這些差異實際改變分析對象、統計口徑、rally 對齊方式或最終答案語意時，才可作為判 false 的理由。
 - 對於「某拍之前一拍的對手球種分布」這類題目，若 candidate 已在完整資料上正確建立前一拍資訊，並在雙人交替擊球、同 rally 對齊成立的前提下統計前一拍球種分布，則即使沒有再額外寫出 `prev_player == 對手` 的保守檢查，也不應單獨因此判 false。
+- 若資料欄位定義本身已明確提供前一拍或下一拍的等價資訊（例如 `opponent_type` 已定義為對手前一球打出的球種代碼），則 candidate 可直接使用該欄位，不可僅因未自行 `shift()` 重建前後拍欄位而判 false。
+- 對於「某拍之前一拍的對手球種分布」這類題目，只要 candidate 使用的欄位語意確實等價於「對手前一拍球種」（例如 `type` 的正確 shift、`player_type` 經合理映射、或欄位定義已明示的 `opponent_type`），就應視為合理做法，不可僅因欄位名稱不同而判 false。
+- 若欄位定義已明示 `getpoint_player` 只記錄在該回合結束的那一拍，則 candidate 可直接用 `getpoint_player` 判斷最後得分拍、最後得分者或該拍是否為回合結束拍，不可僅因未先 `groupby(...).last()` 就判 false。
+- 對於「最後得分球」「最後失分球」「某種得分是否發生在回合最後一拍」這類題目，只要 candidate 直接以欄位定義已明確的 `getpoint_player` 搭配同列球種 / 失誤欄位進行篩選，且不會混入非回合結束拍，就應視為合理做法。
 
 [不要被表面相似誤導]
 即使 candidate 與 reference 都用了 groupby、shift、merge、value_counts，也不代表邏輯一致。
