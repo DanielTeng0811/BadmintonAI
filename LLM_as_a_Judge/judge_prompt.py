@@ -51,12 +51,14 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 視覺化形式不同
 - 題目未要求視覺化時，candidate 額外畫圖或多做圖表，不應單獨成為判 false 的理由
 - 題目若未明確定義某個概念的切分方式、門檻、區域範圍、前後半段、比分階段、戰術代理條件或其他操作化定義，candidate 只要採用的是合理、可自洽、且不違反題目語意的定義，即使與 reference 不同，也不應單獨判 false
+- 對於策略題、建議題、proxy 題，candidate 若先將題目合理操作化成目前資料可支撐的版本（例如以移動距離、落點深淺、前後場區域、下一拍直接得分、球種代理等作為 proxy），且有清楚對應回原題，不應僅因與 reference 採用不同 proxy 就判 false
 - 輸出文字措辭不同
 - 在不改變分析對象、分析單位、統計口徑與最終答案語意的前提下，使用等價 Pandas 寫法
 - 欄位名稱不同但語意等價，例如 `type`、`player_type`、`opponent_type` 或其他等價球種欄位
 - 先在完整資料建立輔助欄位（例如 `prev_type`、`prev_player`），再對齊或指派到篩選後子集合使用
 - 額外的保守檢查，例如確認前一拍是否為對手、確認同一個 rally、或將名稱映射成更易讀格式
 - `value_counts()` 與 `value_counts(normalize=True)` 若最終只是呈現同一個分布（例如圓餅圖），不應單獨成為判 false 的理由
+- 若資料本身就是單一固定對戰組合，candidate 以 `opponent == 某對手` 來間接鎖定 `player == 周天成`，或反之，只要分析主體實質一致，不應單獨判 false
 
 [不可接受的差異]
 - 抓錯分析對象
@@ -114,6 +116,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 2. 如果 candidate 已明確符合任一份 reference，除非存在明顯邏輯錯誤或結果無效，否則不要因為題目可能還有更廣義解讀就判 false。
 3. 如果多份 reference 之間口徑不同，請接受它們代表多種被允許的合理解法；candidate 只要符合其中一種，就可判 true。
 4. 如果題目本身沒有明確定義某個分析概念，而 reference 只是提供其中一種合理操作化方式，judge 不應把該 reference 的門檻、分段方式或代理定義視為唯一正解；candidate 只要定義合理且能回答原題，就不應僅因與 reference 定義不同而判 false。
+5. 如果題目本身偏策略建議或戰術詮釋，judge 應優先檢查 candidate 是否做了「合理且資料可支撐的操作化」，而不是要求它必須完全重現 reference 的戰術語言或 proxy 選擇。
 
 [作答前請自問]
 1. 候選 code 是否明確符合至少一份 reference，而不是只有表面相似？
