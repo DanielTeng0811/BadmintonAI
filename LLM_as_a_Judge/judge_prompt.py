@@ -99,6 +99,7 @@ def create_judge_prompt(question: str, code: str, column_definitions_info: str, 
 - 對於「某拍之前一拍的對手球種分布」這類題目，只要 candidate 使用的欄位語意確實等價於「對手前一拍球種」（例如 `type` 的正確 shift、`player_type` 經合理映射、或欄位定義已明示的 `opponent_type`），就應視為合理做法，不可僅因欄位名稱不同而判 false。
 - 若欄位定義已明示 `getpoint_player` 只記錄在該回合結束的那一拍，則 candidate 可直接用 `getpoint_player` 判斷最後得分拍、最後得分者或該拍是否為回合結束拍，不可僅因未先 `groupby(...).last()` 就判 false。
 - 對於「最後得分球」「最後失分球」「某種得分是否發生在回合最後一拍」這類題目，只要 candidate 直接以欄位定義已明確的 `getpoint_player` 搭配同列球種 / 失誤欄位進行篩選，且不會混入非回合結束拍，就應視為合理做法。
+- 對於「失誤次數」「各球種失誤次數」這類題目，若欄位定義已明示 `getpoint_player` 只出現在回合結束拍，且 candidate 已明確篩選 `player == 某球員` 與 `getpoint_player == 對手`，則可視為合理的「該球員最後一拍失分 / 失誤」近似口徑；不可僅因未顯式使用 `lose_reason.notna()` 就直接判 false。但若題目明確要求失誤原因分布、非受迫性失誤，或 candidate 的寫法可能混入非本人最後一拍失分，則仍需更嚴格檢查。
 
 [不要被表面相似誤導]
 即使 candidate 與 reference 都用了 groupby、shift、merge、value_counts，也不代表邏輯一致。
