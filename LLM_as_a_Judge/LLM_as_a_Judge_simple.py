@@ -61,12 +61,16 @@ class LLMAsAJudgeSimple:
 
     def __init__(self, target_questions=[1],
                  gen_api_mode='OpenAI 官方', gen_model='gpt-4o',
-                 judge_api_mode='OpenAI 官方', judge_model='gpt-4o'):
+                 judge_api_mode='OpenAI 官方', judge_model='gpt-4o',
+                 question_file="評估問題.txt",
+                 example_file="example.ipynb"):
         self.target_questions = target_questions
         self.gen_api_mode = gen_api_mode
         self.gen_model = gen_model
         self.judge_api_mode = judge_api_mode
         self.judge_model = judge_model
+        self.question_file = question_file
+        self.example_file = example_file
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         self._current_q_num = None
 
@@ -113,7 +117,7 @@ class LLMAsAJudgeSimple:
 
     def _load_reference_answers(self):
         """從 example.ipynb 載入各題標準答案，回傳 dict {q_num: code_str}"""
-        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.example_file)
         if not os.path.exists(example_path):
             return {}
         try:
@@ -138,7 +142,7 @@ class LLMAsAJudgeSimple:
 
     def _load_reference_answers_with_duplicates(self):
         """從 example.ipynb 載入各題標準答案，支援同題號多個 code cell。"""
-        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.example_file)
         if not os.path.exists(example_path):
             return {}
         try:
@@ -204,8 +208,9 @@ class LLMAsAJudgeSimple:
             })
         self.notebook["cells"].append(cell)
 
-    def _load_target_questions(self, filepath="評估問題.txt"):
+    def _load_target_questions(self, filepath=None):
         script_dir = os.path.dirname(os.path.abspath(__file__))
+        filepath = filepath or self.question_file
         fullpath = os.path.join(script_dir, filepath)
         questions = []
         try:
@@ -383,7 +388,7 @@ class LLMAsAJudgeSimple:
             if not only_generation:
                 ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
                 if ref_code == "無標準答案":
-                    print(f"⚠️ 題號 {self._current_q_num} 在 example.ipynb 找不到標準答案，無法評估。")
+                    print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
                     continue
                     
                 # AI 裁判給分
@@ -478,6 +483,8 @@ class LLMAsAJudgeSimple:
 
 if __name__ == "__main__":
     QUESTIONS_TO_RUN = list(range(1, 101))
+    QUESTION_FILE = "評估問題_new.txt"
+    EXAMPLE_FILE = "example_new.ipynb"
 
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     GEN_API_MODE = "OpenAI 官方"
@@ -495,7 +502,9 @@ if __name__ == "__main__":
         gen_api_mode=GEN_API_MODE,
         gen_model=GEN_MODEL,
         judge_api_mode=JUDGE_API_MODE,
-        judge_model=JUDGE_MODEL
+        judge_model=JUDGE_MODEL,
+        question_file=QUESTION_FILE,
+        example_file=EXAMPLE_FILE
     )
 
     evaluator.run(only_generation=ONLY_GENERATION)

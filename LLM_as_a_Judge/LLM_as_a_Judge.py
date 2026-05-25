@@ -59,12 +59,16 @@ load_dotenv(dotenv_path=env_path)
 class LLMAsAJudge:
     def __init__(self, target_questions=[1], 
                  gen_api_mode='OpenAI 官方', gen_model='gpt-4o',
-                 judge_api_mode='Claude', judge_model='claude-sonnet-4-6'):
+                 judge_api_mode='Claude', judge_model='claude-sonnet-4-6',
+                 question_file="評估問題.txt",
+                 example_file="example.ipynb"):
         self.target_questions = target_questions
         self.gen_api_mode = gen_api_mode
         self.gen_model = gen_model
         self.judge_api_mode = judge_api_mode
         self.judge_model = judge_model
+        self.question_file = question_file
+        self.example_file = example_file
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # 設置輸出路徑 (與腳本放在同一資料夾)
@@ -112,9 +116,9 @@ class LLMAsAJudge:
 
     def _load_reference_answers(self):
         """從 example.ipynb 載入各題標準答案，回傳 dict {q_num: code_str}"""
-        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.example_file)
         if not os.path.exists(example_path):
-            print("⚠️ 找不到 example.ipynb，無法進行標準答案比對。")
+            print(f"⚠️ 找不到 {self.example_file}，無法進行標準答案比對。")
             return {}
         
         try:
@@ -145,7 +149,7 @@ class LLMAsAJudge:
 
     def _load_reference_answers_with_duplicates(self):
         """從 example.ipynb 載入各題標準答案，支援同題號多個 code cell。"""
-        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "example.ipynb")
+        example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.example_file)
 
         try:
             with open(example_path, "r", encoding="utf-8") as f:
@@ -225,9 +229,10 @@ class LLMAsAJudge:
             
         self.notebook["cells"].append(cell)
 
-    def _load_target_questions(self, filepath="評估問題.txt"):
+    def _load_target_questions(self, filepath=None):
         """讀取問題集並篩選出 target_questions 中的問題 (保證與腳本在同一資料夾)"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
+        filepath = filepath or self.question_file
         fullpath = os.path.join(script_dir, filepath)
             
         questions = []
@@ -484,7 +489,7 @@ class LLMAsAJudge:
                 if not only_generation:
                     ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
                     if ref_code == "無標準答案":
-                        print(f"⚠️ 題號 {self._current_q_num} 在 example.ipynb 找不到標準答案，無法評估。")
+                        print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
                         continue
                         
                     eval_res = self._judge_result(q_text, code_to_execute, ref_code)
@@ -676,6 +681,8 @@ class LLMAsAJudge:
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
     QUESTIONS_TO_RUN = list(range(1, 101))
+    QUESTION_FILE = "評估問題_new.txt"
+    EXAMPLE_FILE = "example_new.ipynb"
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
     # GEN_API_MODE =  "Claude"
@@ -696,7 +703,9 @@ if __name__ == "__main__":
         gen_api_mode=GEN_API_MODE,
         gen_model=GEN_MODEL,
         judge_api_mode=JUDGE_API_MODE,
-        judge_model=JUDGE_MODEL
+        judge_model=JUDGE_MODEL,
+        question_file=QUESTION_FILE,
+        example_file=EXAMPLE_FILE
     )
     
     evaluator.run(
