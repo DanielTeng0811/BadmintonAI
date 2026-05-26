@@ -69,6 +69,14 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str, co
 1. 區分連續數值(Float)與類別。座標勿直接 groupby。
 2. 軸標籤避免大量浮點數。
 3. 繪圖前檢查 `if len(filtered_df) > 0:`。
+
+**Step 2 輸出格式規範（非常重要）**
+1. 你只能輸出 **一個且僅一個** `python fenced code block`。
+2. 這個唯一的 `python fenced code block` 必須是**完整、最終、可直接執行**的程式碼。
+3. 不可輸出第二個 `python fenced code block`。
+4. 不可將分析草稿、偽碼、圖表規劃、局部片段包在 `python fenced code block` 中。
+5. 若需要補充說明，請放在 code block 外，且盡量精簡。
+6. 若輸出包含多個 `python fenced code block`，將視為格式錯誤。
 """
     return prompt
 

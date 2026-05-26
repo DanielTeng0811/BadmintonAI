@@ -2,6 +2,7 @@ import pandas as pd
 import io
 import json
 import platform
+import re
 import matplotlib.pyplot as plt
 import seaborn as sns
 from contextlib import redirect_stdout
@@ -69,6 +70,20 @@ def extract_conversation_context(messages, use_history):
         step2_history_candidate = step2_history_candidate[-8:]
         
     return step1_history, step2_history_candidate
+
+def extract_python_code_block(text):
+    """
+    從 LLM 回覆中抽取最後一個完整的 python fenced code block。
+    這裡刻意取最後一個，避免前面是分析草稿或示意片段。
+    """
+    if not text:
+        return None
+
+    blocks = re.findall(r"```python\s*(.*?)```", text, flags=re.DOTALL | re.IGNORECASE)
+    if not blocks:
+        return None
+
+    return blocks[-1].strip()
 
 # --- 工作流函數 ---
 
@@ -176,11 +191,7 @@ def run_code_generation(client, model, system_prompt, enhanced_prompt, history):
     tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
     log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
     
-    code = None
-    if "```python" in ai_response:
-        start = ai_response.find("```python") + len("```python\n")
-        end = ai_response.rfind("```")
-        code = ai_response[start:end].strip()
+    code = extract_python_code_block(ai_response)
     
     return {"code": code, "tokens": tokens, "raw_response": ai_response}
 
@@ -300,10 +311,9 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
             total_tokens += getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
             log_llm_interaction(f"Step 3: Fix Loop (Retry {retry_count})", fix_messages, fix_content)
             
-            if "```python" in fix_content:
-                s = fix_content.find("```python") + 9
-                e = fix_content.rfind("```")
-                code_to_execute = fix_content[s:e].strip()
+            extracted_code = extract_python_code_block(fix_content)
+            if extracted_code:
+                code_to_execute = extracted_code
 
     return {
         "final_code": code_to_execute,
@@ -327,11 +337,7 @@ def run_logic_reflection(client, model, full_prompt):
     tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
     log_llm_interaction("Step 4: Logic Reflection", messages, content)
     
-    new_code = None
-    if "```python" in content:
-        start = content.find("```python") + len("```python\n")
-        end = content.rfind("```")
-        new_code = content[start:end].strip()
+    new_code = extract_python_code_block(content)
         
     return {"new_code": new_code, "tokens": tokens}
 
