@@ -229,6 +229,55 @@ class LLMAsAJudge:
             
         self.notebook["cells"].append(cell)
 
+    def _checkpoint_export(self):
+        """每題後先保存一次，避免流程中途中斷時前功盡棄。"""
+        try:
+            self._export_files(show_message=False)
+        except Exception as e:
+            print(f"⚠️ 保存 checkpoint 失敗：{e}")
+
+    def _record_question_failure(self, q_text, error, pipeline_tokens=0, required_column_groups=None,
+                                 code_to_execute="", insight_text="", b64_images=None, only_generation=False):
+        """記錄單題流程中斷，並保留當下已完成內容。"""
+        required_column_groups = required_column_groups or []
+        b64_images = b64_images or []
+        error_text = f"流程中斷：{type(error).__name__}: {error}"
+
+        self.total_pipeline_tokens += pipeline_tokens
+
+        if not only_generation:
+            res_item = {
+                "question_id": self._current_q_num,
+                "question_text": q_text,
+                "pipeline_tokens": pipeline_tokens,
+                "judge_tokens": 0,
+                "total_tokens": pipeline_tokens,
+                "required_groups": ", ".join(required_column_groups),
+                "code_correct": False,
+                "code_reasoning": error_text,
+                "needs_review": True
+            }
+            self.results.append(res_item)
+            if self._current_q_num not in self.flagged_questions:
+                self.flagged_questions.append(self._current_q_num)
+
+        q_header = f"## 題號 {self._current_q_num}"
+        if not only_generation:
+            q_header += " (*)"
+
+        group_text = ", ".join(required_column_groups) if required_column_groups else "未判定（流程中斷）"
+        self._add_notebook_markdown(
+            f"{q_header}\n**問題**: {q_text}\n> **使用的資料欄位群組**: `{group_text}`"
+        )
+        if code_to_execute:
+            self._add_notebook_code(code_to_execute, b64_images)
+
+        failure_md = f"### 執行中斷\n\n> **錯誤**: {error_text}"
+        if insight_text:
+            self._add_notebook_markdown(f"### 數據洞察\n{insight_text}\n\n---\n{failure_md}")
+        else:
+            self._add_notebook_markdown(failure_md)
+
     def _load_target_questions(self, filepath=None):
         """讀取問題集並篩選出 target_questions 中的問題 (保證與腳本在同一資料夾)"""
         script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -482,73 +531,93 @@ class LLMAsAJudge:
                 q_text = q_dict["問題"]
                 
                 print(f"\n[{idx}/{total_items}] 處理問題 {self._current_q_num}: {q_text[:30]}...")
-                
-                # 執行分析流程
-                code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(q_text, skip_logic_reflection=skip_logic_reflection)
-                
-                if not only_generation:
-                    ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
-                    if ref_code == "無標準答案":
-                        print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
-                        continue
+
+                code_to_execute = ""
+                insight_text = ""
+                b64_images = []
+                pipeline_tokens = 0
+                required_column_groups = []
+                try:
+                    # 執行分析流程
+                    code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(
+                        q_text, skip_logic_reflection=skip_logic_reflection
+                    )
+                    
+                    if not only_generation:
+                        ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
+                        if ref_code == "無標準答案":
+                            print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
+                            continue
+                            
+                        eval_res = self._judge_result(q_text, code_to_execute, ref_code)
+                        judge_tokens = eval_res.get("judge_tokens", 0)
+
+                        res_item = {
+                            "question_id": self._current_q_num,
+                            "question_text": q_text,
+                            "pipeline_tokens": pipeline_tokens,
+                            "judge_tokens": judge_tokens,
+                            "total_tokens": pipeline_tokens + judge_tokens,
+                            "required_groups": ", ".join(required_column_groups)
+                        }
+
+                        # 累計總 Token
+                        self.total_pipeline_tokens += pipeline_tokens
+                        self.total_judge_tokens += judge_tokens
+
+                        code_correct = eval_res.get("code_correct", False)
+                        reasoning = eval_res.get("reasoning", "")
                         
-                    eval_res = self._judge_result(q_text, code_to_execute, ref_code)
-                    judge_tokens = eval_res.get("judge_tokens", 0)
+                        res_item["code_correct"] = code_correct
+                        res_item["code_reasoning"] = reasoning
 
-                    res_item = {
-                        "question_id": self._current_q_num,
-                        "question_text": q_text,
-                        "pipeline_tokens": pipeline_tokens,
-                        "judge_tokens": judge_tokens,
-                        "total_tokens": pipeline_tokens + judge_tokens,
-                        "required_groups": ", ".join(required_column_groups)
-                    }
+                        # 標記需要審查的題目
+                        is_flagged = not code_correct
+                        res_item["needs_review"] = is_flagged
+                        if is_flagged:
+                            self.flagged_questions.append(self._current_q_num)
 
-                    # 累計總 Token
-                    self.total_pipeline_tokens += pipeline_tokens
-                    self.total_judge_tokens += judge_tokens
-
-                    code_correct = eval_res.get("code_correct", False)
-                    reasoning = eval_res.get("reasoning", "")
+                        self.results.append(res_item)
+                        
+                        status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
+                        print(f"🏁 評分結果: {status_emoji}")
+                        print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
+                    else:
+                        # 僅生成模式
+                        self.total_pipeline_tokens += pipeline_tokens
+                        print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
                     
-                    res_item["code_correct"] = code_correct
-                    res_item["code_reasoning"] = reasoning
-
-                    # 標記需要審查的題目
-                    is_flagged = not code_correct
-                    res_item["needs_review"] = is_flagged
-                    if is_flagged:
-                        self.flagged_questions.append(self._current_q_num)
-
-                    self.results.append(res_item)
+                    # 構建 IPYNB 結構
+                    q_header = f"## 題號 {self._current_q_num}"
+                    if not only_generation and self._current_q_num in self.flagged_questions:
+                        q_header += " (*)"
                     
-                    status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
-                    print(f"🏁 評分結果: {status_emoji}")
-                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
-                else:
-                    # 僅生成模式
-                    self.total_pipeline_tokens += pipeline_tokens
-                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
-                
-                # 構建 IPYNB 結構
-                q_header = f"## 題號 {self._current_q_num}"
-                if not only_generation and self._current_q_num in self.flagged_questions:
-                    q_header += " (*)"
-                
-                group_info = f"\n> **使用的資料欄位群組**: `{', '.join(required_column_groups) if required_column_groups else '全欄位 (Fallback)'}`"
-                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}{group_info}")
-                if code_to_execute:
-                    self._add_notebook_code(code_to_execute, b64_images)
-                
-                if not only_generation:
-                    status_text = "✅ 正確" if code_correct else "❌ 錯誤"
-                    judge_md = f"### 🤖 AI 裁判評分報告\n\n"
-                    judge_md += f"#### 💻 程式碼評核: {status_text}\n> **分析意見**: {reasoning}\n\n"
-                    self._add_notebook_markdown(f"### 數據洞察\n{insight_text}\n\n---\n{judge_md}")
-                else:
-                    self._add_notebook_markdown(f"### 數據洞察\n{insight_text}")
-                
-                time.sleep(2)
+                    group_info = f"\n> **使用的資料欄位群組**: `{', '.join(required_column_groups) if required_column_groups else '全欄位 (Fallback)'}`"
+                    self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}{group_info}")
+                    if code_to_execute:
+                        self._add_notebook_code(code_to_execute, b64_images)
+                    
+                    if not only_generation:
+                        status_text = "✅ 正確" if code_correct else "❌ 錯誤"
+                        judge_md = f"### 🤖 AI 裁判評分報告\n\n"
+                        judge_md += f"#### 💻 程式碼評核: {status_text}\n> **分析意見**: {reasoning}\n\n"
+                        self._add_notebook_markdown(f"### 數據洞察\n{insight_text}\n\n---\n{judge_md}")
+                    else:
+                        self._add_notebook_markdown(f"### 數據洞察\n{insight_text}")
+                except Exception as e:
+                    print(f"❌ 題號 {self._current_q_num} 流程中斷：{e}")
+                    self._record_question_failure(
+                        q_text,
+                        e,
+                        pipeline_tokens=pipeline_tokens,
+                        required_column_groups=required_column_groups,
+                        code_to_execute=code_to_execute,
+                        insight_text=insight_text,
+                        b64_images=b64_images,
+                        only_generation=only_generation
+                    )
+                finally:
+                    self._checkpoint_export()
         else:
             # --- 直接評核現有報告 ---
             print(f"\n🚀 啟動 LLM-as-a-Judge: 讀取分析報告.md...")
@@ -656,7 +725,7 @@ class LLMAsAJudge:
             correct_ratio = correct_count / total_count if total_count > 0 else 0
             print(f" 正確比例: {correct_count}/{total_count} ({correct_ratio:.2%})")
 
-        self._export_files()
+        self._checkpoint_export()
         
         # 顯示標註題目總結
         if not only_generation and self.flagged_questions:
@@ -665,7 +734,7 @@ class LLMAsAJudge:
             print(f"建議人工檢視以下題目: {', '.join(map(str, self.flagged_questions))}")
             print(f"{'='*50}")
 
-    def _export_files(self):
+    def _export_files(self, show_message=True):
         """匯出 CSV, IPYNB"""
         # CSV (僅在非僅生成模式下匯出)
         if not getattr(self, 'only_generation', False):
@@ -676,7 +745,8 @@ class LLMAsAJudge:
         with open(self.ipynb_file, "w", encoding='utf-8') as f:
             json.dump(self.notebook, f, ensure_ascii=False, indent=2)
          
-        print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
+        if show_message:
+            print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
 
 if __name__ == "__main__":
     # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
@@ -685,10 +755,10 @@ if __name__ == "__main__":
     EXAMPLE_FILE = "example_new.ipynb"
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
-    # GEN_API_MODE =  "Claude"
-    # GEN_MODEL = "claude-sonnet-4-6"
-    GEN_API_MODE =  "OpenAI 官方"
-    GEN_MODEL = "gpt-4o"
+    GEN_API_MODE =  "Claude"
+    GEN_MODEL = "claude-sonnet-4-6"
+    # GEN_API_MODE =  "OpenAI 官方"
+    # GEN_MODEL = "gpt-4o"
     
     # --- 2. 選擇評估 (Judge) 用的 API 與模型 ---
     JUDGE_API_MODE = "OpenAI 官方"

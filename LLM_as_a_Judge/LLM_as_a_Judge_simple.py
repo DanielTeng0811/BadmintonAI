@@ -208,6 +208,48 @@ class LLMAsAJudgeSimple:
             })
         self.notebook["cells"].append(cell)
 
+    def _checkpoint_export(self):
+        """每題後先保存一次，避免流程中途中斷時前功盡棄。"""
+        try:
+            self._export_files(show_message=False)
+        except Exception as e:
+            print(f"⚠️ 保存 checkpoint 失敗：{e}")
+
+    def _record_question_failure(self, q_text, error, pipeline_tokens=0, code="", insight="", b64_images=None, only_generation=False):
+        """記錄單題流程中斷，並保留當下已完成內容。"""
+        b64_images = b64_images or []
+        error_text = f"流程中斷：{type(error).__name__}: {error}"
+
+        self.total_pipeline_tokens += pipeline_tokens
+
+        if not only_generation:
+            res_item = {
+                "question_id": self._current_q_num,
+                "question_text": q_text,
+                "pipeline_tokens": pipeline_tokens,
+                "judge_tokens": 0,
+                "total_tokens": pipeline_tokens,
+                "code_correct": False,
+                "code_reasoning": error_text,
+                "needs_review": True
+            }
+            self.results.append(res_item)
+            if self._current_q_num not in self.flagged_questions:
+                self.flagged_questions.append(self._current_q_num)
+
+        q_header = f"## 題號 {self._current_q_num}"
+        if not only_generation:
+            q_header += " (*)"
+        self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
+        if code:
+            self._add_notebook_code(code, b64_images)
+
+        failure_md = f"### 執行中斷\n\n> **錯誤**: {error_text}"
+        if insight:
+            self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{failure_md}")
+        else:
+            self._add_notebook_markdown(failure_md)
+
     def _load_target_questions(self, filepath=None):
         script_dir = os.path.dirname(os.path.abspath(__file__))
         filepath = filepath or self.question_file
@@ -382,70 +424,86 @@ class LLMAsAJudgeSimple:
 
             print(f"\n[{idx}/{total_items}] 處理問題 {self._current_q_num}: {q_text[:40]}...")
 
-            # 執行簡化版流程
-            code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline_simple(q_text)
+            code = ""
+            insight = ""
+            b64_images = []
+            pipeline_tokens = 0
+            try:
+                # 執行簡化版流程
+                code, insight, b64_images, plot_paths, pipeline_tokens = self._run_pipeline_simple(q_text)
 
-            if not only_generation:
-                ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
-                if ref_code == "無標準答案":
-                    print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
-                    continue
+                if not only_generation:
+                    ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
+                    if ref_code == "無標準答案":
+                        print(f"⚠️ 題號 {self._current_q_num} 在 {self.example_file} 找不到標準答案，無法評估。")
+                        continue
+                        
+                    # AI 裁判給分
+                    eval_res = self._judge_result(q_text, code, ref_code)
+                    judge_tokens = eval_res.get("judge_tokens", 0)
+
+                    res_item = {
+                        "question_id": self._current_q_num,
+                        "question_text": q_text,
+                        "pipeline_tokens": pipeline_tokens,
+                        "judge_tokens": judge_tokens,
+                        "total_tokens": pipeline_tokens + judge_tokens
+                    }
+
+                    self.total_pipeline_tokens += pipeline_tokens
+                    self.total_judge_tokens += judge_tokens
+
+                    code_correct = eval_res.get("code_correct", False)
+                    reasoning = eval_res.get("reasoning", "")
                     
-                # AI 裁判給分
-                eval_res = self._judge_result(q_text, code, ref_code)
-                judge_tokens = eval_res.get("judge_tokens", 0)
+                    res_item["code_correct"] = code_correct
+                    res_item["code_reasoning"] = reasoning
 
-                res_item = {
-                    "question_id": self._current_q_num,
-                    "question_text": q_text,
-                    "pipeline_tokens": pipeline_tokens,
-                    "judge_tokens": judge_tokens,
-                    "total_tokens": pipeline_tokens + judge_tokens
-                }
+                    # 標記低分
+                    is_flagged = not code_correct
 
-                self.total_pipeline_tokens += pipeline_tokens
-                self.total_judge_tokens += judge_tokens
+                    res_item["needs_review"] = is_flagged
+                    if is_flagged:
+                        self.flagged_questions.append(self._current_q_num)
 
-                code_correct = eval_res.get("code_correct", False)
-                reasoning = eval_res.get("reasoning", "")
-                
-                res_item["code_correct"] = code_correct
-                res_item["code_reasoning"] = reasoning
+                    self.results.append(res_item)
 
-                # 標記低分
-                is_flagged = not code_correct
+                    status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
+                    print(f"🏁 評分結果: {status_emoji}")
+                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
+                else:
+                    self.total_pipeline_tokens += pipeline_tokens
+                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
 
-                res_item["needs_review"] = is_flagged
-                if is_flagged:
-                    self.flagged_questions.append(self._current_q_num)
+                # 構建 IPYNB 結構
+                q_header = f"## 題號 {self._current_q_num}"
+                if not only_generation and self._current_q_num in self.flagged_questions:
+                    q_header += " (*)"
 
-                self.results.append(res_item)
+                self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
+                if code:
+                    self._add_notebook_code(code, b64_images)
 
-                status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
-                print(f"🏁 評分結果: {status_emoji}")
-                print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
-            else:
-                self.total_pipeline_tokens += pipeline_tokens
-                print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
-
-            # 構建 IPYNB 結構
-            q_header = f"## 題號 {self._current_q_num}"
-            if not only_generation and self._current_q_num in self.flagged_questions:
-                q_header += " (*)"
-
-            self._add_notebook_markdown(f"{q_header}\n**問題**: {q_text}")
-            if code:
-                self._add_notebook_code(code, b64_images)
-
-            if not only_generation:
-                status_text = "✅ 正確" if code_correct else "❌ 錯誤"
-                judge_md = "### 🤖 AI 裁判評分報告\n\n"
-                judge_md += f"#### 💻 程式碼評核: {status_text}\n> **分析意見**: {reasoning}\n\n"
-                self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{judge_md}")
-            else:
-                self._add_notebook_markdown(f"### 數據洞察\n{insight}")
-
-            time.sleep(2)
+                if not only_generation:
+                    status_text = "✅ 正確" if code_correct else "❌ 錯誤"
+                    judge_md = "### 🤖 AI 裁判評分報告\n\n"
+                    judge_md += f"#### 💻 程式碼評核: {status_text}\n> **分析意見**: {reasoning}\n\n"
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight}\n\n---\n{judge_md}")
+                else:
+                    self._add_notebook_markdown(f"### 數據洞察\n{insight}")
+            except Exception as e:
+                print(f"❌ 題號 {self._current_q_num} 流程中斷：{e}")
+                self._record_question_failure(
+                    q_text,
+                    e,
+                    pipeline_tokens=pipeline_tokens,
+                    code=code,
+                    insight=insight,
+                    b64_images=b64_images,
+                    only_generation=only_generation
+                )
+            finally:
+                self._checkpoint_export()
 
         # Token 統計
         print(f"\n{'='*50}")
@@ -462,7 +520,7 @@ class LLMAsAJudgeSimple:
             correct_ratio = correct_count / total_count if total_count > 0 else 0
             print(f" 正確比例: {correct_count}/{total_count} ({correct_ratio:.2%})")
 
-        self._export_files()
+        self._checkpoint_export()
 
         if not only_generation and self.flagged_questions:
             print(f"\n{'='*50}")
@@ -470,7 +528,7 @@ class LLMAsAJudgeSimple:
             print(f"建議人工檢視以下題目: {', '.join(map(str, self.flagged_questions))}")
             print(f"{'='*50}")
 
-    def _export_files(self):
+    def _export_files(self, show_message=True):
         if not getattr(self, 'only_generation', False):
             df_res = pd.DataFrame(self.results)
             df_res.to_csv(self.csv_file, index=False, encoding='utf-8-sig')
@@ -478,7 +536,8 @@ class LLMAsAJudgeSimple:
         with open(self.ipynb_file, "w", encoding='utf-8') as f:
             json.dump(self.notebook, f, ensure_ascii=False, indent=2)
 
-        print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
+        if show_message:
+            print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
 
 
 if __name__ == "__main__":
