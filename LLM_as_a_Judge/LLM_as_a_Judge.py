@@ -755,10 +755,10 @@ if __name__ == "__main__":
     EXAMPLE_FILE = "example_new.ipynb"
     
     # --- 1. 選擇生成 (Generation) 用的 API 與模型 ---
-    GEN_API_MODE =  "Claude"
-    GEN_MODEL = "claude-sonnet-4-6"
-    # GEN_API_MODE =  "OpenAI 官方"
-    # GEN_MODEL = "gpt-4o"
+    # GEN_API_MODE =  "Claude"
+    # GEN_MODEL = "claude-sonnet-4-6"
+    GEN_API_MODE =  "OpenAI 官方"
+    GEN_MODEL = "gpt-4o"
     
     # --- 2. 選擇評估 (Judge) 用的 API 與模型 ---
     JUDGE_API_MODE = "OpenAI 官方"

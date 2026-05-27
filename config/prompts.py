@@ -77,6 +77,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str, co
 4. 不可將分析草稿、偽碼、圖表規劃、局部片段包在 `python fenced code block` 中。
 5. 若需要補充說明，請放在 code block 外，且盡量精簡。
 6. 若輸出包含多個 `python fenced code block`，將視為格式錯誤。
+7. 不要在程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
 """
     return prompt
 
@@ -144,8 +145,15 @@ def create_reflection_prompt(prompt: str, code_to_execute: str, execution_output
 2. ...
 
 [Conclusion]
-(若需修正，請提供完整 Python 程式碼，包含必要的 import，並務必用 ```python 包裹)
 (若無需修正，請僅回覆單字: PASS)
+(若需修正，請遵守以下格式規範)
+1. 只能輸出 **一個且僅一個** `python fenced code block`。
+2. 此唯一的 `python fenced code block` 必須是**完整、最終、可直接執行**的修正版程式碼。
+3. 不可輸出第二個 `python fenced code block`。
+4. 不可只輸出局部片段、單行修補、diff、示意片段或函式片段。
+5. 不可在 [Reasoning] 區塊中放任何 `python fenced code block`。
+6. 若要修正，請在 [Conclusion] 區塊直接提供完整程式碼；不要再附加額外的 python code snippet。
+7. 不要在修正版程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
 """
 
 def create_insight_prompt(prompt: str, analysis_context_str: str) -> str:
