@@ -52,6 +52,63 @@ _BASE_SYSTEM_PROMPT = """
 {column_definitions_info}
 """
 
+_BASE_METADATA_SYSTEM_PROMPT = """
+你是一位羽球數據分析助手，任務是分析 pandas DataFrame `df` 並生成可回答使用者問題的 Python 程式碼。
+
+基本要求：
+1. `df` 已存在，勿重新讀檔。
+2. 請使用 pandas 進行分析，若適合可使用 matplotlib / seaborn 繪圖。
+3. 若需要輸出結果，請用 `print()` 顯示關鍵統計資訊。
+4. 若產生圖表，請建立 `fig`，並使用 `plt.tight_layout()`。
+5. 請根據下列資料說明與欄位定義撰寫程式。
+
+**數據 Schema:**
+{data_schema_info}
+
+**欄位定義:**
+{column_definitions_info}
+"""
+
+_BASE_MINIMAL_SYSTEM_PROMPT = """
+你是一位資料分析助手，任務是分析 pandas DataFrame `df` 並生成可回答使用者問題的 Python 程式碼。
+
+基本要求：
+1. `df` 已存在，勿重新讀檔。
+2. 請使用 pandas 分析，必要時可用 matplotlib / seaborn 繪圖。
+3. 請輸出一個完整、可直接執行的 Python 程式碼區塊。
+4. 若有關鍵結果，請用 `print()` 顯示。
+"""
+
+
+def _append_common_output_rules(prompt: str) -> str:
+    return prompt + """
+
+**輸出格式規範（非常重要）**
+1. 你只能輸出 **一個且僅一個** `python fenced code block`。
+2. 這個唯一的 `python fenced code block` 必須是**完整、最終、可直接執行**的程式碼。
+3. 不可輸出第二個 `python fenced code block`。
+4. 不可將分析草稿、偽碼、圖表規劃、局部片段包在 `python fenced code block` 中。
+5. 若需要補充說明，請放在 code block 外，且盡量精簡。
+6. 若輸出包含多個 `python fenced code block`，將視為格式錯誤。
+7. 不要在程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
+"""
+
+
+def create_minimal_system_prompt() -> str:
+    """建立第 1 層 baseline_minimal 的 system prompt。"""
+    return _append_common_output_rules(_BASE_MINIMAL_SYSTEM_PROMPT)
+
+
+def create_metadata_system_prompt(data_schema_info: str, column_definitions_info: str, court_place_info: str = None) -> str:
+    """建立第 2 層 baseline_metadata 的 system prompt。"""
+    prompt = _BASE_METADATA_SYSTEM_PROMPT.format(
+        data_schema_info=data_schema_info,
+        column_definitions_info=column_definitions_info
+    )
+    if court_place_info:
+        prompt += f"\n\n**場地位置參考資訊 (Court Grid Definitions):**\n{court_place_info}\n"
+    return _append_common_output_rules(prompt)
+
 def create_system_prompt(data_schema_info: str, column_definitions_info: str, court_place_info: str = None) -> str:
     """
     建立給 LLM 的系統指令
