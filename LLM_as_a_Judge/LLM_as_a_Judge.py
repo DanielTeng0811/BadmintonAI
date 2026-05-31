@@ -187,7 +187,7 @@ class LLMAsAJudge:
     def _build_system_prompt(self, required_column_groups, needs_court_info):
         """依模式建立對應層級的 system prompt。"""
         if self.mode == "baseline_minimal":
-            return create_minimal_system_prompt()
+            return create_minimal_system_prompt(self.data_schema_info)
 
         if self.mode == "baseline_metadata":
             return create_metadata_system_prompt(

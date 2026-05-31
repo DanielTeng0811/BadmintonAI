@@ -199,6 +199,12 @@ def run_code_execution(code, df, extended_globals=None):
     """
     Step 3: 執行程式碼並收集結果
     """
+    def _blocked_input(*args, **kwargs):
+        raise RuntimeError("禁止在自動評測流程中使用 input()；請改用 df.columns 與既有欄位自動判斷。")
+
+    def _blocked_exit(*args, **kwargs):
+        raise RuntimeError("禁止在自動評測流程中使用 exit()/quit()；請改以 print() 說明錯誤並讓程式自然結束。")
+
     # 字體設定
     font_setup = """
 import platform as _plat
@@ -221,7 +227,10 @@ plt.rcParams['axes.unicode_minus'] = False
         "platform": platform, 
         "io": io, 
         "plt": plt,
-        "sns": sns 
+        "sns": sns,
+        "input": _blocked_input,
+        "exit": _blocked_exit,
+        "quit": _blocked_exit,
     }
     if extended_globals:
         exec_globals.update(extended_globals)
@@ -237,8 +246,8 @@ plt.rcParams['axes.unicode_minus'] = False
             exec(font_setup + "\n" + code, exec_globals)
         stdout = f.getvalue()
         success = True
-    except Exception as e:
-        error_msg = str(e)
+    except BaseException as e:
+        error_msg = f"{type(e).__name__}: {e}"
         
     # 提取生成的圖表，並過濾掉 None 或非 matplotlib figure 物件
     figs = [plt.figure(n) for n in plt.get_fignums()]

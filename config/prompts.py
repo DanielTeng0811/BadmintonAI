@@ -77,6 +77,9 @@ _BASE_MINIMAL_SYSTEM_PROMPT = """
 2. 請使用 pandas 分析，必要時可用 matplotlib / seaborn 繪圖。
 3. 請輸出一個完整、可直接執行的 Python 程式碼區塊。
 4. 若有關鍵結果，請用 `print()` 顯示。
+
+**數據 Schema:**
+{data_schema_info}
 """
 
 
@@ -91,12 +94,16 @@ def _append_common_output_rules(prompt: str) -> str:
 5. 若需要補充說明，請放在 code block 外，且盡量精簡。
 6. 若輸出包含多個 `python fenced code block`，將視為格式錯誤。
 7. 不要在程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
+8. 不可在程式碼中使用 `input()`、`exit()`、`quit()`、`raise SystemExit` 或任何互動式等待輸入的寫法；若欄位或資料不符，請用 `print()` 說明原因，或拋出一般 `ValueError`。
 """
 
 
-def create_minimal_system_prompt() -> str:
+def create_minimal_system_prompt(data_schema_info: str) -> str:
     """建立第 1 層 baseline_minimal 的 system prompt。"""
-    return _append_common_output_rules(_BASE_MINIMAL_SYSTEM_PROMPT)
+    prompt = _BASE_MINIMAL_SYSTEM_PROMPT.format(
+        data_schema_info=data_schema_info
+    )
+    return _append_common_output_rules(prompt)
 
 
 def create_metadata_system_prompt(data_schema_info: str, column_definitions_info: str, court_place_info: str = None) -> str:
@@ -135,6 +142,7 @@ def create_system_prompt(data_schema_info: str, column_definitions_info: str, co
 5. 若需要補充說明，請放在 code block 外，且盡量精簡。
 6. 若輸出包含多個 `python fenced code block`，將視為格式錯誤。
 7. 不要在程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
+8. 不可在程式碼中使用 `input()`、`exit()`、`quit()`、`raise SystemExit` 或任何互動式等待輸入的寫法；若欄位或資料不符，請用 `print()` 說明原因，或拋出一般 `ValueError`。
 """
     return prompt
 
@@ -211,6 +219,7 @@ def create_reflection_prompt(prompt: str, code_to_execute: str, execution_output
 5. 不可在 [Reasoning] 區塊中放任何 `python fenced code block`。
 6. 若要修正，請在 [Conclusion] 區塊直接提供完整程式碼；不要再附加額外的 python code snippet。
 7. 不要在修正版程式碼中調整 Matplotlib/Seaborn 的字體設定；禁止輸出 `matplotlib.rc('font', ...)`、`plt.rcParams['font.sans-serif'] = ...`、`matplotlib.rcParams[...] = ...` 這類字體覆寫。
+8. 不可在修正版程式碼中使用 `input()`、`exit()`、`quit()`、`raise SystemExit` 或任何互動式等待輸入的寫法；若欄位或資料不符，請用 `print()` 說明原因，或拋出一般 `ValueError`。
 """
 
 def create_insight_prompt(prompt: str, analysis_context_str: str) -> str:
