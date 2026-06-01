@@ -85,6 +85,28 @@ def extract_python_code_block(text):
 
     return blocks[-1].strip()
 
+def extract_token_usage(response):
+    """
+    從 OpenAI 回應中抽取 token 使用量。
+    回傳 input/output/total 三種數值；若欄位不存在則以 0 補齊。
+    """
+    usage = getattr(response, "usage", None)
+    if not usage:
+        return {
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+        }
+
+    input_tokens = getattr(usage, "prompt_tokens", 0) or 0
+    output_tokens = getattr(usage, "completion_tokens", 0) or 0
+    total_tokens = getattr(usage, "total_tokens", input_tokens + output_tokens) or 0
+    return {
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total_tokens,
+    }
+
 # --- 工作流函數 ---
 
 def run_clarification_check(client, model, full_prompt):
@@ -136,7 +158,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
     )
     
     raw_content = response.choices[0].message.content.strip()
-    tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
+    token_usage = extract_token_usage(response)
     log_llm_interaction("Step 1: Enhancement", messages, raw_content)
     
     # 解析 JSON
@@ -171,7 +193,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
         "needs_court_info": needs_court_info,
         "is_related": is_related_to_previous_code,
         "required_column_groups": required_column_groups,
-        "tokens": tokens
+        **token_usage
     }
 
 def run_code_generation(client, model, system_prompt, enhanced_prompt, history):
@@ -188,12 +210,12 @@ def run_code_generation(client, model, system_prompt, enhanced_prompt, history):
         messages=conversation
     )
     ai_response = response.choices[0].message.content
-    tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
+    token_usage = extract_token_usage(response)
     log_llm_interaction("Step 2: Code Generation", conversation, ai_response)
     
     code = extract_python_code_block(ai_response)
     
-    return {"code": code, "tokens": tokens, "raw_response": ai_response}
+    return {"code": code, "raw_response": ai_response, **token_usage}
 
 def run_code_execution(code, df, extended_globals=None):
     """
@@ -289,6 +311,8 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
     """
     code_to_execute = code
     retry_count = 0
+    total_input_tokens = 0
+    total_output_tokens = 0
     total_tokens = 0
     success = False
     exec_result = None
@@ -317,7 +341,10 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
             
             response = client.chat.completions.create(model=model, messages=fix_messages)
             fix_content = response.choices[0].message.content
-            total_tokens += getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
+            token_usage = extract_token_usage(response)
+            total_input_tokens += token_usage["input_tokens"]
+            total_output_tokens += token_usage["output_tokens"]
+            total_tokens += token_usage["total_tokens"]
             log_llm_interaction(f"Step 3: Fix Loop (Retry {retry_count})", fix_messages, fix_content)
             
             extracted_code = extract_python_code_block(fix_content)
@@ -327,7 +354,9 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
     return {
         "final_code": code_to_execute,
         "exec_result": exec_result,
-        "tokens": total_tokens,
+        "input_tokens": total_input_tokens,
+        "output_tokens": total_output_tokens,
+        "total_tokens": total_tokens,
         "success": success
     }
 
@@ -365,7 +394,7 @@ def run_insight_generation(client, model, system_prompt, full_prompt):
         temperature=0.4,
     )
     insight = response.choices[0].message.content
-    tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
+    token_usage = extract_token_usage(response)
     log_llm_interaction("Step 6: Insight Generation", messages, insight)
     
-    return {"insight": insight, "tokens": tokens}
+    return {"insight": insight, **token_usage}

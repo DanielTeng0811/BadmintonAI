@@ -60,6 +60,8 @@ class LLMAsAJudge:
                  judge_api_mode='OpenAI 官方', judge_model='gpt-5.1',
                  mode="our_method",
                  enable_step1=None,
+                 input_token_price=1,
+                 output_token_price=1,
                  question_file="評估問題.txt",
                  example_file="example.ipynb"):
         self.target_questions = target_questions
@@ -69,6 +71,8 @@ class LLMAsAJudge:
         self.judge_model = judge_model
         self.mode = mode
         self.enable_step1 = (mode == "our_method") if enable_step1 is None else enable_step1
+        self.input_token_price = input_token_price
+        self.output_token_price = output_token_price
         self.question_file = question_file
         self.example_file = example_file
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -91,17 +95,14 @@ class LLMAsAJudge:
         self.ipynb_file = os.path.join(self.run_dir, "eval_notebook.ipynb")
 
         # 初始化 API
-        print("🔧 正在初始化 生成 API Client...")
         _key_map = {"Claude": "ANTHROPIC_API_KEY", "Gemini": "GEMINI_API_KEY"}
         gen_api_key = os.getenv(_key_map.get(gen_api_mode, "OPENAI_API_KEY"))
         self.gen_client = initialize_client(gen_api_mode, gen_api_key)
 
-        print("⚖️ 正在初始化 裁判 API Client...")
         judge_api_key = os.getenv(_key_map.get(judge_api_mode, "OPENAI_API_KEY"))
         self.judge_client = initialize_client(judge_api_mode, judge_api_key)
 
         # 載入數據
-        print("📦 正在載入羽球數據...")
         self.df, self.data_schema_info, self.column_definitions_info = load_all_data()
 
         # 載入場地資訊
@@ -119,9 +120,19 @@ class LLMAsAJudge:
         self.reference_answers = self._load_reference_answers_with_duplicates()
         
         # Token 累計計數器
-        self.total_pipeline_tokens = 0
+        self.total_pipeline_input_tokens = 0
+        self.total_pipeline_output_tokens = 0
         self.total_judge_tokens = 0
         self.flagged_questions = [] # 儲存低分標註的題號
+
+    def _get_mode_label(self):
+        mode_labels = {
+            "baseline_minimal": "第一層 baseline_minimal",
+            "baseline_metadata": "第二層 baseline_metadata",
+            "baseline_fullprompt": "第三層 baseline_fullprompt",
+            "our_method": "第四層 our_method",
+        }
+        return mode_labels.get(self.mode, self.mode)
 
     def _load_reference_answers(self):
         """從 example.ipynb 載入各題標準答案，回傳 dict {q_num: code_str}"""
@@ -278,22 +289,27 @@ class LLMAsAJudge:
         except Exception as e:
             print(f"⚠️ 保存 checkpoint 失敗：{e}")
 
-    def _record_question_failure(self, q_text, error, pipeline_tokens=0, required_column_groups=None,
+    def _record_question_failure(self, q_text, error, pipeline_input_tokens=0, pipeline_output_tokens=0,
+                                 required_column_groups=None,
                                  code_to_execute="", insight_text="", b64_images=None, only_generation=False):
         """記錄單題流程中斷，並保留當下已完成內容。"""
         required_column_groups = required_column_groups or []
         b64_images = b64_images or []
         error_text = f"流程中斷：{type(error).__name__}: {error}"
+        pipeline_total_tokens = pipeline_input_tokens + pipeline_output_tokens
 
-        self.total_pipeline_tokens += pipeline_tokens
+        self.total_pipeline_input_tokens += pipeline_input_tokens
+        self.total_pipeline_output_tokens += pipeline_output_tokens
 
         if not only_generation:
             res_item = {
                 "question_id": self._current_q_num,
                 "question_text": q_text,
-                "pipeline_tokens": pipeline_tokens,
+                "pipeline_input_tokens": pipeline_input_tokens,
+                "pipeline_output_tokens": pipeline_output_tokens,
+                "pipeline_tokens": pipeline_total_tokens,
                 "judge_tokens": 0,
-                "total_tokens": pipeline_tokens,
+                "total_tokens": pipeline_total_tokens,
                 "required_groups": ", ".join(required_column_groups),
                 "code_correct": False,
                 "code_reasoning": error_text,
@@ -351,7 +367,8 @@ class LLMAsAJudge:
         
         # --- Step 1: 轉化與優化使用者問題 ---
         print("▶ Step 1: 分析與優化問題...")
-        pipeline_tokens = 0
+        pipeline_input_tokens = 0
+        pipeline_output_tokens = 0
         required_column_groups = []
         needs_court_info = False
         if self.enable_step1:
@@ -360,7 +377,8 @@ class LLMAsAJudge:
             enhanced_prompt = enhance_res["enhanced_prompt"]
             needs_court_info = enhance_res["needs_court_info"]
             required_column_groups = enhance_res.get("required_column_groups", [])
-            pipeline_tokens += enhance_res.get("tokens", 0)
+            pipeline_input_tokens += enhance_res.get("input_tokens", 0)
+            pipeline_output_tokens += enhance_res.get("output_tokens", 0)
         else:
             enhanced_prompt = prompt
         
@@ -369,7 +387,8 @@ class LLMAsAJudge:
         system_prompt = self._build_system_prompt(required_column_groups, needs_court_info)
         gen_res = run_code_generation(self.gen_client, self.gen_model, system_prompt, enhanced_prompt, [])
         code_to_execute = gen_res["code"]
-        pipeline_tokens += gen_res.get("tokens", 0)
+        pipeline_input_tokens += gen_res.get("input_tokens", 0)
+        pipeline_output_tokens += gen_res.get("output_tokens", 0)
         
         # --- Step 3: 執行程式碼並在失敗時自動透過 AI 修復 ---
         print("▶ Step 3: 執行程式...")
@@ -378,7 +397,8 @@ class LLMAsAJudge:
             self.gen_client, self.gen_model, code_to_execute, self.df, system_prompt, enhanced_prompt,
             max_retries=3
         )
-        pipeline_tokens += exec_loop_res.get("tokens", 0)
+        pipeline_input_tokens += exec_loop_res.get("input_tokens", 0)
+        pipeline_output_tokens += exec_loop_res.get("output_tokens", 0)
         
         code_to_execute = exec_loop_res["final_code"]
         exec_result = exec_loop_res["exec_result"]
@@ -433,9 +453,18 @@ class LLMAsAJudge:
             insight_prompt
         )
         insight_text = insight_res["insight"]
-        pipeline_tokens += insight_res.get("tokens", 0)
+        pipeline_input_tokens += insight_res.get("input_tokens", 0)
+        pipeline_output_tokens += insight_res.get("output_tokens", 0)
         
-        return code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups
+        return (
+            code_to_execute,
+            insight_text,
+            b64_images,
+            plot_paths,
+            pipeline_input_tokens,
+            pipeline_output_tokens,
+            required_column_groups,
+        )
 
     def _judge_result(self, question, code, ref_codes):
         """呼叫 LLM 進行評分判斷"""
@@ -495,6 +524,7 @@ class LLMAsAJudge:
 
         print(f"\n🚀 啟動 LLM-as-a-Judge: 生成 + 評核...")
         print(f"📌 目標題數: {total_items} 題")
+        print(f"🏗️ 使用架構: {self._get_mode_label()}")
         print(f"📊 生成模型: {self.gen_model} | 裁判模型: {self.judge_model}\n{'-'*50}")
 
         for idx, q_dict in enumerate(questions, 1):
@@ -506,13 +536,21 @@ class LLMAsAJudge:
             code_to_execute = ""
             insight_text = ""
             b64_images = []
-            pipeline_tokens = 0
+            pipeline_input_tokens = 0
+            pipeline_output_tokens = 0
             required_column_groups = []
             try:
                 # 執行分析流程
-                code_to_execute, insight_text, b64_images, plot_paths, pipeline_tokens, required_column_groups = self._run_pipeline(
-                    q_text
-                )
+                (
+                    code_to_execute,
+                    insight_text,
+                    b64_images,
+                    plot_paths,
+                    pipeline_input_tokens,
+                    pipeline_output_tokens,
+                    required_column_groups,
+                ) = self._run_pipeline(q_text)
+                pipeline_tokens = pipeline_input_tokens + pipeline_output_tokens
 
                 if not only_generation:
                     ref_code = self.reference_answers.get(self._current_q_num, "無標準答案")
@@ -526,6 +564,8 @@ class LLMAsAJudge:
                     res_item = {
                         "question_id": self._current_q_num,
                         "question_text": q_text,
+                        "pipeline_input_tokens": pipeline_input_tokens,
+                        "pipeline_output_tokens": pipeline_output_tokens,
                         "pipeline_tokens": pipeline_tokens,
                         "judge_tokens": judge_tokens,
                         "total_tokens": pipeline_tokens + judge_tokens,
@@ -533,7 +573,8 @@ class LLMAsAJudge:
                     }
 
                     # 累計總 Token
-                    self.total_pipeline_tokens += pipeline_tokens
+                    self.total_pipeline_input_tokens += pipeline_input_tokens
+                    self.total_pipeline_output_tokens += pipeline_output_tokens
                     self.total_judge_tokens += judge_tokens
 
                     code_correct = eval_res.get("code_correct", False)
@@ -552,11 +593,19 @@ class LLMAsAJudge:
 
                     status_emoji = "✅ 正確" if code_correct else "❌ 錯誤"
                     print(f"🏁 評分結果: {status_emoji}")
-                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,} | 評分 {judge_tokens:,} | 總計 {pipeline_tokens + judge_tokens:,}")
+                    print(
+                        f"💰 消耗 Token: 產出(input) {pipeline_input_tokens:,} | "
+                        f"產出(output) {pipeline_output_tokens:,} | 評分 {judge_tokens:,} | "
+                        f"總計 {pipeline_tokens + judge_tokens:,}"
+                    )
                 else:
                     # 僅生成模式
-                    self.total_pipeline_tokens += pipeline_tokens
-                    print(f"💰 消耗 Token: 產出 {pipeline_tokens:,}")
+                    self.total_pipeline_input_tokens += pipeline_input_tokens
+                    self.total_pipeline_output_tokens += pipeline_output_tokens
+                    print(
+                        f"💰 消耗 Token: 產出(input) {pipeline_input_tokens:,} | "
+                        f"產出(output) {pipeline_output_tokens:,} | 總計 {pipeline_tokens:,}"
+                    )
 
                 # 構建 IPYNB 結構
                 q_header = f"## 題號 {self._current_q_num}"
@@ -580,7 +629,8 @@ class LLMAsAJudge:
                 self._record_question_failure(
                     q_text,
                     e,
-                    pipeline_tokens=pipeline_tokens,
+                    pipeline_input_tokens=pipeline_input_tokens,
+                    pipeline_output_tokens=pipeline_output_tokens,
                     required_column_groups=required_column_groups,
                     code_to_execute=code_to_execute,
                     insight_text=insight_text,
@@ -591,13 +641,19 @@ class LLMAsAJudge:
                 self._checkpoint_export()
 
         # --- 列印最終 Token 統計 ---
-        if total_items > 1:
-            total_tokens = self.total_pipeline_tokens + self.total_judge_tokens
+        if total_items > 0:
+            total_pipeline_tokens = self.total_pipeline_input_tokens + self.total_pipeline_output_tokens
+            total_tokens = total_pipeline_tokens + self.total_judge_tokens
+            estimated_cost = (
+                self.total_pipeline_input_tokens * self.input_token_price +
+                self.total_pipeline_output_tokens * self.output_token_price
+            )
             print(f"\n{'='*50}")
             print(f"💰 總計 Token 消耗統計 ({total_items} 題):")
-            
-            print(f"  - 總計產出 Token: {self.total_pipeline_tokens:,}")
+            print(f"  - 總計產出 Token(input): {self.total_pipeline_input_tokens:,}")
+            print(f"  - 總計產出 Token(output): {self.total_pipeline_output_tokens:,}")
             print(f"  - 總計評分 Token: {self.total_judge_tokens:,}")
+            print(f"  - 預估產出成本: {estimated_cost:,}")
             print(f"  - 項目總計 Token: {total_tokens:,}")
             print(f"{'='*50}")
 
@@ -631,7 +687,7 @@ class LLMAsAJudge:
             print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
 
 if __name__ == "__main__":
-    # QUESTIONS_TO_RUN = [1, 3] # 指定題號進行生成與評估，否則自動讀取 分析報告.md 進行評估
+    # QUESTIONS_TO_RUN = list(range(1, 101))
     QUESTIONS_TO_RUN = list(range(1, 101))
     QUESTION_FILE = "評估問題_new.txt"
     EXAMPLE_FILE = "example_new.ipynb"
@@ -650,6 +706,8 @@ if __name__ == "__main__":
     # baseline_minimal baseline_metadata baseline_fullprompt our_method
     MODE = "our_method"
     ONLY_GENERATION = False       # 設定為 True 則只生成內容而不進行 AI 評分 (也不會產出 CSV)
+    INPUT_TOKEN_PRICE = 1
+    OUTPUT_TOKEN_PRICE = 1
     
     evaluator = LLMAsAJudge(
         target_questions=QUESTIONS_TO_RUN,
@@ -658,6 +716,8 @@ if __name__ == "__main__":
         judge_api_mode=JUDGE_API_MODE,
         judge_model=JUDGE_MODEL,
         mode=MODE,
+        input_token_price=INPUT_TOKEN_PRICE,
+        output_token_price=OUTPUT_TOKEN_PRICE,
         question_file=QUESTION_FILE,
         example_file=EXAMPLE_FILE
     )
