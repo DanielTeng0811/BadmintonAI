@@ -94,6 +94,7 @@ class LLMAsAJudge:
         
         self.csv_file = os.path.join(self.run_dir, "eval_results.csv")
         self.ipynb_file = os.path.join(self.run_dir, "eval_notebook.ipynb")
+        self.summary_file = os.path.join(self.run_dir, "summary.txt")
 
         # 初始化 API
         _key_map = {"Claude": "ANTHROPIC_API_KEY", "Gemini": "GEMINI_API_KEY"}
@@ -134,6 +135,40 @@ class LLMAsAJudge:
             "our_method": "第四層 our_method",
         }
         return mode_labels.get(self.mode, self.mode)
+
+    def _build_summary_text(self):
+        total_items = len(self.target_questions)
+        total_pipeline_tokens = self.total_pipeline_input_tokens + self.total_pipeline_output_tokens
+        total_tokens = total_pipeline_tokens + self.total_judge_tokens
+        estimated_cost = (
+            self.total_pipeline_input_tokens * self.input_token_price +
+            self.total_pipeline_output_tokens * self.output_token_price
+        )
+
+        lines = [
+            f"題數: {total_items}",
+            f"架構: {self._get_mode_label()}",
+            f"生成模型: {self.gen_model}",
+            f"裁判模型: {self.judge_model}",
+            "",
+            f"總計 Token 消耗統計:",
+            f"- 總計產出 Token (input): {self.total_pipeline_input_tokens:,}",
+            f"- 總計產出 Token (output): {self.total_pipeline_output_tokens:,}",
+            f"- 總計評分 Token: {self.total_judge_tokens:,}",
+            f"- 預估產出成本: {estimated_cost:,}",
+            f"- 項目總計 Token: {total_tokens:,}",
+        ]
+
+        if not getattr(self, 'only_generation', False) and self.results:
+            correct_count = sum(1 for item in self.results if not item.get("needs_review", False))
+            total_count = len(self.results)
+            correct_ratio = correct_count / total_count if total_count > 0 else 0
+            lines.extend([
+                "",
+                f"正確比例: {correct_count}/{total_count} ({correct_ratio:.2%})",
+            ])
+
+        return "\n".join(lines) + "\n"
 
     def _load_reference_answers(self):
         """從 example.ipynb 載入各題標準答案，回傳 dict {q_num: code_str}"""
@@ -651,8 +686,8 @@ class LLMAsAJudge:
             )
             print(f"\n{'='*50}")
             print(f"💰 總計 Token 消耗統計 ({total_items} 題):")
-            print(f"  - 總計產出 Token(input): {self.total_pipeline_input_tokens:,}")
-            print(f"  - 總計產出 Token(output): {self.total_pipeline_output_tokens:,}")
+            print(f"  - 總計產出 Token (input): {self.total_pipeline_input_tokens:,}")
+            print(f"  - 總計產出 Token (output): {self.total_pipeline_output_tokens:,}")
             print(f"  - 總計評分 Token: {self.total_judge_tokens:,}")
             print(f"  - 預估產出成本: {estimated_cost:,}")
             print(f"  - 項目總計 Token: {total_tokens:,}")
@@ -683,6 +718,10 @@ class LLMAsAJudge:
         # IPYNB
         with open(self.ipynb_file, "w", encoding='utf-8') as f:
             json.dump(self.notebook, f, ensure_ascii=False, indent=2)
+
+        # Summary
+        with open(self.summary_file, "w", encoding="utf-8") as f:
+            f.write(self._build_summary_text())
          
         if show_message:
             print(f"\n📂 評估流程結束，所有輸出已儲存至目錄:\n   {self.run_dir}")
@@ -708,7 +747,7 @@ if __name__ == "__main__":
     MODE = "our_method"
     ONLY_GENERATION = False       # 設定為 True 則只生成內容而不進行 AI 評分 (也不會產出 CSV)
     INPUT_TOKEN_PRICE = 1
-    OUTPUT_TOKEN_PRICE = 1
+    OUTPUT_TOKEN_PRICE = 8
     
     evaluator = LLMAsAJudge(
         target_questions=QUESTIONS_TO_RUN,
