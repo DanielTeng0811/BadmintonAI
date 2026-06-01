@@ -87,8 +87,8 @@ def extract_python_code_block(text):
 
 def extract_token_usage(response):
     """
-    從 OpenAI 回應中抽取 token 使用量。
-    回傳 input/output/total 三種數值；若欄位不存在則以 0 補齊。
+    從不同供應商回應中抽取 token 使用量。
+    支援 OpenAI 相容欄位 (prompt/completion) 與部分 SDK 常見欄位 (input/output)。
     """
     usage = getattr(response, "usage", None)
     if not usage:
@@ -98,13 +98,26 @@ def extract_token_usage(response):
             "total_tokens": 0,
         }
 
-    input_tokens = getattr(usage, "prompt_tokens", 0) or 0
-    output_tokens = getattr(usage, "completion_tokens", 0) or 0
-    total_tokens = getattr(usage, "total_tokens", input_tokens + output_tokens) or 0
+    def _usage_get(obj, *keys):
+        for key in keys:
+            if isinstance(obj, dict) and key in obj:
+                value = obj.get(key)
+            else:
+                value = getattr(obj, key, None)
+            if value is not None:
+                return value
+        return 0
+
+    input_tokens = _usage_get(usage, "prompt_tokens", "input_tokens")
+    output_tokens = _usage_get(usage, "completion_tokens", "output_tokens")
+    total_tokens = _usage_get(usage, "total_tokens", "total_token_count")
+    if not total_tokens:
+        total_tokens = input_tokens + output_tokens
+
     return {
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
-        "total_tokens": total_tokens,
+        "input_tokens": int(input_tokens or 0),
+        "output_tokens": int(output_tokens or 0),
+        "total_tokens": int(total_tokens or 0),
     }
 
 # --- 工作流函數 ---

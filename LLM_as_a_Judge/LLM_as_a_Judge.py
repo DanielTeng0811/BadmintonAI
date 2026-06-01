@@ -42,6 +42,7 @@ from config.prompts import (
 from utils.data_loader import load_all_data, filter_schema_and_definitions
 from utils.ai_client import initialize_client
 from utils.analysis_workflow import (
+    extract_token_usage,
     run_prompt_enhancement,
     run_code_generation,
     run_code_execution_loop,
@@ -488,7 +489,7 @@ class LLMAsAJudge:
                 temperature=0.0
             )
             raw_eval = response.choices[0].message.content.strip()
-            judge_tokens += getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
+            judge_tokens += extract_token_usage(response)["total_tokens"]
             
             # 安全清理與 Parse JSON
             if "```json" in raw_eval:
