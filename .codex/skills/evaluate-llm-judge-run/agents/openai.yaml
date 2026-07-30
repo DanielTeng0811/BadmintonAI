@@ -1,0 +1,4 @@
+interface:
+  display_name: "LLM Run 評估"
+  short_description: "逐題複核 LLM-as-a-Judge run 並產生報告"
+  default_prompt: "Use $evaluate-llm-judge-run to audit the specified run and create its Markdown report."

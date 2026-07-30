@@ -1,0 +1,139 @@
+目標題數: 40
+架構: 隔離測試模式 test
+生成模型: gpt-5.6-luna
+裁判模型: gpt-4o-mini
+SKIP_INSIGHT: True
+
+總計 Token 消耗統計:
+- 總計產出 Token (input): 276,825
+- 總計產出 Token (output): 93,415
+- 總計評分 Token: 0
+- Generation 成本: 0.837315
+- Judge 成本: 0
+- 總成本: 0.837315
+- 項目總計 Token: 370,240
+- 洞察 Token (input/output): 0/0
+- 評估 gate: code_logic
+
+實際處理題數: 40
+逐題生命週期統計:
+- completed: 40
+
+題目列表:
+- 正確: none
+- 錯誤: none
+- 未評分: [1, 6, 10, 13, 16, 17, 18, 22, 25, 30, 31, 34, 37, 38, 42, 45, 47, 50, 51, 60, 61, 63, 65, 66, 67, 71, 73, 76, 79, 80, 82, 83, 84, 85, 88, 89, 91, 93, 95, 100]
+- 執行失敗: none
+
+各階段 Token:
+- step1: input=49801, output=10754, total=60555, calls=40
+- code_generation: input=227024, output=82661, total=309685, calls=40
+- renderer: input=0, output=0, total=0, calls=40
+- execution: input=0, output=0, total=0, calls=0
+- insight: input=0, output=0, total=0, calls=0
+- judge: input=0, output=0, total=0, calls=0
+
+Step 1 metadata routing:
+- Q1: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q6: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure
+- Q10: enabled=True, needs_court_info=True, source=llm+semantic_guard, metadata=full_court_place, groups=game_structure, shot_type, player_location, scoring_reason
+- Q13: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q16: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, scoring_reason
+- Q17: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, player_location, scoring_reason
+- Q18: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, player_movement, scoring_reason
+- Q22: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q25: enabled=True, needs_court_info=True, source=llm+semantic_guard, metadata=full_court_place, groups=game_structure, coordinates, player_location
+- Q30: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, player_movement, scoring_reason
+- Q31: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type
+- Q34: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q37: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q38: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q42: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q45: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q47: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q50: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q51: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, shot_type, coordinates
+- Q60: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q61: enabled=True, needs_court_info=True, source=llm+semantic_guard, metadata=full_court_place, groups=game_structure, coordinates, player_movement, scoring_reason
+- Q63: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type
+- Q65: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q66: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q67: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q71: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q73: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, coordinates, scoring_reason
+- Q76: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, player_movement, scoring_reason
+- Q79: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type
+- Q80: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, shot_type, coordinates, player_location, scoring_reason, stroke_details
+- Q82: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type
+- Q83: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, shot_type, coordinates, scoring_reason
+- Q84: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q85: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q88: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, coordinates
+- Q89: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, shot_type, coordinates
+- Q91: enabled=True, needs_court_info=True, source=llm+semantic_guard, metadata=full_court_place, groups=game_structure, shot_type, coordinates, player_location
+- Q93: enabled=True, needs_court_info=False, source=llm, metadata=none, groups=game_structure, shot_type, scoring_reason
+- Q95: enabled=True, needs_court_info=True, source=llm+semantic_guard, metadata=full_court_place, groups=game_structure, shot_type, coordinates, scoring_reason
+- Q100: enabled=True, needs_court_info=True, source=llm, metadata=full_court_place, groups=game_structure, shot_type, coordinates
+
+test mode 輸出契約:
+- 驗證狀態: {'valid': 40}
+- 建議路徑: {'renderer_candidate': 40}
+- 此區只統計 Step 1 合約；實際路徑見 test mode renderer
+
+test mode renderer:
+- 實際路徑: {'renderer': 38, 'generic_text_fallback': 2}
+- Fallback 題號: [50, 84]
+- Payload 正規化題號: [17, 51, 93]
+- 空輸出產物題號: none
+- Code output token 分配為估計值，不是 API 分階段回報
+- 分析／呈現 input token 估計: 205120/21904
+- 分析／呈現 output token 估計: 65449/17212
+- Fallback 題目的 Step 2 input/output token: 10625/3571
+
+逐題洞察狀態:
+- Q1: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q6: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q10: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q13: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q16: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q17: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q18: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q22: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q25: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q30: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q31: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q34: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q37: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q38: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q42: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q45: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q47: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q50: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q51: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q60: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q61: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q63: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q65: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q66: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q67: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q71: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q73: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q76: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q79: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q80: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q82: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q83: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q84: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q85: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q88: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q89: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q91: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q93: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q95: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+- Q100: status=skipped, skipped=True, completion=evidence_only_insight_skipped, input=0, output=0
+
+人工複核結果：
+- 正確題目數：31/40
+- 錯誤題目數：9/40
+- 正確題目：[1, 10, 13, 17, 18, 22, 25, 30, 31, 37, 38, 42, 45, 47, 50, 51, 63, 65, 66, 71, 73, 79, 80, 82, 85, 88, 89, 91, 93, 95, 100]
+- 錯誤題目：[6, 16, 34, 60, 61, 67, 76, 83, 84]

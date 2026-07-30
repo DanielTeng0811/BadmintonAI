@@ -68,6 +68,7 @@ datasets/
 *.jpg
 *.jpeg
 *.png
+!LLM_as_a_Judge/result_gpt5.6-luna/**/*.png
 *.gif
 *.mp4
 *.avi
@@ -96,6 +97,7 @@ llm_debug_log.txt
 .streamlit/secrets.toml
 
 test_questions.md
+TODO.md
 
 analysis_context_output.txt
 LLM_as_a_Judge/eval_results/

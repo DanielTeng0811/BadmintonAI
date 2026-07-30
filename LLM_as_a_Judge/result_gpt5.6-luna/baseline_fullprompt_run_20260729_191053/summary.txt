@@ -1,0 +1,124 @@
+目標題數: 40
+架構: 第三層 baseline_fullprompt
+生成模型: gpt-5.6-luna
+裁判模型: gpt-4o-mini
+SKIP_INSIGHT: True
+
+總計 Token 消耗統計:
+- 總計產出 Token (input): 361,863
+- 總計產出 Token (output): 100,365
+- 總計評分 Token: 0
+- Generation 成本: 0.964053
+- Judge 成本: 0
+- 總成本: 0.964053
+- 項目總計 Token: 462,228
+- 洞察 Token (input/output): 0/0
+- 評估 gate: code_logic
+
+實際處理題數: 40
+逐題生命週期統計:
+- completed: 40
+
+題目列表:
+- 正確: none
+- 錯誤: none
+- 未評分: [1, 6, 10, 13, 16, 17, 18, 22, 25, 30, 31, 34, 37, 38, 42, 45, 47, 50, 51, 60, 61, 63, 65, 66, 67, 71, 73, 76, 79, 80, 82, 83, 84, 85, 88, 89, 91, 93, 95, 100]
+- 執行失敗: none
+
+各階段 Token:
+- step1: input=0, output=0, total=0, calls=0
+- code_generation: input=307441, output=89514, total=396955, calls=40
+- execution: input=0, output=0, total=0, calls=0
+- insight: input=0, output=0, total=0, calls=0
+- judge: input=0, output=0, total=0, calls=0
+- repair: input=54422, output=10851, total=65273, calls=6
+
+Step 1 metadata routing:
+- Q1: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q6: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q10: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q13: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q16: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q17: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q18: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q22: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q25: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q30: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q31: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q34: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q37: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q38: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q42: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q45: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q47: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q50: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q51: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q60: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q61: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q63: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q65: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q66: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q67: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q71: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q73: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q76: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q79: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q80: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q82: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q83: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q84: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q85: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q88: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q89: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q91: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q93: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q95: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+- Q100: enabled=False, needs_court_info=False, source=step1_disabled, metadata=full_court_place, groups=none
+
+逐題洞察狀態:
+- Q1: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q6: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q10: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q13: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q16: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q17: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q18: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q22: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q25: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q30: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q31: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q34: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q37: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q38: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q42: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q45: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q47: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q50: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q51: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q60: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q61: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q63: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q65: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q66: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q67: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q71: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q73: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q76: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q79: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q80: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q82: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q83: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q84: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q85: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q88: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q89: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q91: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q93: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q95: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+- Q100: status=skipped, skipped=True, completion=analysis_complete_insight_skipped, input=0, output=0
+
+人工複核結果：
+- 正確題目數：30/40
+- 錯誤題目數：10/40
+- 正確題目：[1, 6, 16, 17, 18, 22, 25, 30, 31, 34, 38, 42, 45, 47, 50, 51, 63, 65, 66, 71, 73, 79, 80, 82, 84, 85, 88, 89, 95, 100]
+- 錯誤題目：[10, 13, 37, 60, 61, 67, 76, 83, 91, 93]

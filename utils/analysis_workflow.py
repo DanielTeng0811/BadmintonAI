@@ -8,6 +8,7 @@ import seaborn as sns
 from contextlib import redirect_stdout
 from datetime import datetime
 from utils.paths import LLM_DEBUG_LOG, ensure_runtime_dirs
+from utils.model_compat import temperature_kwargs
 
 # --- 輔助函數 ---
 def log_llm_interaction(step_name, messages, response_content):
@@ -122,6 +123,32 @@ def extract_token_usage(response):
 
 # --- 工作流函數 ---
 
+_COURT_DEFINITION_TERMS = (
+    "前場",
+    "中場",
+    "後場",
+    "前中後場",
+    "四角",
+    "兩側",
+    "區域",
+    "場地區域",
+    "區域代碼",
+    "場地編號",
+)
+
+
+def infer_needs_court_info(user_prompt):
+    """以高信心、題號無關的語意判斷是否需要正式場地對照。"""
+    prompt = str(user_prompt or "")
+    if any(term in prompt for term in _COURT_DEFINITION_TERMS):
+        return True
+    return bool(re.search(r"\b(?:zone|area)\b", prompt, flags=re.IGNORECASE))
+
+
+def _optional_json_bool(value):
+    """只接受真正的 JSON boolean，避免字串 false 被當成真值。"""
+    return value if isinstance(value, bool) else None
+
 def run_clarification_check(client, model, full_prompt):
     """
     Step 0: 檢查問題是否需要澄清
@@ -131,7 +158,7 @@ def run_clarification_check(client, model, full_prompt):
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.3
+        **temperature_kwargs(model, 0.3),
     )
     content = response.choices[0].message.content.strip()
     log_llm_interaction("Step 0: Clarification Check", messages, content)
@@ -155,7 +182,14 @@ def run_clarification_check(client, model, full_prompt):
     except:
         return {"need_clarification": False}
 
-def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
+def run_prompt_enhancement(
+    client,
+    model,
+    system_prompt,
+    user_prompt,
+    history,
+    output_contract_validator=None,
+):
     """
     Step 1: 轉化與優化使用者問題
     """
@@ -167,7 +201,7 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.2
+        **temperature_kwargs(model, 0.2),
     )
     
     raw_content = response.choices[0].message.content.strip()
@@ -175,11 +209,27 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
     log_llm_interaction("Step 1: Enhancement", messages, raw_content)
     
     # 解析 JSON
-    enhanced_prompt = raw_content
+    enhanced_prompt = user_prompt
     needs_court_info = False
+    needs_court_info_llm = None
+    needs_court_info_source = "default"
+    semantic_court_signal = infer_needs_court_info(user_prompt)
+    parse_error = ""
     is_related_to_previous_code = False
     required_column_groups = []
+    analysis_subject = ""
+    analysis_unit = ""
+    temporal_requirement = ""
+    scoring_rule = ""
+    spatial_requirement = ""
+    output_contract_validation = {
+        "status": "not_requested",
+        "route": "existing_free_code",
+        "contract": None,
+        "errors": [],
+    }
     
+    parsed = {}
     try:
         json_str = raw_content
         if "```json" in raw_content:
@@ -192,20 +242,103 @@ def run_prompt_enhancement(client, model, system_prompt, user_prompt, history):
             json_str = raw_content[start:end].strip()
         
         parsed = json.loads(json_str)
-        enhanced_prompt = parsed.get("enhanced_prompt", raw_content)
-        needs_court_info = parsed.get("needs_court_info", False)
-        is_related_to_previous_code = parsed.get("is_related_to_previous_code", False)
+        if (
+            output_contract_validator is not None
+            and not isinstance(parsed, dict)
+        ):
+            raise TypeError("Step 1 JSON 根節點必須是 object")
+        analysis_subject = parsed.get("analysis_subject", "")
+        analysis_unit = parsed.get("analysis_unit", "")
+        temporal_requirement = parsed.get("temporal_requirement", "")
+        scoring_rule = parsed.get("scoring_rule", "")
+        spatial_requirement = parsed.get("spatial_requirement", "")
+        needs_court_info_llm = _optional_json_bool(
+            parsed.get("needs_court_info")
+        )
+        if "needs_court_info" in parsed and needs_court_info_llm is None:
+            parse_error = "needs_court_info 必須是 JSON boolean"
+        related_value = _optional_json_bool(
+            parsed.get("is_related_to_previous_code")
+        )
+        is_related_to_previous_code = (
+            related_value if related_value is not None else False
+        )
         required_column_groups = parsed.get("required_column_groups", [])
-    except:
-        # 備援邏輯：如果解析失敗，根據關鍵字判斷
-        if any(k in user_prompt for k in ["落點", "位置", "區域", "座標", "location", "area"]):
-            needs_court_info = True
+    except (json.JSONDecodeError, TypeError, ValueError) as error:
+        parse_error = f"{type(error).__name__}: {error}"
+        if output_contract_validator is not None:
+            parsed = {}
+
+    if output_contract_validator is not None:
+        output_contract_validation = output_contract_validator(
+            parsed.get("output_contract")
+        )
+
+    if semantic_court_signal:
+        needs_court_info = True
+        needs_court_info_source = (
+            "llm+semantic_guard"
+            if needs_court_info_llm is True
+            else "semantic_guard"
+        )
+    elif needs_court_info_llm is not None:
+        needs_court_info = needs_court_info_llm
+        needs_court_info_source = "llm"
+
+    structured_lines = []
+    if analysis_subject:
+        structured_lines.append(f"- 分析主體: {analysis_subject}")
+    if analysis_unit:
+        structured_lines.append(f"- 統計單位: {analysis_unit}")
+    if temporal_requirement:
+        structured_lines.append(f"- 時序需求: {temporal_requirement}")
+    if scoring_rule:
+        structured_lines.append(f"- 得分口徑: {scoring_rule}")
+    if spatial_requirement:
+        structured_lines.append(f"- 空間需求: {spatial_requirement}")
+    if required_column_groups:
+        structured_lines.append(f"- 關鍵欄位群組: {', '.join(required_column_groups)}")
+
+    if structured_lines:
+        enhanced_prompt = (
+            f"{user_prompt}\n\n"
+            "[Step 1 結構化規格]\n"
+            + "\n".join(structured_lines)
+            + "\n\n"
+            "請依照上述結構化規格生成程式碼"
+        )
             
+    normalized_result = {
+        "analysis_subject": analysis_subject,
+        "analysis_unit": analysis_unit,
+        "temporal_requirement": temporal_requirement,
+        "scoring_rule": scoring_rule,
+        "spatial_requirement": spatial_requirement,
+        "needs_court_info": needs_court_info,
+        "is_related_to_previous_code": is_related_to_previous_code,
+        "required_column_groups": required_column_groups,
+        "output_contract": output_contract_validation["contract"],
+    }
+
     return {
         "enhanced_prompt": enhanced_prompt,
         "needs_court_info": needs_court_info,
+        "needs_court_info_llm": needs_court_info_llm,
+        "needs_court_info_source": needs_court_info_source,
+        "semantic_court_signal": semantic_court_signal,
+        "parse_error": parse_error,
+        "raw_response": raw_content,
+        "normalized_result": normalized_result,
         "is_related": is_related_to_previous_code,
         "required_column_groups": required_column_groups,
+        "analysis_subject": analysis_subject,
+        "analysis_unit": analysis_unit,
+        "temporal_requirement": temporal_requirement,
+        "scoring_rule": scoring_rule,
+        "spatial_requirement": spatial_requirement,
+        "output_contract_status": output_contract_validation["status"],
+        "output_contract_route": output_contract_validation["route"],
+        "output_contract_errors": output_contract_validation["errors"],
         **token_usage
     }
 
@@ -327,6 +460,8 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
     total_input_tokens = 0
     total_output_tokens = 0
     total_tokens = 0
+    repair_attempts = 0
+    attempt_usages = []
     success = False
     exec_result = None
     
@@ -349,12 +484,17 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": enhanced_prompt},
                 {"role": "assistant", "content": f"```python\n{code_to_execute}\n```"},
-                {"role": "user", "content": f"執行錯誤: {exec_result['error']}。請修正並重新輸出完整程式碼 (包含必要的 import)。"}
+                {"role": "user", "content": f"執行錯誤: {exec_result['error']}。請修正並只輸出一個完整、最終、可直接執行的 python code block；不要附加任何解釋文字，包含必要的 import。"}
             ]
             
             response = client.chat.completions.create(model=model, messages=fix_messages)
             fix_content = response.choices[0].message.content
             token_usage = extract_token_usage(response)
+            repair_attempts += 1
+            attempt_usages.append({
+                "attempt": repair_attempts,
+                **token_usage,
+            })
             total_input_tokens += token_usage["input_tokens"]
             total_output_tokens += token_usage["output_tokens"]
             total_tokens += token_usage["total_tokens"]
@@ -370,7 +510,9 @@ def run_code_execution_loop(client, model, code, df, system_prompt, enhanced_pro
         "input_tokens": total_input_tokens,
         "output_tokens": total_output_tokens,
         "total_tokens": total_tokens,
-        "success": success
+        "success": success,
+        "repair_attempts": repair_attempts,
+        "attempt_usages": attempt_usages,
     }
 
 def run_logic_reflection(client, model, full_prompt):
@@ -382,7 +524,7 @@ def run_logic_reflection(client, model, full_prompt):
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.1
+        **temperature_kwargs(model, 0.1),
     )
     content = response.choices[0].message.content.strip()
     tokens = getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') else 0
@@ -404,7 +546,7 @@ def run_insight_generation(client, model, system_prompt, full_prompt):
     response = client.chat.completions.create(
         model=model,
         messages=messages,
-        temperature=0.4,
+        **temperature_kwargs(model, 0.4),
     )
     insight = response.choices[0].message.content
     token_usage = extract_token_usage(response)
