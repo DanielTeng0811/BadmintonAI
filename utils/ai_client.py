@@ -4,7 +4,7 @@ AI client initialization for different API providers
 
 支援 OpenAI、Gemini、交大伺服器、Claude (Anthropic)
 Claude 模式透過 Adapter Pattern 將 Anthropic SDK 包裝為 OpenAI 相容介面，
-讓所有呼叫端 (analysis_workflow, front_page, LLM_as_a_Judge, auto_generate_answers)
+讓所有呼叫端 (analysis_workflow, front_page, LLM_as_a_Judge)
 無需任何改動即可使用 Claude。
 """
 import openai
