@@ -93,5 +93,6 @@ BadmintonAI/
 ## 文件
 
 - [專案結構說明](docs/PROJECT_STRUCTURE.md)
+- [LLM 評測目錄導覽](LLM_as_a_Judge/README.md)
 - [部署說明](docs/DEPLOYMENT.md)
 - [評測題目重分組](docs/evaluation_question_regrouped_scheme.md)
