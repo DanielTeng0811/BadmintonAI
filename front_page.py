@@ -91,9 +91,11 @@ def check_password():
     if st.session_state.get("password_correct", False):
         return True
 
-    # 2. 設定你的通關密碼 (預設: badminton2024)
-    # 也可以從 Secrets 讀取: st.secrets.get("APP_PASSWORD", "badminton2024")
-    CORRECT_PASSWORD = os.getenv("APP_PASSWORD", "badminton2024")
+    # 2. 不提供預設密碼，避免公開部署時意外使用已知憑證。
+    correct_password = get_api_key("APP_PASSWORD")
+    if not correct_password:
+        st.error("⚠️ 服務尚未設定 APP_PASSWORD。請在 .env 或部署平台的 Secrets 中設定後再啟動。")
+        return False
 
     # 3. 顯示輸入框
     st.header("🔒 請輸入通關密碼")
@@ -101,7 +103,7 @@ def check_password():
     password_input = st.text_input("密碼", type="password")
 
     if st.button("登入"):
-        if password_input == CORRECT_PASSWORD:
+        if password_input == correct_password:
             st.session_state["password_correct"] = True
             st.rerun() # 重新整理以進入主畫面
         else:
@@ -139,6 +141,7 @@ with st.sidebar:
     
     st.divider()
     st.header("📂 資料管理")
+    st.caption("部署在 Hugging Face Spaces 時，上傳資料只會暫存於目前的容器；重新啟動後請重新上傳。")
     uploaded_file = st.file_uploader("上傳新比賽資料 (CSV)", type=["csv"], help="上傳 raw data，系統將自動執行 data_processing 並更新資料庫")
     
     if uploaded_file is not None:
