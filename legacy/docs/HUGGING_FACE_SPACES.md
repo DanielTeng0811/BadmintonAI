@@ -1,3 +1,5 @@
+> 歷史研究文件：本文保留當時的路徑與部署方式。新系統請見 [目前 README](../../README.md) 與 [雲端部署規劃](../../docs/CLOUD_DEPLOYMENT.md)；舊版現行操作見 [存檔指南](../README.md)。
+
 # 部署到 Hugging Face Spaces
 
 本專案以 Docker Space 部署。Space 會依根目錄 `README.md` 的 YAML 設定與 `Dockerfile` 建置，並在 port `7860` 提供 Streamlit App。

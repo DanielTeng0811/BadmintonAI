@@ -1,3 +1,5 @@
+> 歷史研究文件：本文保留當時的路徑與部署方式。新系統請見 [目前 README](../../README.md) 與 [雲端部署規劃](../../docs/CLOUD_DEPLOYMENT.md)；舊版現行操作見 [存檔指南](../README.md)。
+
 # 🚀 BadmintonAI - Streamlit Cloud 部署指南
 
 本指南將協助您將 BadmintonAI 應用程式部署到 Streamlit Cloud。

@@ -32,10 +32,13 @@ SETUP_CODE = """from pathlib import Path
 import sys
 
 PROJECT_ROOT = Path.cwd().resolve()
-while PROJECT_ROOT != PROJECT_ROOT.parent and not (PROJECT_ROOT / "LLM_as_a_Judge").exists():
+while not (PROJECT_ROOT / "LLM_as_a_Judge").exists():
+    if (PROJECT_ROOT / "legacy" / "LLM_as_a_Judge").exists():
+        PROJECT_ROOT = PROJECT_ROOT / "legacy"
+        break
+    if PROJECT_ROOT == PROJECT_ROOT.parent:
+        raise RuntimeError("找不到 BadmintonAI 舊版專案根目錄")
     PROJECT_ROOT = PROJECT_ROOT.parent
-if not (PROJECT_ROOT / "LLM_as_a_Judge").exists():
-    raise RuntimeError("找不到 BadmintonAI 專案根目錄")
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 

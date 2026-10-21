@@ -1,136 +1,111 @@
----
-title: BadmintonAI
-emoji: 🏸
-colorFrom: red
-colorTo: blue
-sdk: docker
-app_port: 7860
-app_file: front_page.py
-pinned: false
----
-
 # BadmintonAI
 
-目前主線是重現 [NYCU-ADSL/BadmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT)：使用原版客製 nanobot、skills、MCP 與 WebUI，模型保留 GPT Luna，先以現有真實逐拍資料建立本機版本及 benchmark。
+以 [NYCU-ADSL/BadmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT) 為基礎的羽球資料分析系統，沿用其 nanobot、WebUI、skills 與 MCP 工具流程，加入不依賴實驗室權限的帳號與對話隔離。模型設定保留 GPT Luna。
 
-## BadmintonGPT 本機入口
+目前提供可重建的本機版本、自有資料與離線 benchmark。原本的 Streamlit、多模型實驗及 LLM-as-a-Judge 已集中到 [legacy/](legacy/README.md)。
 
-需要 Docker Desktop、Docker Compose 與 Python 3.10 以上。在專案根目錄執行：
+## 目前狀態
+
+| 功能 | 狀態 |
+| --- | --- |
+| nanobot WebUI、skills、SQLite MCP、Python 計算與圖表 | 已完成本機接線與離線驗證 |
+| 註冊、登入、登出、修改密碼與管理員停用帳號 | 已完成 |
+| 多使用者對話、專案、側欄與附件隔離 | 已完成實際 HTTP／WebSocket 驗證 |
+| GPT Luna 回答 | 設定保留；等待可用 API key 實測 |
+| 完整實驗室資料集、進階分析與影片服務 | 尚無權限，相關工具暫停啟用 |
+| 公開雲端部署 | 保留 Cloudflare Tunnel 路線，尚未上線 |
+
+## 快速啟動
+
+主機需要 Git、Python 3.10 以上，以及已啟動的 Docker／Docker Compose v2。主服務依賴由 Docker 安裝，啟動時不需要安裝舊版 Streamlit 套件。
 
 ```bash
-git submodule update --init vendor/badmintonGPT
+git clone --recurse-submodules https://github.com/DanielTeng0811/BadmintonAI.git
+cd BadmintonAI
 python3 scripts/badminton_gpt.py ingest
 python3 scripts/badminton_gpt.py build
 python3 scripts/badminton_gpt.py up
-python3 scripts/badminton_gpt.py verify
-python3 scripts/badminton_gpt.py preview
 ```
 
-開啟 [本機 BadmintonGPT](http://127.0.0.1:8765)，第一次由你設定 `admin` 密碼，再登入使用；其他使用者可自行建立一般帳號。登入、登出、多使用者和對話隔離不依賴實驗室權限，詳見 [本機帳號指南](docs/LOCAL_ACCOUNTS.md)。`verify` 不呼叫模型、不消耗 API token；`preview` 顯示已驗證資料產生的固定步驟圖表，明確標示未呼叫 Luna，僅 admin 可見。
+既有 checkout 先執行 `git submodule update --init vendor/badmintonGPT`。上游固定於 `7cccbb18aba8bcfa096f22b923fb2aa16326e6ed`，本地調整只套用到建置副本。
 
-```bash
-# 實際雙帳號隔離驗證，不會修改正式帳號資料庫或呼叫模型。
-python3 scripts/badminton_gpt.py verify-auth
+開啟 <http://127.0.0.1:8765>，第一次自行設定 `admin` 密碼。沒有預設密碼；其他使用者可從登入頁註冊一般帳號。帳號功能不需要模型 API key，詳細操作見 [帳號與隔離指南](docs/LOCAL_ACCOUNTS.md)。
+
+### 設定 Luna
+
+首次執行會建立被 Git 忽略的 `.env`。將 [.env.badminton-gpt.example](.env.badminton-gpt.example) 中需要的欄位合併到 `.env`，保留既有設定：
+
+```dotenv
+OPENAI_API_KEY=<填入自己的金鑰>
+NANOBOT_MODEL=gpt-6-luna
+OPENAI_API_BASE=https://api.openai.com/v1
 ```
 
-聊天前，在既有 `.env` 設定有效的 `OPENAI_API_KEY` 與帳號可用的 Luna 模型 ID（預設 `NANOBOT_MODEL=gpt-6-luna`），再執行 `up`。範本為 [.env.badminton-gpt.example](.env.badminton-gpt.example)，請合併需要的欄位，不要覆寫既有金鑰。**Luna 的實際模型回答尚待有效金鑰驗證。**
+模型 ID 與 API base 必須使用供應方實際提供的值；程式不會自動改用其他模型。設定後再執行 `python3 scripts/badminton_gpt.py up`。目前尚未驗證真實 Luna 回答。
+
+## 驗證與日常操作
+
+以下檢查不呼叫模型、不消耗 API token：
 
 ```bash
-# 有可用金鑰後才執行；這會呼叫付費模型。
+python3 scripts/badminton_gpt.py verify       # 資料、MCP、計算與圖表
+python3 scripts/badminton_gpt.py verify-auth  # 一次性帳號的真實隔離檢查
+python3 scripts/badminton_gpt.py preview      # admin 專屬離線圖表預覽
+python3 scripts/badminton_gpt.py status
+python3 scripts/badminton_gpt.py logs
+python3 scripts/badminton_gpt.py down
+```
+
+帳號與對話保存在 Docker volumes；`down` 保留資料。API key、帳號資料庫與 `.runtime/` 不提交到 Git。離線預覽是固定步驟產生的真實資料結果，不能作為模型回答能力的證明。
+
+有有效金鑰後，才執行付費模型 benchmark：
+
+```bash
 python3 scripts/badminton_gpt.py benchmark --live
 ```
 
-目前資料為本 repo 的 5 筆紀錄、5,204 拍、409 回合，並非上游需要權限的完整資料集。實驗室的進階分析、影片檢索、精華生成尚無存取權，這個版本停用其工具與 skills。完整流程、資料限制、驗證方法見 [重現指南](docs/BADMINTON_GPT_REPRODUCTION.md)。
-
-後續部署保留「雲端／校內主機 + Cloudflare Tunnel + 自有網域」，沿用現有帳號與對話隔離；所需資源、接線及上線前待辦見 [雲端部署規劃](docs/CLOUD_DEPLOYMENT.md)。目前仍是本機服務，尚未公開部署。
-
-## 舊版 Streamlit 與研究紀錄
-
-以下保留舊版操作方式。新開發以以上的 BadmintonGPT 入口為主。
-
-以自然語言查詢羽球逐拍資料，產生統計、圖表與戰術洞察；專案也包含一套可重現的 LLM 評測流程。
-
-## 兩個主要入口
-
-- **互動分析 App**：`front_page.py` 是 Streamlit 入口，供使用者提問、上傳資料並下載分析報告。
-- **LLM 評測**：`LLM_as_a_Judge/LLM_as_a_Judge.py` 用於比較不同 prompt／模式的產出與 Judge 結果。
-
-## 快速開始
-
-建議使用 Python 3.10 以上，從專案根目錄執行：
+開發者可另建 Python 環境，執行目前主線的離線單元測試：
 
 ```bash
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
-
-建立不納入版本控制的 `.env`：
-
-```env
-OPENAI_API_KEY=...
-ANTHROPIC_API_KEY=...
-GEMINI_API_KEY=...
-APP_PASSWORD=...
-```
-
-依使用的模型供應商設定對應的 API key 即可。啟動 App：
-
-```bash
-streamlit run front_page.py
-```
-
-## 開發與測試
-
-```bash
-pip install -r requirements-dev.txt
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-dev.txt
 python -m pytest
 ```
 
-評測程式會依 `LLM_as_a_Judge/LLM_as_a_Judge.py` 末端的設定執行。它可能呼叫外部模型並產生成本，因此請先確認題目、模型、模式與 `ONLY_GENERATION` 等選項，再手動執行：
+舊版研究測試與依賴獨立保留於 `legacy/`，操作見 [舊版存檔指南](legacy/README.md)。
 
-```bash
-python LLM_as_a_Judge/LLM_as_a_Judge.py
-```
+## 資料與限制
 
-## 專案地圖
+目前使用 `data/processed/processed_new_3.db` 的 **5 筆紀錄、5,204 拍、409 回合**，匯入成上游的 `matches`、`rallies`、`shots` schema。原始來源保留，匯入後資料另存於 `.runtime/`。
+
+這些紀錄無法確定賽事、日期與輪次；場地區域編碼也不相容，相關欄位維持未知。未提供可播放影片，且不代表已取得上游完整資料集。自有 benchmark 的答案由來源 SQL 獨立凍結，適用於本機驗證，尚不代表跨資料集的泛化能力。
+
+## 部署方向
+
+後續採用「自有 HTTPS 網域 → Cloudflare Tunnel → 帳號服務 → BadmintonGPT」，實際程式執行在雲端 VM 或有使用權限的校內主機。現有版本只開放 localhost；正式網域、HTTPS 與公開環境驗收仍待部署階段完成。
+
+詳見 [雲端部署規劃](docs/CLOUD_DEPLOYMENT.md)。API key 和影片服務待權限到位後再接入。
+
+## 專案結構與文件
 
 ```text
 BadmintonAI/
-├── front_page.py                 # Streamlit 互動式分析介面
-├── config/                       # Prompt 與應用設定
-├── utils/                        # 資料載入、資料處理、LLM client、分析流程
-├── data/
-│   ├── raw/                      # 原始逐拍資料
-│   ├── processed/                # App 使用的 CSV / SQLite 資料
-│   └── metadata/                 # 欄位與場地定義
-├── LLM_as_a_Judge/               # 評測核心、模式設定與已保留的評測輸出
-├── evaluation/questions/         # 評測題庫
-├── notebooks/                    # 手動探索與產生的 notebook
-├── scripts/                      # 批次處理、資料庫與輔助工具
-├── tests/                        # 自動化測試
-└── docs/                         # 文件、部署說明與研究紀錄
+├── compose.badminton-gpt.yml   # 本機服務入口
+├── local_auth/                # 帳號與身分驗證代理
+├── scripts/                   # 建置、匯入、操作與驗證工具
+├── vendor/badmintonGPT/        # 固定版本上游 submodule
+├── data/                      # 共用的原始研究資料與來源資料庫
+├── benchmarks/badminton_gpt/   # 凍結題目與驗證紀錄
+├── tests/                     # 目前主線測試
+├── docs/                      # 重現、帳號、部署與維護文件
+└── legacy/                    # 舊版程式、測試、評測結果與歷史文件
 ```
 
-完整的目錄責任、資料處理規則與協作方式請見 [專案結構說明](docs/PROJECT_STRUCTURE.md)。
+- [重現範圍與驗證方式](docs/BADMINTON_GPT_REPRODUCTION.md)
+- [帳號、多使用者與對話隔離](docs/LOCAL_ACCOUNTS.md)
+- [雲端與 Cloudflare 部署規劃](docs/CLOUD_DEPLOYMENT.md)
+- [目錄責任與維護規則](docs/PROJECT_STRUCTURE.md)
+- [舊版研究存檔與路徑對照](legacy/README.md)
 
-## 資料與評測輸出
-
-- `data/processed/` 的資料庫與 CSV 是 App 執行所需的版本化資料。
-- `LLM_as_a_Judge/result_*/` 保留可供團隊檢視的完整評測輸出，包括 notebook、CSV、圖表、`summary.txt` 與 `run_manifest.json`。
-- 新增評測結果時，請依既有的 `result_<model>/<run_name>/` 結構存放；不要覆寫既有 run，讓結果可以追溯。
-
-## 支援功能
-
-- 中文自然語言資料查詢與程式碼生成
-- 資料上傳、清理與 SQLite 更新
-- 澄清問題、程式執行修正、邏輯檢查與戰術洞察
-- Baseline 與完整方法的 LLM 評測比較
-
-## 文件
-
-- [專案結構說明](docs/PROJECT_STRUCTURE.md)
-- [LLM 評測目錄導覽](LLM_as_a_Judge/README.md)
-- [部署說明](docs/DEPLOYMENT.md)
-- [評測題目重分組](docs/evaluation_question_regrouped_scheme.md)
-- [Hugging Face Spaces 部署](docs/HUGGING_FACE_SPACES.md)
+本專案授權見 [LICENSE](LICENSE)；上游原始碼及其 vendored 元件依各自授權條款使用。

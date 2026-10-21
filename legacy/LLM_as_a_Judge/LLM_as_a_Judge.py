@@ -74,7 +74,7 @@ from LLM_as_a_Judge.validation_sets import (
 )
 
 # 環境變數在模式驗證通過後才載入。
-env_path = os.path.join(parent_dir, '.env')
+env_path = os.path.join(os.path.dirname(parent_dir), '.env')
 
 
 class PipelineExecutionError(RuntimeError):

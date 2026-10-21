@@ -8,21 +8,21 @@ RUN apt-get update && apt-get install -y \
 
 # Hugging Face Docker Spaces 以 UID 1000 執行容器。
 RUN useradd --create-home --uid 1000 user
-WORKDIR /home/user/app
+WORKDIR /home/user/app/legacy
 
 # 先安裝依賴，讓後續程式碼變更能使用 Docker layer cache。
-COPY requirements.txt ./
+COPY legacy/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # App runtime 只需要 UI、核心模組、資料與 Streamlit 設定；
 # 評測輸出、測試與本機開發檔案不應進入部署 image。
-COPY --chown=user:user front_page.py ./
-COPY --chown=user:user config ./config
-COPY --chown=user:user utils ./utils
-COPY --chown=user:user data ./data
-COPY --chown=user:user .streamlit ./.streamlit
+COPY --chown=user:user legacy/front_page.py ./
+COPY --chown=user:user legacy/config ./config
+COPY --chown=user:user legacy/utils ./utils
+COPY --chown=user:user data ../data
+COPY --chown=user:user legacy/.streamlit ./.streamlit
 
-RUN mkdir -p logs data/processed && chown -R user:user /home/user/app
+RUN mkdir -p logs ../data/processed && chown -R user:user /home/user/app
 USER user
 ENV HOME=/home/user \
     STREAMLIT_SERVER_PORT=7860 \

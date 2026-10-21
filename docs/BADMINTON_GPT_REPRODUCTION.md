@@ -1,6 +1,6 @@
 # BadmintonGPT 本機重現
 
-本專案以 [NYCU-ADSL/badmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT) 的 `7cccbb18aba8bcfa096f22b923fb2aa16326e6ed` 為基準，透過 Git submodule 固定原始碼。沿用其客製 nanobot、WebUI、Agent loop、skill 載入方式、SQLite MCP 與圖表 renderer。舊版 Streamlit 流程和 LLM-as-a-Judge 結果保留，不在新入口的執行路徑中。
+本專案以 [NYCU-ADSL/badmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT) 的 `7cccbb18aba8bcfa096f22b923fb2aa16326e6ed` 為基準，透過 Git submodule 固定原始碼。沿用其客製 nanobot、WebUI、Agent loop、skill 載入方式、SQLite MCP 與圖表 renderer。舊版 Streamlit 流程和 LLM-as-a-Judge 結果集中保留於 [legacy/](../legacy/README.md)，不在新入口的執行路徑中。
 
 ## 重現範圍
 

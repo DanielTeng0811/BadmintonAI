@@ -70,8 +70,8 @@ python3 scripts/badminton_gpt.py verify-auth
 # 原有資料、MCP、Python 與圖表接線檢查。
 python3 scripts/badminton_gpt.py verify
 
-# 回歸測試。
-venv/bin/python -m pytest -q --disable-warnings
+# 目前主線回歸測試；先依 README 安裝 requirements-dev.txt。
+python -m pytest -q --disable-warnings
 ```
 
 `verify-auth` 使用獨立臨時 auth DB，不建立正式管理員密碼、不動正式帳號資料庫。測試會建立兩個一般帳號，透過真實 HTTP／WebSocket 驗證清單、讀取、刪除、偽造身分、token、附件、側欄、專案根目錄、登出、停用及密碼更新。只使用內建 `/help` 指令及標明為測試資料的附件，不需要有效 API key。

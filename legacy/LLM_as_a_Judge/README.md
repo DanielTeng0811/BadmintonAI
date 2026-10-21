@@ -47,7 +47,7 @@ result_<model>/
 
 ## 修改前檢查
 
-1. 修改 mode 或 prompt 前，先閱讀 `mode_config.py` 與相關的 `tests/test_evaluator_modes.py`。
+1. 修改 mode 或 prompt 前，先閱讀 `mode_config.py` 與相關的 `legacy/tests/test_evaluator_modes.py`。
 2. 修改輸出格式前，檢查 `output_contract.py`、`test_output_adapter.py` 與對應的 output tests。
 3. 主流程會發出模型請求；不要把它當作一般單元測試執行。
-4. 程式變更後從專案根目錄執行 `python -m pytest`。
+4. 程式變更後從 repository 根目錄執行 `python -m pytest -c legacy/pytest.ini legacy/tests`；此指令需使用舊版依賴環境。

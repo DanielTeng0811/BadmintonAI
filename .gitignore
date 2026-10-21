@@ -27,6 +27,9 @@ env/
 ENV/
 env.bak/
 venv.bak/
+.venv/
+.venv-legacy/
+.pytest_cache/
 
 # PyCharm
 .idea/
@@ -68,7 +71,7 @@ datasets/
 *.jpg
 *.jpeg
 *.png
-!LLM_as_a_Judge/result_gpt5.6-luna/**/*.png
+!legacy/LLM_as_a_Judge/result_gpt5.6-luna/**/*.png
 *.gif
 *.mp4
 *.avi
@@ -97,6 +100,7 @@ llm_debug_log.txt
 
 # Streamlit Cloud 設定 (不要上傳包含 API keys 的機密檔案)
 .streamlit/secrets.toml
+legacy/.streamlit/secrets.toml
 
 test_questions.md
 TODO.md
@@ -104,3 +108,5 @@ TODO.md
 analysis_context_output.txt
 LLM_as_a_Judge/eval_results/
 LLM_as_a_Judge/eval_results_simple/
+legacy/LLM_as_a_Judge/eval_results/
+legacy/LLM_as_a_Judge/eval_results_simple/
