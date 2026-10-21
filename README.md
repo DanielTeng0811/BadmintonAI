@@ -2,7 +2,7 @@
 
 以 [NYCU-ADSL/BadmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT) 為基礎的羽球資料分析系統，沿用其 nanobot、WebUI、skills 與 MCP 工具流程，加入不依賴實驗室權限的帳號與對話隔離。模型設定保留 GPT Luna。
 
-目前提供可重建的本機版本、自有資料與離線 benchmark。原本的 Streamlit、多模型實驗及 LLM-as-a-Judge 已集中到 [legacy/](legacy/README.md)。
+目前提供可重建的本機版本、ShuttleSet 資料整合與離線 benchmark。原本的 Streamlit、多模型實驗及 LLM-as-a-Judge 已集中到 [legacy/](legacy/README.md)。
 
 ## 目前狀態
 
@@ -12,7 +12,8 @@
 | 註冊、登入、登出、修改密碼與管理員停用帳號 | 已完成 |
 | 多使用者對話、專案、側欄與附件隔離 | 已完成實際 HTTP／WebSocket 驗證 |
 | GPT Luna 回答 | 設定保留；等待可用 API key 實測 |
-| 完整實驗室資料集、進階分析與影片服務 | 尚無權限，相關工具暫停啟用 |
+| ShuttleSet + ShuttleSet22 | 已去重匯入，保留來源與影片連結 |
+| 實驗室進階分析與影片服務 | 尚無權限，相關工具暫停啟用 |
 | 公開雲端部署 | 保留 Cloudflare Tunnel 路線，尚未上線 |
 
 ## 快速啟動
@@ -77,9 +78,13 @@ python -m pytest
 
 ## 資料與限制
 
-目前使用 `data/processed/processed_new_3.db` 的 **5 筆紀錄、5,204 拍、409 回合**，匯入成上游的 `matches`、`rallies`、`shots` schema。原始來源保留，匯入後資料另存於 `.runtime/`。
+目前使用 `data/sources/ShuttleSet.zip` 與 `ShuttleSet22.zip`，去重後共 **94 場比賽、81,938 筆逐拍標註、7,888 回合**，涵蓋 2018–2022 年。賽事、日期、輪次與球員由原始 metadata 匯入；原始壓縮檔保留，建置資料庫另存於 `.runtime/`。
 
-這些紀錄無法確定賽事、日期與輪次；場地區域編碼也不相容，相關欄位維持未知。未提供可播放影片，且不代表已取得上游完整資料集。自有 benchmark 的答案由來源 SQL 獨立凍結，適用於本機驗證，尚不代表跨資料集的泛化能力。
+兩包重疊的 8 場比賽已合併，另移除一筆完全重複標註，共去除 6,902 筆重複來源列。拍號相同但影格不同的紀錄保留並標記。舊 5 筆處理資料另存於 `legacy_*` 表，以 `legacy_match_aliases` 對應正式比賽，不加入目前總數。
+
+**43 個原始 YouTube 連結已保留，尚未驗證播放狀態；沒有本機影片或回合剪輯。** 原始座標、區域碼、影格與時間皆可追溯，尚未宣稱與上游球場網格一致。詳細 schema、去重規則、查詢與重建方式見 [資料集指南](docs/DATASETS.md)。
+
+目前的 16 題 benchmark 由另一套 CSV 讀取程式獨立凍結答案，適用於本機驗證，尚不代表跨資料集的泛化能力。舊版題目與驗證紀錄保留供追溯。
 
 ## 部署方向
 
@@ -103,6 +108,7 @@ BadmintonAI/
 ```
 
 - [重現範圍與驗證方式](docs/BADMINTON_GPT_REPRODUCTION.md)
+- [資料來源、去重與查詢](docs/DATASETS.md)
 - [帳號、多使用者與對話隔離](docs/LOCAL_ACCOUNTS.md)
 - [雲端與 Cloudflare 部署規劃](docs/CLOUD_DEPLOYMENT.md)
 - [目錄責任與維護規則](docs/PROJECT_STRUCTURE.md)

@@ -9,7 +9,10 @@
 | `local_auth/` | 帳號、密碼與 session；登入後代理 HTTP／WebSocket 至內部 gateway |
 | `scripts/badminton_gpt.py` | 統一管理建置、匯入、啟動與驗證 |
 | `scripts/badminton_gpt_account_overlay.py` | 對建置副本套用帳號、登出與附件隔離調整 |
-| `scripts/import_badminton_gpt_data.py` | 來源資料庫轉換與 provenance；不修改原始資料 |
+| `scripts/import_shuttleset_data.py` | 目前資料去重、來源追溯、歷史資料對應 |
+| `scripts/create_shuttleset_benchmark.py` | 獨立 CSV oracle 與凍結答案 |
+| `scripts/import_badminton_gpt_data.py` | 保留舊資料轉換，支援歷史表與回歸測試 |
+| `data/sources/` | 原始 ShuttleSet ZIP；不執行裡面的程式碼，不修改來源 |
 | `vendor/badmintonGPT/` | 固定版本上游 submodule；本地修改透過 overlay，不直接更動上游 |
 | `data/` | 新舊版本共用的研究資料；保留來源名稱與內容以維持可追溯性 |
 | `benchmarks/badminton_gpt/` | 自有題目、來源 hash、凍結答案及驗證基準 |

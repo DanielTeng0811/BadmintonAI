@@ -1,0 +1,625 @@
+{
+  "dataset": "shuttleset_merged",
+  "upstream_revision": "7cccbb18aba8bcfa096f22b923fb2aa16326e6ed",
+  "counts": {
+    "matches": 94,
+    "shots": 81938,
+    "rallies": 7888,
+    "source_shot_rows": 88840,
+    "duplicate_annotations_removed": 6902,
+    "video_links": 43,
+    "quality_issues": 1
+  },
+  "sources": [
+    {
+      "dataset": "ShuttleSet",
+      "archive": "data/sources/ShuttleSet.zip",
+      "sha256": "416ab94faaaf45bd75dfe1e0da77b403667c95cb4432edc451f1e0fcf36f37da",
+      "match_rows": 44,
+      "shot_rows": 36484
+    },
+    {
+      "dataset": "ShuttleSet22",
+      "archive": "data/sources/ShuttleSet22.zip",
+      "sha256": "239008fce377625908b93b96575c70e4871bb6accb31feabc6ffb9aabf63e55c",
+      "match_rows": 58,
+      "shot_rows": 52356
+    }
+  ],
+  "model_requests": 0,
+  "model_validation": "pending_user_api_key",
+  "offline_verification": {
+    "mode": "offline",
+    "time": "2026-10-21T06:10:32.135100+00:00",
+    "model_validation": "not_run",
+    "passed": 24,
+    "total": 24,
+    "checks": [
+      {
+        "id": "resolved_luna_configuration",
+        "passed": true,
+        "model": "gpt-6-luna",
+        "api_type": "responses",
+        "api_request_made": false
+      },
+      {
+        "id": "mcp_contract",
+        "passed": true
+      },
+      {
+        "id": "catalog",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 94
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 94
+          }
+        ]
+      },
+      {
+        "id": "total_shots",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 81938
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 81938
+          }
+        ]
+      },
+      {
+        "id": "rally_count",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 7888
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 7888
+          }
+        ]
+      },
+      {
+        "id": "years",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "year": 2018,
+              "n": 3
+            },
+            {
+              "year": 2019,
+              "n": 8
+            },
+            {
+              "year": 2020,
+              "n": 9
+            },
+            {
+              "year": 2021,
+              "n": 24
+            },
+            {
+              "year": 2022,
+              "n": 50
+            }
+          ],
+          "row_count": 5
+        },
+        "expected": [
+          {
+            "year": 2018,
+            "n": 3
+          },
+          {
+            "year": 2019,
+            "n": 8
+          },
+          {
+            "year": 2020,
+            "n": 9
+          },
+          {
+            "year": 2021,
+            "n": 24
+          },
+          {
+            "year": 2022,
+            "n": 50
+          }
+        ]
+      },
+      {
+        "id": "player_mapping",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player_a": "Kento MOMOTA",
+              "player_b": "CHOU Tien Chen"
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "player_a": "Kento MOMOTA",
+            "player_b": "CHOU Tien Chen"
+          }
+        ]
+      },
+      {
+        "id": "match_scope",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 1644
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 1644
+          }
+        ]
+      },
+      {
+        "id": "chart",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player": "A",
+              "n": 817,
+              "pct": 49.7
+            },
+            {
+              "player": "B",
+              "n": 827,
+              "pct": 50.3
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "player": "A",
+            "n": 817,
+            "pct": 49.7
+          },
+          {
+            "player": "B",
+            "n": 827,
+            "pct": 50.3
+          }
+        ]
+      },
+      {
+        "id": "shot_distribution_2022",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "type": "切球",
+              "n": 3530
+            },
+            {
+              "type": "勾球",
+              "n": 651
+            },
+            {
+              "type": "小平球",
+              "n": 18
+            },
+            {
+              "type": "平球",
+              "n": 655
+            },
+            {
+              "type": "後場抽平球",
+              "n": 659
+            },
+            {
+              "type": "挑球",
+              "n": 7962
+            },
+            {
+              "type": "推球",
+              "n": 2160
+            },
+            {
+              "type": "撲球",
+              "n": 556
+            },
+            {
+              "type": "擋小球",
+              "n": 4987
+            },
+            {
+              "type": "放小球",
+              "n": 8164
+            },
+            {
+              "type": "未知球種",
+              "n": 712
+            },
+            {
+              "type": "殺球",
+              "n": 3470
+            },
+            {
+              "type": "發短球",
+              "n": 2730
+            },
+            {
+              "type": "發長球",
+              "n": 927
+            },
+            {
+              "type": "過度切球",
+              "n": 803
+            },
+            {
+              "type": "長球",
+              "n": 4362
+            },
+            {
+              "type": "防守回抽",
+              "n": 401
+            },
+            {
+              "type": "防守回挑",
+              "n": 570
+            },
+            {
+              "type": "點扣",
+              "n": 2138
+            }
+          ],
+          "row_count": 19
+        },
+        "expected": [
+          {
+            "type": "切球",
+            "n": 3530
+          },
+          {
+            "type": "勾球",
+            "n": 651
+          },
+          {
+            "type": "小平球",
+            "n": 18
+          },
+          {
+            "type": "平球",
+            "n": 655
+          },
+          {
+            "type": "後場抽平球",
+            "n": 659
+          },
+          {
+            "type": "挑球",
+            "n": 7962
+          },
+          {
+            "type": "推球",
+            "n": 2160
+          },
+          {
+            "type": "撲球",
+            "n": 556
+          },
+          {
+            "type": "擋小球",
+            "n": 4987
+          },
+          {
+            "type": "放小球",
+            "n": 8164
+          },
+          {
+            "type": "未知球種",
+            "n": 712
+          },
+          {
+            "type": "殺球",
+            "n": 3470
+          },
+          {
+            "type": "發短球",
+            "n": 2730
+          },
+          {
+            "type": "發長球",
+            "n": 927
+          },
+          {
+            "type": "過度切球",
+            "n": 803
+          },
+          {
+            "type": "長球",
+            "n": 4362
+          },
+          {
+            "type": "防守回抽",
+            "n": 401
+          },
+          {
+            "type": "防守回挑",
+            "n": 570
+          },
+          {
+            "type": "點扣",
+            "n": 2138
+          }
+        ]
+      },
+      {
+        "id": "winners",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player": "A",
+              "n": 15
+            },
+            {
+              "player": "B",
+              "n": 23
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "player": "A",
+            "n": 15
+          },
+          {
+            "player": "B",
+            "n": 23
+          }
+        ]
+      },
+      {
+        "id": "video_links",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 43
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 43
+          }
+        ]
+      },
+      {
+        "id": "video_link_scope",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "video_url": "https://www.youtube.com/watch?v=O669aZhH0LI"
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "video_url": "https://www.youtube.com/watch?v=O669aZhH0LI"
+          }
+        ]
+      },
+      {
+        "id": "no_video",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 0
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 0
+          }
+        ]
+      },
+      {
+        "id": "overlapping_matches",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 8
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 8
+          }
+        ]
+      },
+      {
+        "id": "deduplication",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 6902
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 6902
+          }
+        ]
+      },
+      {
+        "id": "source_counts",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "dataset": "ShuttleSet",
+              "n": 36484
+            },
+            {
+              "dataset": "ShuttleSet22",
+              "n": 52356
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "dataset": "ShuttleSet",
+            "n": 36484
+          },
+          {
+            "dataset": "ShuttleSet22",
+            "n": 52356
+          }
+        ]
+      },
+      {
+        "id": "ambiguous_shot_numbers",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 1
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 1
+          }
+        ]
+      },
+      {
+        "id": "readonly_0",
+        "passed": true
+      },
+      {
+        "id": "readonly_1",
+        "passed": true
+      },
+      {
+        "id": "readonly_2",
+        "passed": true
+      },
+      {
+        "id": "row_limit",
+        "passed": true
+      },
+      {
+        "id": "no_invented_zone_mapping",
+        "passed": true
+      },
+      {
+        "id": "agent_skills_mcp_python_chart",
+        "passed": true,
+        "calls": [
+          "read_file",
+          "read_file",
+          "mcp_badminton-db_query",
+          "exec",
+          "read_file"
+        ],
+        "provider": "scripted; no model quality claim",
+        "actual": [
+          {
+            "player": "A",
+            "n": 817,
+            "pct": 49.7
+          },
+          {
+            "player": "B",
+            "n": 827,
+            "pct": 50.3
+          }
+        ]
+      }
+    ]
+  },
+  "unit_tests": {
+    "passed": 20,
+    "failed": 0,
+    "command": "python -m pytest -q --disable-warnings"
+  },
+  "account_isolation": {
+    "passed": 61,
+    "total": 61,
+    "production_auth_database_modified": false
+  },
+  "browser_verification": {
+    "passed": true,
+    "flow": "temporary local auth DB -> real gateway -> new verified preview -> visualizer SVG",
+    "sample_match": "Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals",
+    "rows": [
+      {
+        "player": "A",
+        "n": 817,
+        "pct": 49.7
+      },
+      {
+        "player": "B",
+        "n": 827,
+        "pct": 50.3
+      }
+    ],
+    "screenshot": ".runtime/badminton-gpt/shuttleset-chart.jpg"
+  },
+  "limitations": [
+    "video URLs unverified; no local video files or playable rally clips",
+    "raw source court codes preserved; upstream hit_area/landing_area remain NULL",
+    "timestamps and frames are annotations, not verified clip boundaries",
+    "one repeated shot number is retained with a quality flag",
+    "old processed subset retained in legacy_* tables, excluded from active totals"
+  ],
+  "release_validation": {
+    "unit_tests": 20,
+    "independent_csv_oracle": "matches frozen cases",
+    "offline_checks": 24,
+    "account_checks": 61,
+    "model_requests": 0
+  }
+}

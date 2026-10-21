@@ -15,6 +15,43 @@ RUNTIME = ROOT / ".runtime/badminton-gpt"
 REVISION = "7cccbb18aba8bcfa096f22b923fb2aa16326e6ed"
 
 
+def dataset_context():
+    manifest_path=RUNTIME / 'data/manifest.json'
+    manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    if manifest.get('dataset')=='shuttleset_merged':
+        return f'''This installation contains the deduplicated ShuttleSet + ShuttleSet22:
+{manifest['matches']} matches, {manifest['shots']} distinct shot annotations and {manifest['rallies']} rallies, spanning 2018–2022.
+Query the live catalog; historical counts in the upstream examples do not apply.
+A is each match's winner, B its loser; always join matches.player_a/player_b.
+Matches include tournament, round, year, match_date, and video_url (43 external
+YouTube links, availability unverified). Links are source videos, not local clips:
+rallies.has_video=0 and video_filename=NULL. Never invent a clip or run reels.
+Use match_links for source URLs; do not fetch/download them automatically.
+Full source coordinates, frame_num, timestamp_seconds, flaw and original area
+codes are retained in shot_details, joined by shot_id. source_hit_area and
+source_landing_area use the dataset's grid; upstream shots.hit_area/landing_area
+remain NULL until that grid is verified. Do not treat raw camera pixels as meters.
+shot_sources preserves every raw row and source; datasets, match_sources and
+match_homographies preserve provenance. Count shots, not shot_sources, because
+the latter includes duplicate source copies. A repeated ball_round with distinct
+frames is retained and flagged in data_quality_issues; shot_id identifies rows.
+Raw flawed/unknown annotations remain included; state filters explicitly.
+legacy_match_aliases resolves the old five processed records to full matches.
+legacy_matches/legacy_shots/legacy_rallies retain the old transformed subset;
+exclude them from current totals. An old name such as legacy_match_1 is an alias,
+not another match. Existing saved results reflect the earlier subset.
+Rally frame bounds are observed shot extrema, not validated video boundaries.
+win_reason IS NOT NULL includes opponent errors; for annotated landing winners
+use win_reason='落地致勝'. getpoint_player records the point winner, which may
+differ from the player who hit the final shot. No remote advanced analysis exists.
+'''
+    return '''This is the historical five-record processed subset: 5204 shots and
+409 rallies, legacy_match_1/3/5/6/7. A=Kento MOMOTA, B=CHOU Tien Chen.
+Tournament/date/round are unknown, with no video or compatible zone mapping.
+Query the actual catalog and never assume the upstream example coverage.
+'''
+
+
 def run(args, **kwargs):
     return subprocess.run(args, cwd=ROOT, check=True, **kwargs)
 
@@ -39,10 +76,10 @@ def prepare_build():
         empty["examples"]["label"] = "先設定可用的 Luna API 金鑰，再試試以下問題" if zh else "Configure your Luna API key, then try these questions"
         examples = {
             "data": ("資料範圍", "列出目前資料庫的所有比賽紀錄、球員，以及每筆紀錄的拍數。", "Dataset catalog", "List all match records, their players and shot counts in the current database."),
-            "reel": ("致勝球統計", "legacy_match_5 兩位球員各有幾拍直接致勝球？", "Winner counts", "How many shot winners did each player hit in legacy_match_5?"),
-            "chart": ("球種圖表", "畫長條圖呈現 legacy_match_3 的球種次數分布。", "Shot distribution", "Draw a bar chart of shot-type counts in legacy_match_3."),
-            "analysis": ("球員比較", "計算 legacy_match_1 兩位球員各自的出手次數與百分比。", "Player comparison", "Calculate each player's shot count and percentage in legacy_match_1."),
-            "search": ("回合統計", "legacy_match_6 每局各有幾個回合？", "Rally counts", "How many rallies are in each set of legacy_match_6?"),
+            "reel": ("影片來源", "哪些比賽有原始影片網址？請保留來源連結並說明尚未驗證播放狀態。", "Video sources", "List original video URLs and note that availability has not been verified."),
+            "chart": ("球種圖表", "畫長條圖呈現 2022 年所有比賽的球種次數分布。", "Shot distribution", "Draw a bar chart of shot-type counts across the 2022 matches."),
+            "analysis": ("球員比較", "計算 2019 福州公開賽男單決賽兩位球員的出手次數與百分比。", "Player comparison", "Compare player shot counts and percentages in the 2019 Fuzhou Open men's singles final."),
+            "search": ("年份統計", "依年份列出目前資料庫的比賽數。", "Yearly catalog", "Count the available matches by year."),
         }
         for key, (zt, zp, et, ep) in examples.items():
             empty["examples"][key] = {"title": zt if zh else et, "prompt": zp if zh else ep}
@@ -50,18 +87,7 @@ def prepare_build():
     skill = destination / "skills/badminton-db/SKILL.md"
     text = skill.read_text()
     position = text.index("# badminton-db playbook")
-    note = """# Local dataset coverage (overrides historical examples below)
-
-This deployment has 5 catalog records (legacy_match_1, legacy_match_3,
-legacy_match_5, legacy_match_6, legacy_match_7), 5204 shots and 409 rallies.
-A = Kento MOMOTA; B = CHOU Tien Chen. Query matches.name / player_a / player_b
-for the actual catalog. Tournament/year/round and analyze_match_id are NULL.
-There are no videos, remote advanced analysis tools, or compatible zone labels.
-Historical counts and match names in the upstream examples below are examples,
-not available data. Never interpret NULL as zero. Use existing match_name values.
-Rally IDs preserve original set/rally numbers and do not identify playable clips.
-
-"""
+    note = '# Local dataset coverage (overrides historical examples below)\n\n'+dataset_context()+'\n'
     skill.write_text(text[:position] + note + text[position:])
     from badminton_gpt_account_overlay import apply
     apply(destination)
@@ -117,21 +143,14 @@ data-analysis skill, and visualise skill. Read the relevant SKILL.md before usin
 - Advanced analysis, clip search and highlight generation are unavailable here.
   Never call their tools, invent a URL, or infer missing advanced metrics.
 
-The legacy import contains five separate records named legacy_match_1, _3, _5,
-_6 and _7. Both players are Kento MOMOTA (A) and CHOU Tien Chen (B). Names do
-not establish tournament, date, round, or a real-world match identity; those
-metadata fields remain NULL. Distinguish these records by name. No videos exist.
-The source uses incompatible court-zone codes, so hit_area/landing_area are NULL;
-do not interpret zones. Rest time and movement metrics are not supplied.
-
 First query the catalog: its rows define the actual coverage. The historical
 counts in the original skill examples (188/244 matches) do not describe this DB.
 Always present unknown or unavailable values honestly. A/B map to player_a/player_b.
 Use only SELECT via MCP, with match_name for a specific match. Points won by a
-shot type use win_reason IS NOT NULL, not getpoint_player alone.
+shot type must distinguish the hitter from the point winner.
 
 """
-    (RUNTIME / "SOUL.md").write_text(soul[:start] + routing + soul[end:])
+    (RUNTIME / "SOUL.md").write_text(soul[:start] + routing + dataset_context()+'\n' + soul[end:])
     (RUNTIME / "deployment.json").write_text(json.dumps({
         "upstream": "https://github.com/NYCU-ADSL/badmintonGPT", "revision": REVISION,
         "model": "${NANOBOT_MODEL:-gpt-6-luna}", "api": "responses",
@@ -154,7 +173,9 @@ def main():
         compose("build")
     elif args.command == "ingest":
         setup()
-        run([sys.executable, str(ROOT / "scripts/import_badminton_gpt_data.py")])
+        # Frozen expectations come from a separate CSV reader, before changing the live DB.
+        run([sys.executable, str(ROOT / 'scripts/create_shuttleset_benchmark.py'), '--verify'])
+        run([sys.executable, str(ROOT / 'scripts/import_shuttleset_data.py')])
     elif args.command == "up":
         setup()
         if not (RUNTIME / "data/badminton.db").exists():

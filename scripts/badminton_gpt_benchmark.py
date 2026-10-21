@@ -15,6 +15,12 @@ import uuid
 BASE = Path("/app/local")
 
 
+def load_bank():
+    manifest=BASE / 'results/data/manifest.json'
+    merged=manifest.exists() and json.loads(manifest.read_text()).get('dataset')=='shuttleset_merged'
+    return json.loads((BASE / 'benchmark' / ('shuttleset_cases.json' if merged else 'cases.json')).read_text())
+
+
 def decode_result(result):
     if result.isError:
         raise RuntimeError(str(result.content))
@@ -40,10 +46,18 @@ async def offline(bank):
         "${" not in cfg.resolve_preset().model and cfg.providers.openai.api_type == "responses"
     ), "model": cfg.resolve_preset().model, "api_type": cfg.providers.openai.api_type,
         "api_request_made": False})
-    source = BASE / "source.db"
-    assert hashlib.sha256(source.read_bytes()).hexdigest() == bank["source_sha256"], "Oracle source changed"
+    source = BASE / bank.get('source_path','source.db')
     db = sqlite3.connect(f"file:{source}?mode=ro", uri=True)
     db.row_factory = sqlite3.Row
+    if bank.get('source_hash_kind')=='sqlite_rows_v1':
+        digest=hashlib.sha256()
+        for table in ('source_matches','source_shots'):
+            digest.update(table.encode())
+            for row in db.execute(f'SELECT * FROM {table} ORDER BY rowid'):
+                digest.update((json.dumps(list(row),ensure_ascii=False,separators=(',',':'))+'\n').encode())
+        assert digest.hexdigest()==bank['source_sha256'], 'Independent CSV oracle changed'
+    else:
+        assert hashlib.sha256(source.read_bytes()).hexdigest() == bank["source_sha256"], "Oracle source changed"
     async with streamablehttp_client("http://badminton-db:8801/mcp") as (read, write, _):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -65,15 +79,16 @@ async def offline(bank):
                 "sql": "SELECT COUNT(*) AS n FROM shots WHERE hit_area IS NOT NULL OR landing_area IS NOT NULL"}))
             checks.append({"id": "no_invented_zone_mapping", "passed": result["rows"] == [{"n": 0}]})
     db.close()
-    checks.append(await plumbing())
+    checks.append(await plumbing(bank))
     return checks
 
 
-async def plumbing():
+async def plumbing(bank):
     """Scripted provider exercises the real agent/tool loop. This is NOT model evaluation."""
     from nanobot.agent.loop import AgentLoop
     from nanobot.config.loader import load_config, resolve_config_env_vars
     from nanobot.providers.base import LLMProvider, LLMResponse, ToolCallRequest
+    chart_match=bank.get('chart_match','legacy_match_1')
 
     class ScriptedProvider(LLMProvider):
         def __init__(self):
@@ -88,7 +103,7 @@ async def plumbing():
             calls = [
                 ("read_file", {"path": "skills/badminton-db/SKILL.md"}),
                 ("read_file", {"path": "skills/data-analysis/SKILL.md"}),
-                ("mcp_badminton-db_query", {"sql": "SELECT player,COUNT(*) AS n FROM shots WHERE match_name='legacy_match_1' GROUP BY player ORDER BY player"}),
+                ("mcp_badminton-db_query", {"sql": f"SELECT player,COUNT(*) AS n FROM shots WHERE match_name='{chart_match}' GROUP BY player ORDER BY player"}),
                 ("exec", {}),
                 ("read_file", {"path": "skills/visualise/SKILL.md"}),
             ]
@@ -128,10 +143,10 @@ async def plumbing():
     key = "cli:plumbing-" + uuid.uuid4().hex
     await loop._connect_mcp()
     try:
-        reply = await asyncio.wait_for(loop.process_direct("比較 legacy_match_1 的出手比例並畫圖。", session_key=key), timeout=90)
+        reply = await asyncio.wait_for(loop.process_direct(f"比較 {chart_match} 的出手比例並畫圖。", session_key=key), timeout=90)
         content = reply.content if reply else ""
         actual = read_answer(content)
-        expected = next(c for c in json.loads((BASE / "benchmark/cases.json").read_text())["cases"] if c["id"] == "chart")["expected"]
+        expected = next(c for c in bank['cases'] if c['id']=='chart')['expected']
         calls = [tc["function"]["name"] for msg in loop.sessions.get_or_create(key).messages for tc in msg.get("tool_calls", [])]
         passed = actual == expected and "exec" in calls and "mcp_badminton-db_query" in calls and "```visualizer" in content
         (BASE / "results/plumbing-response.md").write_text(content)
@@ -186,7 +201,7 @@ def preview():
     from nanobot import accounts
     if accounts.accounts_enabled():
         accounts.ledger().claim(key, "admin@local.badminton")
-    prompt = "離線驗證預覽：legacy_match_1 出手比例（固定步驟測試，未呼叫 Luna）"
+    prompt = f"離線驗證預覽：{load_bank().get('chart_match','legacy_match_1')} 出手比例（固定步驟測試，未呼叫 Luna）"
     if not session.messages:
         session.add_message("user", prompt)
         session.add_message("assistant", content)
@@ -199,7 +214,7 @@ def preview():
 
 
 async def main(mode):
-    bank = json.loads((BASE / "benchmark/cases.json").read_text())
+    bank = load_bank()
     checks = await (offline(bank) if mode == "offline" else live(bank))
     report = {"mode": mode, "time": datetime.now(timezone.utc).isoformat(),
               "model_validation": "not_run" if mode == "offline" else "live",

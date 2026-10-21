@@ -1,0 +1,320 @@
+{
+  "dataset": "shuttleset_merged",
+  "sources": [
+    {
+      "dataset": "ShuttleSet",
+      "sha256": "416ab94faaaf45bd75dfe1e0da77b403667c95cb4432edc451f1e0fcf36f37da"
+    },
+    {
+      "dataset": "ShuttleSet22",
+      "sha256": "239008fce377625908b93b96575c70e4871bb6accb31feabc6ffb9aabf63e55c"
+    }
+  ],
+  "source_sha256": "909847c00e099cab7fdfeb11130d8766168dfd8c81ad5b71f0f442d0a05e61a2",
+  "source_hash_kind": "sqlite_rows_v1",
+  "source_path": "results/data/shuttleset-oracle.db",
+  "chart_match": "Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals",
+  "scope": "development oracle independently computed from source CSVs; not a model-quality evaluation",
+  "cases": [
+    {
+      "id": "catalog",
+      "prompt": "目前去重後有幾場比賽？",
+      "source_sql": "SELECT COUNT(*) AS n FROM catalog",
+      "target_sql": "SELECT COUNT(*) AS n FROM matches",
+      "expected": [
+        {
+          "n": 94
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "total_shots",
+      "prompt": "去重後共有幾筆逐拍標註？",
+      "source_sql": "SELECT COUNT(*) AS n FROM annotations",
+      "target_sql": "SELECT COUNT(*) AS n FROM shots",
+      "expected": [
+        {
+          "n": 81938
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "rally_count",
+      "prompt": "去重後共有幾個回合？",
+      "source_sql": "SELECT COUNT(*) AS n FROM (SELECT match_name,set_no,rally FROM annotations GROUP BY match_name,set_no,rally)",
+      "target_sql": "SELECT COUNT(*) AS n FROM rallies",
+      "expected": [
+        {
+          "n": 7888
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "years",
+      "prompt": "依年份列出比賽數。",
+      "source_sql": "SELECT year,COUNT(*) AS n FROM catalog GROUP BY year ORDER BY year",
+      "target_sql": "SELECT year,COUNT(*) AS n FROM matches GROUP BY year ORDER BY year",
+      "expected": [
+        {
+          "year": 2018,
+          "n": 3
+        },
+        {
+          "year": 2019,
+          "n": 8
+        },
+        {
+          "year": 2020,
+          "n": 9
+        },
+        {
+          "year": 2021,
+          "n": 24
+        },
+        {
+          "year": 2022,
+          "n": 50
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "player_mapping",
+      "prompt": "列出 2019 福州公開賽男單決賽的 A/B 球員姓名。",
+      "source_sql": "SELECT player_a,player_b FROM catalog WHERE name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "target_sql": "SELECT player_a,player_b FROM matches WHERE name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "expected": [
+        {
+          "player_a": "Kento MOMOTA",
+          "player_b": "CHOU Tien Chen"
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "match_scope",
+      "prompt": "2019 福州公開賽男單決賽共有幾筆逐拍標註？",
+      "source_sql": "SELECT COUNT(*) AS n FROM annotations WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "target_sql": "SELECT COUNT(*) AS n FROM shots WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "expected": [
+        {
+          "n": 1644
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "chart",
+      "prompt": "比較 2019 福州公開賽男單決賽兩位球員的出手數與比例並畫長條圖，player 使用 A/B。",
+      "source_sql": "SELECT player,COUNT(*) AS n,ROUND(100.0*COUNT(*)/(SELECT COUNT(*) FROM annotations WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'),2) AS pct FROM annotations WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals' GROUP BY player ORDER BY player",
+      "target_sql": "SELECT player,COUNT(*) AS n,ROUND(100.0*COUNT(*)/(SELECT COUNT(*) FROM shots WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'),2) AS pct FROM shots WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals' GROUP BY player ORDER BY player",
+      "expected": [
+        {
+          "player": "A",
+          "n": 817,
+          "pct": 49.7
+        },
+        {
+          "player": "B",
+          "n": 827,
+          "pct": 50.3
+        }
+      ],
+      "requires_chart": true
+    },
+    {
+      "id": "shot_distribution_2022",
+      "prompt": "2022 年所有比賽各球種有幾筆標註？",
+      "source_sql": "SELECT s.type,COUNT(*) AS n FROM annotations s JOIN catalog m ON m.name=s.match_name WHERE m.year=2022 GROUP BY s.type ORDER BY s.type",
+      "target_sql": "SELECT s.type,COUNT(*) AS n FROM shots s JOIN matches m ON m.name=s.match_name WHERE m.year=2022 GROUP BY s.type ORDER BY s.type",
+      "expected": [
+        {
+          "type": "切球",
+          "n": 3530
+        },
+        {
+          "type": "勾球",
+          "n": 651
+        },
+        {
+          "type": "小平球",
+          "n": 18
+        },
+        {
+          "type": "平球",
+          "n": 655
+        },
+        {
+          "type": "後場抽平球",
+          "n": 659
+        },
+        {
+          "type": "挑球",
+          "n": 7962
+        },
+        {
+          "type": "推球",
+          "n": 2160
+        },
+        {
+          "type": "撲球",
+          "n": 556
+        },
+        {
+          "type": "擋小球",
+          "n": 4987
+        },
+        {
+          "type": "放小球",
+          "n": 8164
+        },
+        {
+          "type": "未知球種",
+          "n": 712
+        },
+        {
+          "type": "殺球",
+          "n": 3470
+        },
+        {
+          "type": "發短球",
+          "n": 2730
+        },
+        {
+          "type": "發長球",
+          "n": 927
+        },
+        {
+          "type": "過度切球",
+          "n": 803
+        },
+        {
+          "type": "長球",
+          "n": 4362
+        },
+        {
+          "type": "防守回抽",
+          "n": 401
+        },
+        {
+          "type": "防守回挑",
+          "n": 570
+        },
+        {
+          "type": "點扣",
+          "n": 2138
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "winners",
+      "prompt": "2019 福州決賽 A/B 各有幾拍標記為落地致勝？",
+      "source_sql": "SELECT player,COUNT(*) AS n FROM annotations WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals' AND win_reason='落地致勝' GROUP BY player ORDER BY player",
+      "target_sql": "SELECT player,COUNT(*) AS n FROM shots WHERE match_name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals' AND win_reason='落地致勝' GROUP BY player ORDER BY player",
+      "expected": [
+        {
+          "player": "A",
+          "n": 15
+        },
+        {
+          "player": "B",
+          "n": 23
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "video_links",
+      "prompt": "有幾場比賽提供外部影片連結？",
+      "source_sql": "SELECT COUNT(*) AS n FROM catalog WHERE video_url IS NOT NULL",
+      "target_sql": "SELECT COUNT(*) AS n FROM matches WHERE video_url IS NOT NULL",
+      "expected": [
+        {
+          "n": 43
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "video_link_scope",
+      "prompt": "列出 2019 福州決賽的原始影片網址。",
+      "source_sql": "SELECT video_url FROM catalog WHERE name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "target_sql": "SELECT video_url FROM matches WHERE name='Kento_MOMOTA_CHOU_Tien_Chen_Fuzhou_Open_2019_Finals'",
+      "expected": [
+        {
+          "video_url": "https://www.youtube.com/watch?v=O669aZhH0LI"
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "no_video",
+      "prompt": "有幾個已具本機可播放影片的回合？",
+      "source_sql": "SELECT 0 AS n",
+      "target_sql": "SELECT COUNT(*) AS n FROM rallies WHERE has_video=1",
+      "expected": [
+        {
+          "n": 0
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "overlapping_matches",
+      "prompt": "兩份來源共有幾場重疊比賽？",
+      "source_sql": "SELECT COUNT(*) AS n FROM (SELECT name FROM source_matches GROUP BY name HAVING COUNT(*)>1)",
+      "target_sql": "SELECT COUNT(*) AS n FROM (SELECT match_name FROM match_sources GROUP BY match_name HAVING COUNT(*)>1)",
+      "expected": [
+        {
+          "n": 8
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "deduplication",
+      "prompt": "逐拍來源標註中去除了幾筆重複？",
+      "source_sql": "SELECT (SELECT COUNT(*) FROM source_shots)-(SELECT COUNT(*) FROM annotations) AS n",
+      "target_sql": "SELECT (SELECT COUNT(*) FROM shot_sources)-(SELECT COUNT(*) FROM shots) AS n",
+      "expected": [
+        {
+          "n": 6902
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "source_counts",
+      "prompt": "各資料來源有幾筆原始逐拍標註？",
+      "source_sql": "SELECT dataset,COUNT(*) AS n FROM source_shots GROUP BY dataset ORDER BY dataset",
+      "target_sql": "SELECT dataset,COUNT(*) AS n FROM shot_sources GROUP BY dataset ORDER BY dataset",
+      "expected": [
+        {
+          "dataset": "ShuttleSet",
+          "n": 36484
+        },
+        {
+          "dataset": "ShuttleSet22",
+          "n": 52356
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "ambiguous_shot_numbers",
+      "prompt": "有幾組拍號相同但內容不同的標註？",
+      "source_sql": "SELECT COUNT(*) AS n FROM (SELECT match_name,set_no,rally,ball_round FROM annotations GROUP BY match_name,set_no,rally,ball_round HAVING COUNT(*)>1)",
+      "target_sql": "SELECT COUNT(*) AS n FROM data_quality_issues WHERE code='repeated_shot_number'",
+      "expected": [
+        {
+          "n": 1
+        }
+      ],
+      "requires_chart": false
+    }
+  ]
+}

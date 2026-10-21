@@ -63,33 +63,17 @@ python3 scripts/badminton_gpt.py benchmark --live
 
 ## 資料來源與轉換
 
-唯一來源是版本化的 `data/processed/processed_new_3.db`，共 5,204 拍。匯入程式唯讀開啟來源，直接使用上游 DDL，先建立暫存 DB，通過 SQLite integrity / foreign-key 檢查後才取代輸出。
+正式資料庫使用版本化的 `data/sources/ShuttleSet.zip` 與 `ShuttleSet22.zip`。合併後共有 94 場比賽、81,938 筆逐拍標註、7,888 回合；43 個原始影片連結保留於 `matches.video_url` 與 `match_links`，不視為已存在回合影片。
 
-| 名稱 | 原始 match_id | 拍數 |
-| --- | --- | ---: |
-| legacy_match_1 | 1 | 1549 |
-| legacy_match_3 | 3 | 805 |
-| legacy_match_5 | 5 | 1073 |
-| legacy_match_6 | 6 | 1029 |
-| legacy_match_7 | 7 | 748 |
+`ingest` 先用獨立 CSV 讀取程式重建 oracle，確認和凍結答案一致，再建立暫存 DB。通過 SQLite integrity／foreign-key 檢查後才取代輸出；失敗會保留既有 DB。完整去重規則、來源追溯與資料限制見 [資料集指南](DATASETS.md)。
 
-A = Kento MOMOTA，B = CHOU Tien Chen，以明確的 score 欄名建立穩定映射。保留原始球種、得失分原因、局、拍序和分數。409 個回合以 `(match_id, set, rally)` 區分，避免跨場或跨局混在一起。
-
-限制必須隨分析保留：
-
-- 原始紀錄不足以判定正式比賽名稱、賽事、日期或輪次，metadata 保留 NULL；五筆紀錄不等於已證實五場獨立正式比賽。
-- 沒有影片，所以 `has_video=0`、`video_filename=NULL`；回合 ID 保留原始編號，不能交給 reels 當影片 ID。
-- 原資料的場地區域編碼和上游 1–16 不同，`hit_area`／`landing_area` 留 NULL，不能假裝已完成對應。
-- frame 範圍是該回合已標註拍的最小與最大 frame，不是可播放片段邊界。
-- 不補推進階運動、球高、休息時間或遠端分析數據。
-
-來源 SHA-256、匯入筆數、A/B 映射與限制記錄在 `.runtime/badminton-gpt/data/manifest.json`。該資料可作為初期開發集；未來應另取得有使用權的多球員、多賽事資料，按整場比賽切分開發／測試集，避免同一場回合洩漏到兩側。
+原本 `data/processed/processed_new_3.db` 的 5,204 筆資料保持不變。新 DB 的 `legacy_matches`、`legacy_shots`、`legacy_rallies` 保留當時的轉換結果，`legacy_match_aliases` 以每筆處理資料全部的 `(set,frame,player)` 證據對應到原始完整比賽。這些歷史表不加入目前的總數，舊對話的子集統計也不會被改寫成新的完整比賽統計。
 
 ## Benchmark 與驗證
 
-2026-10-21 的本機驗證：18／18 項離線檢查通過，既有與新增回歸測試共 171 項通過。兩個容器皆 healthy，瀏覽器已確認本機首頁與 visualizer 圖表。完整結果保存在 [離線基準紀錄](../benchmarks/badminton_gpt/offline_baseline.json)；其中明確標示模型沒有執行。此紀錄描述當次版本，之後修改仍應重新執行驗證。
+目前使用 [ShuttleSet 凍結題目](../benchmarks/badminton_gpt/shuttleset_cases.json) 的 16 題獨立答案，涵蓋總量、年份、球員、單場比例圖、2022 球種分布、落地致勝、影片連結、來源去重與異常拍號。`scripts/create_shuttleset_benchmark.py` 直接從原始 ZIP 的 CSV 建立 oracle，與正式匯入器分開；數字格式正規化後比對重複標註。來源完整性採可攜式資料列 digest，不依賴 SQLite 檔案頁面格式。
 
-`benchmarks/badminton_gpt/cases.json` 包含 10 題與凍結答案，涵蓋資料範圍、全庫拍數、單筆過濾、A/B、球種、致勝球、局、回合、缺少影片與比例圖表。答案由**原始 DB 的獨立 SQL** 建立，不由匯入結果或模型生成。保留 `source_sql`、`target_sql`、來源 hash 和 expected rows。
+原始五筆資料的 [10 題題庫](../benchmarks/badminton_gpt/cases.json) 與 [歷史離線基準](../benchmarks/badminton_gpt/offline_baseline.json) 維持不變，描述較早版本，不代表目前完整資料集的總量。
 
 `verify` 實際啟動 MCP Client 連線，檢查資料答案、唯讀限制、200-row 上限與缺少場地標籤。另用明確標示的 scripted provider 驅動真實 nanobot，依序讀 skill、查 MCP、在原本的 bubblewrap sandbox 執行 Python、產生 visualizer 圖表。這驗證接線與執行，不測模型推理品質。
 
@@ -98,7 +82,8 @@ A = Kento MOMOTA，B = CHOU Tien Chen，以明確的 score 欄名建立穩定映
 回歸測試：
 
 ```bash
-uv run --with pytest --python 3.12 python -m pytest tests/test_badminton_gpt_reproduction.py -q
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
 ```
 
 ## 重現時修正的相容性
@@ -110,7 +95,9 @@ uv run --with pytest --python 3.12 python -m pytest tests/test_badminton_gpt_rep
 - `vendor/badmintonGPT/`：固定版本的上游 Git submodule。
 - `compose.badminton-gpt.yml`：本機容器、連接埠、資料與設定掛載。
 - `scripts/badminton_gpt.py`：setup / build / ingest / up / verify 等入口。
-- `scripts/import_badminton_gpt_data.py`：原資料到上游 schema。
+- `scripts/import_shuttleset_data.py`：目前兩包資料的去重、來源追溯及歷史別名。
+- `scripts/create_shuttleset_benchmark.py`：獨立 CSV oracle 與新題目。
+- `scripts/import_badminton_gpt_data.py`：舊五筆資料的保留轉換器。
 - `scripts/create_badminton_gpt_benchmark.py`：從來源凍結 oracle；已有檔案時拒絕覆寫。
 - `scripts/badminton_gpt_benchmark.py`：MCP 驗證、Agent 接線測試與可選 live evaluation。
 - `.runtime/badminton-gpt/`：可重建 DB、build context、驗證結果，全部忽略版本控制。
