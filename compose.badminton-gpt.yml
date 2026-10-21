@@ -1,0 +1,101 @@
+name: badmintonai-gpt
+services:
+  auth:
+    image: badmintonai-auth:local-v1
+    build: ./local_auth
+    restart: unless-stopped
+    depends_on:
+      gateway:
+        condition: service_healthy
+    environment:
+      AUTH_DATABASE: /data/auth.db
+      GATEWAY_URL: http://gateway:8765
+    volumes:
+      - auth_state:/data
+    ports:
+      - "127.0.0.1:${BADMINTONGPT_PORT:-8765}:8080"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/auth/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  gateway:
+    image: badmintonai-gateway:7cccbb1
+    build: ./.runtime/badminton-gpt/build
+    restart: unless-stopped
+    depends_on:
+      badminton-db:
+        condition: service_healthy
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-not-configured}
+      OPENAI_API_BASE: ${OPENAI_API_BASE:-https://api.openai.com/v1}
+      NANOBOT_MODEL: ${NANOBOT_MODEL:-gpt-6-luna}
+      NANOBOT_WEBUI_TRUST_PROXY: "1"
+      NANOBOT_ACCOUNTS: "1"
+      NANOBOT_ACCOUNTS_WHITELIST: admin@local.badminton
+      NANOBOT_ACCOUNTS_LEGACY_OWNER: admin@local.badminton
+      NANOBOT_ACCOUNTS_INVITE_REQUIRED: "0"
+      NANOBOT_WEBUI_REMOTE_PROJECTS: "1"
+      NANOBOT_TOPIC_GATE: "0"
+      NANOBOT_MODERATION: "0"
+      NANOBOT_DISABLE_SHARED_MEMORY: "1"
+      NANOBOT_EXEC_PYTHON_ONLY: "1"
+      NANOBOT_SANDBOX_NO_NETWORK: "1"
+      NANOBOT_SANDBOX_STRICT: "1"
+    volumes:
+      - ./.runtime/badminton-gpt/config.json:/app/nanobot/config.json:ro
+      - ./.runtime/badminton-gpt/SOUL.md:/app/nanobot/workspace/SOUL.md:ro
+      - badminton_state:/home/nanobot/.nanobot
+      - ./scripts/badminton_gpt_benchmark.py:/app/local/benchmark.py:ro
+      - ./benchmarks/badminton_gpt:/app/local/benchmark:ro
+      - ./data/processed/processed_new_3.db:/app/local/source.db:ro
+      - ./.runtime/badminton-gpt:/app/local/results
+    expose:
+      - "8765"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18790/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+  badminton-db:
+    image: badmintonai-db:7cccbb1
+    build:
+      context: ./vendor/badmintonGPT/mcps/badminton-db
+      # Upstream's unbounded mcp>=1.0 installs v2 and breaks FastMCP imports.
+      dockerfile_inline: |
+        FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim@sha256:e5b65587bce7de595f299855d7385fe7fca39b8a74baa261ba1b7147afa78e58
+        RUN uv pip install --system --no-cache "mcp==1.26.0" "huggingface_hub>=0.20,<3" "pydantic>=2,<3" "python-dotenv>=1,<2"
+        WORKDIR /app
+        COPY . /app
+        RUN useradd -m -u 1000 -s /bin/bash app && mkdir -p /app/data && chown -R app:app /app
+        USER app
+        ENV BADMINTON_DB=/app/data/badminton.db MCP_HOST=0.0.0.0 MCP_PORT=8801 MCP_TRANSPORT=streamable-http
+        CMD ["python3", "/app/server.py"]
+    restart: unless-stopped
+    volumes:
+      - ./.runtime/badminton-gpt/data:/app/data:ro
+    ports:
+      - "127.0.0.1:${BADMINTONGPT_DB_PORT:-8801}:8801"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8801/healthz', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+  auth-test:
+    image: badmintonai-auth:local-v1
+    profiles: ["auth-test"]
+    depends_on:
+      gateway:
+        condition: service_healthy
+    volumes:
+      - ./scripts/test_badminton_gpt_auth_live.py:/app/verify_auth.py:ro
+      - ./.runtime/badminton-gpt:/results
+      - badminton_state:/gateway-state
+    command: ["python3", "/app/verify_auth.py"]
+volumes:
+  badminton_state:
+  auth_state:

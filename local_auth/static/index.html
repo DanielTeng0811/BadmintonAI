@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>登入 · BadmintonGPT</title>
+  <link rel="stylesheet" href="/auth/auth.css">
+  <script src="/auth/auth.js" defer></script>
+</head>
+<body>
+  <main class="layout">
+    <section class="intro" aria-label="BadmintonGPT">
+      <a class="brand" href="/auth/login"><svg viewBox="0 0 44 44" aria-hidden="true"><path d="M6 8h32v28H6zM6 22h32M22 8v28M12 8v28M32 8v28"/></svg><span>BadmintonGPT</span></a>
+      <p class="eyebrow">YOUR COURT. YOUR CONVERSATION.</p>
+      <h1>每個問題，<br>從你的球場開始。</h1>
+      <p class="lead">查詢比賽、探索數據，<br>把羽球裡的細節，看得更清楚。</p>
+      <div class="court" aria-hidden="true"><span></span><i></i><b></b></div>
+      <p class="privacy">各自的帳號，各自的對話。</p>
+    </section>
+    <section class="panel" aria-labelledby="heading">
+      <p class="kicker" id="kicker">WELCOME BACK</p>
+      <h2 id="heading">登入你的帳號</h2>
+      <p class="description" id="description">繼續你的羽球分析。</p>
+      <form id="credentials" hidden>
+        <label for="username">帳號</label>
+        <input id="username" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required minlength="3" maxlength="32" placeholder="你的帳號">
+        <label for="password">密碼</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required minlength="12" maxlength="128" placeholder="至少 12 個字元">
+        <div id="confirmation" hidden><label for="confirm">確認密碼</label><input id="confirm" name="confirm" type="password" autocomplete="new-password" maxlength="128" placeholder="再輸入一次密碼"></div>
+        <p class="error" id="error" role="alert" aria-live="polite"></p>
+        <button id="submit" type="submit">登入 <span aria-hidden="true">↗</span></button>
+        <p class="switch" id="switch"></p>
+      </form>
+      <div id="account" hidden>
+        <div class="identity"><span id="account-name"></span><span id="role" class="badge"></span></div>
+        <a class="primary-link" href="/">回到聊天 →</a>
+        <form id="change-password">
+          <h3>變更密碼</h3>
+          <label for="current">目前密碼</label><input id="current" type="password" autocomplete="current-password" required>
+          <label for="new-password">新密碼</label><input id="new-password" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <label for="new-confirm">確認新密碼</label><input id="new-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <p class="hint">更新後會登出所有裝置。</p><p id="password-error" class="error" role="alert"></p>
+          <button type="submit">更新密碼</button>
+        </form>
+        <section id="admin" hidden><h3>帳號管理</h3><p class="hint">停用帳號會立即中止其登入與聊天連線。</p><div id="users"></div></section>
+        <button class="secondary" type="button" id="logout">登出</button>
+      </div>
+      <p class="footnote" id="footnote">使用個人帳號登入，對話不會分享給其他使用者。</p>
+    </section>
+  </main>
+</body>
+</html>

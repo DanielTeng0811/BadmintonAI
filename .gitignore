@@ -92,6 +92,8 @@ llm_debug_log.txt
 # Environment variables
 .env
 .env.example
+!.env.badminton-gpt.example
+.runtime/
 
 # Streamlit Cloud 設定 (不要上傳包含 API keys 的機密檔案)
 .streamlit/secrets.toml

@@ -1,10 +1,16 @@
 # 專案結構與協作規則
 
+目前主線為 [BadmintonGPT 本機重現](BADMINTON_GPT_REPRODUCTION.md)。入口是 `scripts/badminton_gpt.py`，由 `compose.badminton-gpt.yml` 啟動固定版本上游的 nanobot WebUI 與資料庫 MCP。`front_page.py` 和既有評測流程保留為舊版研究材料。
+
 ## 目錄責任
 
 | 目錄／檔案 | 用途 | 放入原則 |
 | --- | --- | --- |
-| `front_page.py` | Streamlit 應用入口 | 保持為輕量 UI 組裝層；可重用邏輯應放入 `utils/`。 |
+| `scripts/badminton_gpt.py` | BadmintonGPT 主入口 | 統一管理建置、資料匯入、啟動與驗證；不要繞回舊版分析流程。 |
+| `vendor/badmintonGPT/` | 固定版本的上游 submodule | 保留上游原始碼；本機調整由 build context overlay 套用。 |
+| `benchmarks/badminton_gpt/` | 自有 benchmark 與凍結答案 | 記錄來源 hash；答案須來自獨立來源查詢，不由模型生成。 |
+| `.runtime/badminton-gpt/` | 可重建資料與本機執行結果 | 不納入版本控制，不存金鑰；每次 benchmark 使用獨立 run。 |
+| `front_page.py` | 舊版 Streamlit 入口 | 保留供研究追溯，新開發以 BadmintonGPT 入口為主。 |
 | `config/` | Prompt 與設定 | Prompt、模式無關設定集中於此；避免在 UI 或腳本內複製。 |
 | `utils/` | 應用核心服務 | 資料載入、資料處理、模型 client、分析工作流與路徑設定。 |
 | `data/raw/` | 原始資料 | 不修改來源內容；處理後資料另存。 |

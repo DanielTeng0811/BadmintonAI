@@ -1,0 +1,281 @@
+{
+  "date": "2026-10-21",
+  "scope": "local login, multi-user accounts and conversation isolation",
+  "upstream_revision": "7cccbb18aba8bcfa096f22b923fb2aa16326e6ed",
+  "regression_tests": {
+    "passed": 178,
+    "skipped": 0
+  },
+  "real_gateway_verification": {
+    "time": "2026-10-21T04:25:05.243278+00:00",
+    "mode": "real_gateway_disposable_local_accounts",
+    "model_requests": 0,
+    "production_auth_database_modified": false,
+    "passed": 61,
+    "total": 61,
+    "checks": [
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "GET /webui/bootstrap -> 401",
+        "passed": true
+      },
+      {
+        "id": "anonymous_chat_redirects_to_login",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/setup -> 200",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/setup -> 409",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/register -> 200",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/register -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /webui/bootstrap -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /webui/bootstrap -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /webui/bootstrap -> 200",
+        "passed": true
+      },
+      {
+        "id": "trusted_identity_admin",
+        "passed": true
+      },
+      {
+        "id": "trusted_identity_alice_7e1ce1ef",
+        "passed": true
+      },
+      {
+        "id": "trusted_identity_bob_7e1ce1ef",
+        "passed": true
+      },
+      {
+        "id": "regular_users_cannot_manage_settings",
+        "passed": true
+      },
+      {
+        "id": "GET /api/settings -> 403",
+        "passed": true
+      },
+      {
+        "id": "GET /auth/users -> 403",
+        "passed": true
+      },
+      {
+        "id": "GET /api/settings -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 200",
+        "passed": true
+      },
+      {
+        "id": "alice_sees_only_own_chat",
+        "passed": true
+      },
+      {
+        "id": "bob_sees_only_own_chat",
+        "passed": true
+      },
+      {
+        "id": "admin_does_not_read_other_users_chats",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/messages -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/webui-thread -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/messages -> 404",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/webui-thread -> 404",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/delete -> 404",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/messages -> 404",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/messages -> 404",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "websocket_foreign_attach_rejected",
+        "passed": true
+      },
+      {
+        "id": "websocket_foreign_write_rejected",
+        "passed": true
+      },
+      {
+        "id": "GET /api/webui/sidebar-state/update -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/webui/sidebar-state -> 200",
+        "passed": true
+      },
+      {
+        "id": "sidebar_titles_and_pins_isolated",
+        "passed": true
+      },
+      {
+        "id": "GET /api/workspaces -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/workspaces -> 200",
+        "passed": true
+      },
+      {
+        "id": "project_roots_are_per_account",
+        "passed": true
+      },
+      {
+        "id": "foreign_project_rejected",
+        "passed": true
+      },
+      {
+        "id": "attachment_has_signed_url",
+        "passed": true
+      },
+      {
+        "id": "GET /api/media/7haZn_1Ujx_9AAroQ-WrBQ/d2Vic29ja2V0L2F1dGgtdmVyaWZpY2F0aW9uLTdlMWNlMWVmLnBuZw -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/media/7haZn_1Ujx_9AAroQ-WrBQ/d2Vic29ja2V0L2F1dGgtdmVyaWZpY2F0aW9uLTdlMWNlMWVmLnBuZw -> 401",
+        "passed": true
+      },
+      {
+        "id": "GET /api/media/7haZn_1Ujx_9AAroQ-WrBQ/d2Vic29ja2V0L2F1dGgtdmVyaWZpY2F0aW9uLTdlMWNlMWVmLnBuZw -> 401",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3A17753ff6-50b8-4118-b558-00ab749f6c10/delete -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions/websocket%3Af83b2d9e-3d80-4ac9-8766-378780f308d3/delete -> 200",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/logout -> 200",
+        "passed": true
+      },
+      {
+        "id": "logout_closes_existing_websocket",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "logout_revokes_stored_session",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/users -> 200",
+        "passed": true
+      },
+      {
+        "id": "disable_closes_existing_websocket",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/login -> 401",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/users -> 200",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/login -> 200",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/password -> 200",
+        "passed": true
+      },
+      {
+        "id": "GET /api/sessions -> 401",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/login -> 401",
+        "passed": true
+      },
+      {
+        "id": "POST /auth/login -> 200",
+        "passed": true
+      }
+    ]
+  },
+  "offline_data_checks": {
+    "passed": 18,
+    "total": 18
+  },
+  "browser_verification": {
+    "login": "passed with disposable account",
+    "account_page": "passed",
+    "logout": "returned to login",
+    "private_history": "new account saw no legacy sessions",
+    "first_admin_setup": "verified; no default password",
+    "screenshots": [
+      ".runtime/badminton-gpt/auth-setup.png",
+      ".runtime/badminton-gpt/auth-logged-in.png"
+    ]
+  },
+  "production_admin_credentials": "not created by tests; first user setup required",
+  "luna_api_validation": "still pending user API key",
+  "remote_video_services": "still disabled"
+}

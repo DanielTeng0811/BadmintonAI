@@ -1,0 +1,3 @@
+[submodule "vendor/badmintonGPT"]
+	path = vendor/badmintonGPT
+	url = https://github.com/NYCU-ADSL/badmintonGPT.git

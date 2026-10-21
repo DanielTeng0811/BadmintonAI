@@ -1,0 +1,190 @@
+{
+  "dataset": "badmintonai_processed_new_3",
+  "source_sha256": "db29964055eea59c2f3b22994fae218da915823c68596be066e420b11d7c8a7c",
+  "scope": "local development benchmark; not a held-out generalization evaluation",
+  "cases": [
+    {
+      "id": "catalog",
+      "prompt": "目前資料庫有幾筆比賽紀錄？",
+      "source_sql": "SELECT COUNT(DISTINCT match_id) AS n FROM match_data",
+      "target_sql": "SELECT COUNT(*) AS n FROM matches",
+      "expected": [
+        {
+          "n": 5
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "total_shots",
+      "prompt": "所有紀錄共有幾拍？",
+      "source_sql": "SELECT COUNT(*) AS n FROM match_data",
+      "target_sql": "SELECT COUNT(*) AS n FROM shots",
+      "expected": [
+        {
+          "n": 5204
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "match_scope",
+      "prompt": "legacy_match_1 共有幾拍？只查這筆紀錄。",
+      "source_sql": "SELECT COUNT(*) AS n FROM match_data WHERE match_id=1",
+      "target_sql": "SELECT COUNT(*) AS n FROM shots WHERE match_name='legacy_match_1'",
+      "expected": [
+        {
+          "n": 1549
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "player_mapping",
+      "prompt": "legacy_match_1 兩位球員各打了幾拍？用 A/B 作為 player 欄位。",
+      "source_sql": "SELECT CASE player WHEN 'Kento MOMOTA' THEN 'A' ELSE 'B' END AS player,COUNT(*) AS n FROM match_data WHERE match_id=1 GROUP BY player ORDER BY 1",
+      "target_sql": "SELECT player,COUNT(*) AS n FROM shots WHERE match_name='legacy_match_1' GROUP BY player ORDER BY player",
+      "expected": [
+        {
+          "player": "A",
+          "n": 770
+        },
+        {
+          "player": "B",
+          "n": 779
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "shot_distribution",
+      "prompt": "legacy_match_3 各球種各有幾拍？依球種名稱排序。",
+      "source_sql": "SELECT type,COUNT(*) AS n FROM match_data WHERE match_id=3 GROUP BY type ORDER BY type",
+      "target_sql": "SELECT type,COUNT(*) AS n FROM shots WHERE match_name='legacy_match_3' GROUP BY type ORDER BY type",
+      "expected": [
+        {
+          "type": "切球",
+          "n": 65
+        },
+        {
+          "type": "平球",
+          "n": 30
+        },
+        {
+          "type": "挑球",
+          "n": 66
+        },
+        {
+          "type": "接殺防守",
+          "n": 102
+        },
+        {
+          "type": "推撲球",
+          "n": 129
+        },
+        {
+          "type": "殺球",
+          "n": 99
+        },
+        {
+          "type": "發短球",
+          "n": 55
+        },
+        {
+          "type": "發長球",
+          "n": 3
+        },
+        {
+          "type": "網前球",
+          "n": 193
+        },
+        {
+          "type": "長球",
+          "n": 63
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "winners",
+      "prompt": "legacy_match_5 兩位球員各有幾拍直接致勝球？用 A/B 作為 player 欄位。",
+      "source_sql": "SELECT CASE player WHEN 'Kento MOMOTA' THEN 'A' ELSE 'B' END AS player,COUNT(*) AS n FROM match_data WHERE match_id=5 AND win_reason IS NOT NULL AND win_reason!='' GROUP BY player ORDER BY 1",
+      "target_sql": "SELECT player,COUNT(*) AS n FROM shots WHERE match_name='legacy_match_5' AND win_reason IS NOT NULL GROUP BY player ORDER BY player",
+      "expected": [
+        {
+          "player": "A",
+          "n": 11
+        },
+        {
+          "player": "B",
+          "n": 12
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "set_scope",
+      "prompt": "legacy_match_6 每局各有幾拍？回傳 set_no 與 n。",
+      "source_sql": "SELECT \"set\" AS set_no,COUNT(*) AS n FROM match_data WHERE match_id=6 GROUP BY \"set\" ORDER BY \"set\"",
+      "target_sql": "SELECT set_no,COUNT(*) AS n FROM shots WHERE match_name='legacy_match_6' GROUP BY set_no ORDER BY set_no",
+      "expected": [
+        {
+          "set_no": 1,
+          "n": 415
+        },
+        {
+          "set_no": 2,
+          "n": 269
+        },
+        {
+          "set_no": 3,
+          "n": 345
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "rally_count",
+      "prompt": "所有紀錄共有幾個回合？回合需區分 match、局與原始回合編號。",
+      "source_sql": "SELECT COUNT(*) AS n FROM (SELECT match_id,\"set\",rally FROM match_data GROUP BY match_id,\"set\",rally)",
+      "target_sql": "SELECT COUNT(*) AS n FROM rallies",
+      "expected": [
+        {
+          "n": 409
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "no_video",
+      "prompt": "資料庫有幾個可播放的回合影片？",
+      "source_sql": "SELECT 0 AS n",
+      "target_sql": "SELECT COUNT(*) AS n FROM rallies WHERE has_video=1",
+      "expected": [
+        {
+          "n": 0
+        }
+      ],
+      "requires_chart": false
+    },
+    {
+      "id": "chart",
+      "prompt": "計算 legacy_match_1 兩位球員出手佔全場的百分比，四捨五入到小數點兩位，並畫長條圖。rows 欄位為 player、n、pct，player 用 A/B。",
+      "source_sql": "SELECT CASE player WHEN 'Kento MOMOTA' THEN 'A' ELSE 'B' END AS player,COUNT(*) AS n,ROUND(100.0*COUNT(*)/(SELECT COUNT(*) FROM match_data WHERE match_id=1),2) AS pct FROM match_data WHERE match_id=1 GROUP BY player ORDER BY 1",
+      "target_sql": "SELECT player,COUNT(*) AS n,ROUND(100.0*COUNT(*)/(SELECT COUNT(*) FROM shots WHERE match_name='legacy_match_1'),2) AS pct FROM shots WHERE match_name='legacy_match_1' GROUP BY player ORDER BY player",
+      "expected": [
+        {
+          "player": "A",
+          "n": 770,
+          "pct": 49.71
+        },
+        {
+          "player": "B",
+          "n": 779,
+          "pct": 50.29
+        }
+      ],
+      "requires_chart": true
+    }
+  ]
+}

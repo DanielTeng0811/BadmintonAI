@@ -1,0 +1,376 @@
+{
+  "upstream_revision": "7cccbb18aba8bcfa096f22b923fb2aa16326e6ed",
+  "dataset": "badmintonai_processed_new_3",
+  "regression_tests": {
+    "passed": 171
+  },
+  "offline_verification": {
+    "mode": "offline",
+    "time": "2026-10-21T04:02:44.267576+00:00",
+    "model_validation": "not_run",
+    "passed": 18,
+    "total": 18,
+    "checks": [
+      {
+        "id": "resolved_luna_configuration",
+        "passed": true,
+        "model": "gpt-6-luna",
+        "api_type": "responses",
+        "api_request_made": false
+      },
+      {
+        "id": "mcp_contract",
+        "passed": true
+      },
+      {
+        "id": "catalog",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 5
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 5
+          }
+        ]
+      },
+      {
+        "id": "total_shots",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 5204
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 5204
+          }
+        ]
+      },
+      {
+        "id": "match_scope",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 1549
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 1549
+          }
+        ]
+      },
+      {
+        "id": "player_mapping",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player": "A",
+              "n": 770
+            },
+            {
+              "player": "B",
+              "n": 779
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "player": "A",
+            "n": 770
+          },
+          {
+            "player": "B",
+            "n": 779
+          }
+        ]
+      },
+      {
+        "id": "shot_distribution",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "type": "切球",
+              "n": 65
+            },
+            {
+              "type": "平球",
+              "n": 30
+            },
+            {
+              "type": "挑球",
+              "n": 66
+            },
+            {
+              "type": "接殺防守",
+              "n": 102
+            },
+            {
+              "type": "推撲球",
+              "n": 129
+            },
+            {
+              "type": "殺球",
+              "n": 99
+            },
+            {
+              "type": "發短球",
+              "n": 55
+            },
+            {
+              "type": "發長球",
+              "n": 3
+            },
+            {
+              "type": "網前球",
+              "n": 193
+            },
+            {
+              "type": "長球",
+              "n": 63
+            }
+          ],
+          "row_count": 10
+        },
+        "expected": [
+          {
+            "type": "切球",
+            "n": 65
+          },
+          {
+            "type": "平球",
+            "n": 30
+          },
+          {
+            "type": "挑球",
+            "n": 66
+          },
+          {
+            "type": "接殺防守",
+            "n": 102
+          },
+          {
+            "type": "推撲球",
+            "n": 129
+          },
+          {
+            "type": "殺球",
+            "n": 99
+          },
+          {
+            "type": "發短球",
+            "n": 55
+          },
+          {
+            "type": "發長球",
+            "n": 3
+          },
+          {
+            "type": "網前球",
+            "n": 193
+          },
+          {
+            "type": "長球",
+            "n": 63
+          }
+        ]
+      },
+      {
+        "id": "winners",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player": "A",
+              "n": 11
+            },
+            {
+              "player": "B",
+              "n": 12
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "player": "A",
+            "n": 11
+          },
+          {
+            "player": "B",
+            "n": 12
+          }
+        ]
+      },
+      {
+        "id": "set_scope",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "set_no": 1,
+              "n": 415
+            },
+            {
+              "set_no": 2,
+              "n": 269
+            },
+            {
+              "set_no": 3,
+              "n": 345
+            }
+          ],
+          "row_count": 3
+        },
+        "expected": [
+          {
+            "set_no": 1,
+            "n": 415
+          },
+          {
+            "set_no": 2,
+            "n": 269
+          },
+          {
+            "set_no": 3,
+            "n": 345
+          }
+        ]
+      },
+      {
+        "id": "rally_count",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 409
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 409
+          }
+        ]
+      },
+      {
+        "id": "no_video",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "n": 0
+            }
+          ],
+          "row_count": 1
+        },
+        "expected": [
+          {
+            "n": 0
+          }
+        ]
+      },
+      {
+        "id": "chart",
+        "passed": true,
+        "actual": {
+          "rows": [
+            {
+              "player": "A",
+              "n": 770,
+              "pct": 49.71
+            },
+            {
+              "player": "B",
+              "n": 779,
+              "pct": 50.29
+            }
+          ],
+          "row_count": 2
+        },
+        "expected": [
+          {
+            "player": "A",
+            "n": 770,
+            "pct": 49.71
+          },
+          {
+            "player": "B",
+            "n": 779,
+            "pct": 50.29
+          }
+        ]
+      },
+      {
+        "id": "readonly_0",
+        "passed": true
+      },
+      {
+        "id": "readonly_1",
+        "passed": true
+      },
+      {
+        "id": "readonly_2",
+        "passed": true
+      },
+      {
+        "id": "row_limit",
+        "passed": true
+      },
+      {
+        "id": "no_invented_zone_mapping",
+        "passed": true
+      },
+      {
+        "id": "agent_skills_mcp_python_chart",
+        "passed": true,
+        "calls": [
+          "read_file",
+          "read_file",
+          "mcp_badminton-db_query",
+          "exec",
+          "read_file"
+        ],
+        "provider": "scripted; no model quality claim",
+        "actual": [
+          {
+            "player": "A",
+            "n": 770,
+            "pct": 49.71
+          },
+          {
+            "player": "B",
+            "n": 779,
+            "pct": 50.29
+          }
+        ]
+      }
+    ]
+  },
+  "luna_live_validation": "deferred_until_user_supplies_api_key",
+  "remote_services": "unavailable_without_lab_credentials",
+  "ui_verification": {
+    "home_examples": "verified against local dataset",
+    "preview": "rendered in original nanobot visualizer",
+    "theme": "dark-mode chart labels readable",
+    "screenshot": ".runtime/badminton-gpt/verified-preview.png",
+    "model_call_made": false
+  }
+}

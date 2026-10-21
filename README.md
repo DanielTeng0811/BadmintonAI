@@ -11,6 +11,43 @@ pinned: false
 
 # BadmintonAI
 
+目前主線是重現 [NYCU-ADSL/BadmintonGPT](https://github.com/NYCU-ADSL/badmintonGPT)：使用原版客製 nanobot、skills、MCP 與 WebUI，模型保留 GPT Luna，先以現有真實逐拍資料建立本機版本及 benchmark。
+
+## BadmintonGPT 本機入口
+
+需要 Docker Desktop、Docker Compose 與 Python 3.10 以上。在專案根目錄執行：
+
+```bash
+git submodule update --init vendor/badmintonGPT
+python3 scripts/badminton_gpt.py ingest
+python3 scripts/badminton_gpt.py build
+python3 scripts/badminton_gpt.py up
+python3 scripts/badminton_gpt.py verify
+python3 scripts/badminton_gpt.py preview
+```
+
+開啟 [本機 BadmintonGPT](http://127.0.0.1:8765)，第一次由你設定 `admin` 密碼，再登入使用；其他使用者可自行建立一般帳號。登入、登出、多使用者和對話隔離不依賴實驗室權限，詳見 [本機帳號指南](docs/LOCAL_ACCOUNTS.md)。`verify` 不呼叫模型、不消耗 API token；`preview` 顯示已驗證資料產生的固定步驟圖表，明確標示未呼叫 Luna，僅 admin 可見。
+
+```bash
+# 實際雙帳號隔離驗證，不會修改正式帳號資料庫或呼叫模型。
+python3 scripts/badminton_gpt.py verify-auth
+```
+
+聊天前，在既有 `.env` 設定有效的 `OPENAI_API_KEY` 與帳號可用的 Luna 模型 ID（預設 `NANOBOT_MODEL=gpt-6-luna`），再執行 `up`。範本為 [.env.badminton-gpt.example](.env.badminton-gpt.example)，請合併需要的欄位，不要覆寫既有金鑰。**Luna 的實際模型回答尚待有效金鑰驗證。**
+
+```bash
+# 有可用金鑰後才執行；這會呼叫付費模型。
+python3 scripts/badminton_gpt.py benchmark --live
+```
+
+目前資料為本 repo 的 5 筆紀錄、5,204 拍、409 回合，並非上游需要權限的完整資料集。實驗室的進階分析、影片檢索、精華生成尚無存取權，這個版本停用其工具與 skills。完整流程、資料限制、驗證方法見 [重現指南](docs/BADMINTON_GPT_REPRODUCTION.md)。
+
+後續部署保留「雲端／校內主機 + Cloudflare Tunnel + 自有網域」，沿用現有帳號與對話隔離；所需資源、接線及上線前待辦見 [雲端部署規劃](docs/CLOUD_DEPLOYMENT.md)。目前仍是本機服務，尚未公開部署。
+
+## 舊版 Streamlit 與研究紀錄
+
+以下保留舊版操作方式。新開發以以上的 BadmintonGPT 入口為主。
+
 以自然語言查詢羽球逐拍資料，產生統計、圖表與戰術洞察；專案也包含一套可重現的 LLM 評測流程。
 
 ## 兩個主要入口
