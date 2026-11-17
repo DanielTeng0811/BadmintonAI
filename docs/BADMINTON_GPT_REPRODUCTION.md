@@ -11,7 +11,7 @@
 | GPT Luna | 預設 `gpt-6-luna`，使用 Responses API；待新金鑰實測 |
 | 資料庫 | 既有資料轉成相同 `matches` / `rallies` / `shots` schema |
 | 本機登入、多使用者與對話隔離 | 已提供獨立登入服務，詳見 [本機帳號指南](LOCAL_ACCOUNTS.md) |
-| Hugging Face 完整資料集 | 需要核准，未下載、未假裝重現其覆蓋率 |
+| Hugging Face 資料集 | 已設為預設來源，固定 revision 並直接沿用上游解析器，見 [存取指南](HUGGING_FACE_DATASET.md) |
 | 遠端 advanced analysis / video retrieval / reels | 無權限，停用工具與 skills |
 | Cloudflare Tunnel | 本機不需要；保留未來接入帳號服務的雲端部署方向，見 [雲端部署規劃](CLOUD_DEPLOYMENT.md)；尚未公開上線 |
 
@@ -63,7 +63,9 @@ python3 scripts/badminton_gpt.py benchmark --live
 
 ## 資料來源與轉換
 
-正式資料庫使用版本化的 `data/sources/ShuttleSet.zip` 與 `ShuttleSet22.zip`。合併後共有 94 場比賽、81,938 筆逐拍標註、7,888 回合；43 個原始影片連結保留於 `matches.video_url` 與 `match_links`，不視為已存在回合影片。
+目前預設為授權 Hugging Face 資料，231 筆目錄、161,138 拍、18,524 個回合片段；只快取約 19 MB CSV，不下載影片。原版解析器的局數、練習資料、A/B 映射規則，以及備份／回復方式詳見 [HF 指南](HUGGING_FACE_DATASET.md)。
+
+保留的 ShuttleSet 路徑透過 `ingest --source shuttleset` 使用版本化的 `data/sources/ShuttleSet.zip` 與 `ShuttleSet22.zip`。合併後共有 94 場比賽、81,938 筆逐拍標註、7,888 回合；43 個原始影片連結保留於 `matches.video_url` 與 `match_links`，不視為已存在回合影片。
 
 `ingest` 先用獨立 CSV 讀取程式重建 oracle，確認和凍結答案一致，再建立暫存 DB。通過 SQLite integrity／foreign-key 檢查後才取代輸出；失敗會保留既有 DB。完整去重規則、來源追溯與資料限制見 [資料集指南](DATASETS.md)。
 
@@ -71,11 +73,13 @@ python3 scripts/badminton_gpt.py benchmark --live
 
 ## Benchmark 與驗證
 
-目前使用 [ShuttleSet 凍結題目](../benchmarks/badminton_gpt/shuttleset_cases.json) 的 16 題獨立答案，涵蓋總量、年份、球員、單場比例圖、2022 球種分布、落地致勝、影片連結、來源去重與異常拍號。`scripts/create_shuttleset_benchmark.py` 直接從原始 ZIP 的 CSV 建立 oracle，與正式匯入器分開；數字格式正規化後比對重複標註。來源完整性採可攜式資料列 digest，不依賴 SQLite 檔案頁面格式。
+HF 目前使用獨立 CSV oracle 的 17 題本機答案，測試目錄、年份、球員、拍數、回合、球種、比例圖與遠端影片清單。受限來源與題庫不提交 Git。`verify` 會依目前 manifest 自動選用題庫；模型實測仍需有效金鑰。
+
+保留的 ShuttleSet 來源使用 [ShuttleSet 凍結題目](../benchmarks/badminton_gpt/shuttleset_cases.json) 的 16 題獨立答案，涵蓋總量、年份、球員、單場比例圖、2022 球種分布、落地致勝、影片連結、來源去重與異常拍號。`scripts/create_shuttleset_benchmark.py` 直接從原始 ZIP 的 CSV 建立 oracle，與正式匯入器分開；數字格式正規化後比對重複標註。來源完整性採可攜式資料列 digest，不依賴 SQLite 檔案頁面格式。
 
 原始五筆資料的 [10 題題庫](../benchmarks/badminton_gpt/cases.json) 與 [歷史離線基準](../benchmarks/badminton_gpt/offline_baseline.json) 維持不變，描述較早版本，不代表目前完整資料集的總量。
 
-`verify` 實際啟動 MCP Client 連線，檢查資料答案、唯讀限制、200-row 上限與缺少場地標籤。另用明確標示的 scripted provider 驅動真實 nanobot，依序讀 skill、查 MCP、在原本的 bubblewrap sandbox 執行 Python、產生 visualizer 圖表。這驗證接線與執行，不測模型推理品質。
+`verify` 實際啟動 MCP Client 連線，檢查資料答案、唯讀限制、200-row 上限；HF 另確認每筆拍數的 CSV 追溯，ShuttleSet 則確認未臆測場地標籤。另用明確標示的 scripted provider 驅動真實 nanobot，依序讀 skill、查 MCP、在原本的 bubblewrap sandbox 執行 Python、產生 visualizer 圖表。這驗證接線與執行，不測模型推理品質。
 
 `benchmark --live` 才用設定的 Luna 做相同問題，保存答案與完整工具 trace，檢查答案、資料庫工具與 skill 讀取；圖表題另檢查 Python 執行、visualise skill 和 visualizer 輸出。機械檢查不等於人工確認戰術推論或圖表的所有語意；目前題庫也不是上游的完整 benchmark。每次產生獨立 run，保存於 `.runtime/badminton-gpt/benchmark-runs/`，不覆寫已完成 run。
 
@@ -95,7 +99,10 @@ python -m pytest -q
 - `vendor/badmintonGPT/`：固定版本的上游 Git submodule。
 - `compose.badminton-gpt.yml`：本機容器、連接埠、資料與設定掛載。
 - `scripts/badminton_gpt.py`：setup / build / ingest / up / verify 等入口。
-- `scripts/import_shuttleset_data.py`：目前兩包資料的去重、來源追溯及歷史別名。
+- `scripts/sync_huggingface_data.py`：授權 CSV 同步、大小限制及完整性校驗。
+- `scripts/activate_huggingface_data.py`：先建立獨立 oracle、離線建庫、驗證、備份與切換。
+- `scripts/import_huggingface_data.py`、`huggingface_oracle.py`：原版解析器接線與獨立 CSV 答案。
+- `scripts/import_shuttleset_data.py`：保留的兩包資料去重、來源追溯及歷史別名。
 - `scripts/create_shuttleset_benchmark.py`：獨立 CSV oracle 與新題目。
 - `scripts/import_badminton_gpt_data.py`：舊五筆資料的保留轉換器。
 - `scripts/create_badminton_gpt_benchmark.py`：從來源凍結 oracle；已有檔案時拒絕覆寫。

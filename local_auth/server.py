@@ -19,7 +19,7 @@ HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authoriz
                "transfer-encoding", "upgrade", "content-length", "host", "cookie", "set-cookie"}
 
 
-def create_app(database, upstream="http://gateway:8765", cookie_name="badminton_session"):
+def create_app(database, upstream="http://gateway:8765", cookie_name="badminton_session", *, reels_upstream=None, reels_ledger=None):
     store = Store(database)
     sockets = {}
     app = web.Application(client_max_size=38 * 1024 * 1024)
@@ -270,6 +270,9 @@ def create_app(database, upstream="http://gateway:8765", cookie_name="badminton_
     async def static_file(request):
         return web.FileResponse(STATIC / request.match_info["filename"])
     app.router.add_get("/auth/{filename:auth\\.css|auth\\.js}", static_file)
+    if reels_upstream and reels_ledger:
+        from .reels import install
+        install(app, identity, reels_upstream, reels_ledger)
     app.router.add_route("*", "/{path:.*}", proxy)
     return app
 
@@ -277,5 +280,7 @@ def create_app(database, upstream="http://gateway:8765", cookie_name="badminton_
 if __name__ == "__main__":
     web.run_app(create_app(os.environ.get("AUTH_DATABASE", "/data/auth.db"),
                            os.environ.get("GATEWAY_URL", "http://gateway:8765"),
-                           os.environ.get("AUTH_COOKIE_NAME", "badminton_session")),
+                           os.environ.get("AUTH_COOKIE_NAME", "badminton_session"),
+                           reels_upstream=os.environ.get("REELS_UPSTREAM"),
+                           reels_ledger=os.environ.get("REELS_LEDGER_PATH")),
                 host="0.0.0.0", port=8080, access_log=None)
