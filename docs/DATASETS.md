@@ -1,6 +1,6 @@
 # ShuttleSet 資料庫
 
-正式資料庫由兩個原始 ZIP 建立，檔案保留在 [data/sources/](../data/sources/README.md)。本機輸出為 `.runtime/badminton-gpt/data/badminton.db`，不修改舊的 `data/processed/processed_new_3.db`。
+本頁描述保留的 ShuttleSet 來源與歷史驗證。目前預設資料庫已切換至 [授權 Hugging Face 來源](HUGGING_FACE_DATASET.md)，兩者不混算。本頁資料可由兩個原始 ZIP 重建，檔案保留在 [data/sources/](../data/sources/README.md)。本機輸出為 `.runtime/badminton-gpt/data/badminton.db`，不修改舊的 `data/processed/processed_new_3.db`。
 
 ## 本次實際內容
 
@@ -68,7 +68,7 @@ ShuttleSet.zip + ShuttleSet22.zip
 ## 重建與驗證
 
 ```bash
-python3 scripts/badminton_gpt.py ingest
+python3 scripts/badminton_gpt.py ingest --source shuttleset
 python3 scripts/badminton_gpt.py build
 python3 scripts/badminton_gpt.py up
 python3 scripts/badminton_gpt.py verify

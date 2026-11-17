@@ -17,7 +17,10 @@ BASE = Path("/app/local")
 
 def load_bank():
     manifest=BASE / 'results/data/manifest.json'
-    merged=manifest.exists() and json.loads(manifest.read_text()).get('dataset')=='shuttleset_merged'
+    dataset=json.loads(manifest.read_text()).get('dataset') if manifest.exists() else None
+    if dataset=='huggingface':
+        return json.loads((BASE/'results/data/hf_cases.json').read_text())
+    merged=dataset=='shuttleset_merged'
     return json.loads((BASE / 'benchmark' / ('shuttleset_cases.json' if merged else 'cases.json')).read_text())
 
 
@@ -75,9 +78,14 @@ async def offline(bank):
                 checks.append({"id": f"readonly_{i}", "passed": "error" in result})
             result = decode_result(await session.call_tool("query", {"sql": "SELECT * FROM shots"}))
             checks.append({"id": "row_limit", "passed": len(result["rows"]) == 200})
-            result = decode_result(await session.call_tool("query", {
-                "sql": "SELECT COUNT(*) AS n FROM shots WHERE hit_area IS NOT NULL OR landing_area IS NOT NULL"}))
-            checks.append({"id": "no_invented_zone_mapping", "passed": result["rows"] == [{"n": 0}]})
+            if bank.get('dataset')=='huggingface':
+                result=decode_result(await session.call_tool('query',{'sql':'SELECT COUNT(*) AS n FROM shots s JOIN shot_sources p ON p.shot_id=s.shot_id'}))
+                expected=next(c['expected'] for c in bank['cases'] if c['id']=='total_shots')
+                checks.append({'id':'hf_source_row_lineage','passed':result['rows']==expected})
+            else:
+                result = decode_result(await session.call_tool("query", {
+                    "sql": "SELECT COUNT(*) AS n FROM shots WHERE hit_area IS NOT NULL OR landing_area IS NOT NULL"}))
+                checks.append({"id": "no_invented_zone_mapping", "passed": result["rows"] == [{"n": 0}]})
     db.close()
     checks.append(await plumbing(bank))
     return checks
@@ -89,6 +97,8 @@ async def plumbing(bank):
     from nanobot.config.loader import load_config, resolve_config_env_vars
     from nanobot.providers.base import LLMProvider, LLMResponse, ToolCallRequest
     chart_match=bank.get('chart_match','legacy_match_1')
+    players=bank.get('chart_players',{'player_a':'Kento MOMOTA','player_b':'CHOU Tien Chen'})
+    player_caption=f"A＝{players.get('player_a') or '未知'}；B＝{players.get('player_b') or '未知'}。"
 
     class ScriptedProvider(LLMProvider):
         def __init__(self):
@@ -122,9 +132,11 @@ async def plumbing(bank):
                 raise RuntimeError("Python calculation failed: " + results[3][:300])
             calculated, _ = json.JSONDecoder().raw_decode(results[3].lstrip())
             data = calculated["rows"]
-            bars = ''.join(f'<text x="10" y="{30+i*55}" fill="var(--color-text-primary, #202020)">{r["player"]}: {r["pct"]}%</text><rect x="100" y="{12+i*55}" width="{r["pct"]*3}" height="25" fill="#287b72"/>' for i, r in enumerate(data))
-            chart = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 130" role="img" aria-label="Plumbing test: shot proportions">' + bars + '</svg>'
-            return LLMResponse(content="離線工具流程驗證（固定步驟，未呼叫 Luna）。A＝Kento MOMOTA；B＝CHOU Tien Chen。\n```json\n" + json.dumps(calculated) + "\n```\n```visualizer\n" + chart + "\n```")
+            from html import escape
+            bars = ''.join(f'<text x="10" y="{30+i*55}" fill="var(--color-text-primary, #202020)">{escape(r["player"] or "未標註")}: {r["pct"]}%</text><rect x="150" y="{12+i*55}" width="{r["pct"]*2.3}" height="25" fill="#287b72"/>' for i, r in enumerate(data))
+            chart = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 {max(130,20+55*len(data))}" role="img" aria-label="Plumbing test: shot proportions">' + bars + '</svg>'
+            missing_note = '空白球員標註另列為「未標註」，比例分母包含這些資料。' if any(not r['player'] for r in data) else ''
+            return LLMResponse(content="離線工具流程驗證（固定步驟，未呼叫 Luna）。"+player_caption+missing_note+"\n```json\n" + json.dumps(calculated) + "\n```\n```visualizer\n" + chart + "\n```")
 
     cfg = resolve_config_env_vars(load_config())
     # A separate workspace/session store prevents test data from entering user conversations.
@@ -217,6 +229,7 @@ async def main(mode):
     bank = load_bank()
     checks = await (offline(bank) if mode == "offline" else live(bank))
     report = {"mode": mode, "time": datetime.now(timezone.utc).isoformat(),
+              "dataset": bank.get('dataset','legacy'), "dataset_revision": bank.get('revision'),
               "model_validation": "not_run" if mode == "offline" else "live",
               "passed": sum(bool(c["passed"]) for c in checks), "total": len(checks), "checks": checks}
     directory = BASE / "results/benchmark-runs" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S") + "-" + uuid.uuid4().hex[:8])

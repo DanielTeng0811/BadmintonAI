@@ -18,6 +18,31 @@ REVISION = "7cccbb18aba8bcfa096f22b923fb2aa16326e6ed"
 def dataset_context():
     manifest_path=RUNTIME / 'data/manifest.json'
     manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    if manifest.get('dataset')=='huggingface':
+        return f'''The ACTIVE dataset is Hugging Face howard9199/Badminton, revision {manifest['revision']}.
+It contains {manifest['matches']} catalog entries ({manifest['official_matches']} official,
+{manifest['practice_catalog']} practice-only catalog entries), {manifest['labeled_matches']} matches with
+{manifest['shots']} parsed shot annotations, and {manifest['rallies']} source rally segments.
+All active matches.source values are hf; the previous ShuttleSet database is backed up,
+not combined into these totals. Historical saved charts refer to their original sources.
+Inspect matches and match_sources before interpreting A/B. match_info.csv is authoritative
+where present; otherwise the pinned upstream parser derives names using folder order and
+RallySeg. A is NOT universally the winner. Unknown player names and years remain NULL.
+Use matches.is_practice=0 for official match counts; practice labels are excluded.
+Remote clip metadata is in remote_videos (repo_path, bytes, remote_url, availability=listed),
+and rallies.remote_video_available indicates an exact match in that inventory.
+remote_match_videos retains full-match video inventory. excluded_annotations retains
+unsupported set-number rows (e.g. set4), excluded from shots like the original importer.
+No MP4 has been downloaded: rallies.has_video=0 and video_filename=NULL mean no local clip.
+Do not automatically fetch videos or say they are locally playable. Remote URLs need the
+user's HF authorization. matches.video_url retains source YouTube links where provided.
+shot_sources links shot_id to every accepted raw CSV row, including frame_num/end_frame_num.
+hf_source_files records source checksums. Source hit_area/landing_area follow the pinned
+upstream parser; inspect the schema and source annotations before interpreting court grids.
+No remote analyze/reels service or model capability has been newly authorized by HF access.
+Use actual catalog names, not historical sample names. For annotated landing winners use
+win_reason='落地致勝'; nonempty win_reason also includes opponent errors.
+'''
     if manifest.get('dataset')=='shuttleset_merged':
         return f'''This installation contains the deduplicated ShuttleSet + ShuttleSet22:
 {manifest['matches']} matches, {manifest['shots']} distinct shot annotations and {manifest['rallies']} rallies, spanning 2018–2022.
@@ -56,9 +81,11 @@ def run(args, **kwargs):
     return subprocess.run(args, cwd=ROOT, check=True, **kwargs)
 
 
-def compose(*args):
+def compose(*args, **kwargs):
+    from badminton_gpt_reels import DIRECTORY, enabled
+    overlays = ["-f", str(DIRECTORY / "compose.json")] if enabled() else []
     return run(["docker", "compose", "--env-file", str(ROOT / ".env"),
-                "-f", str(ROOT / "compose.badminton-gpt.yml"), *args])
+                "-f", str(ROOT / "compose.badminton-gpt.yml"), *overlays, *args], **kwargs)
 
 
 def prepare_build():
@@ -66,6 +93,8 @@ def prepare_build():
     destination = RUNTIME / "build"
     shutil.copytree(UPSTREAM, destination, dirs_exist_ok=True,
                     ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__", "node_modules", "data"))
+    manifest_path = RUNTIME / 'data/manifest.json'
+    hf = manifest_path.exists() and json.loads(manifest_path.read_text()).get('dataset') == 'huggingface'
     for path in (destination / "vendor/nanobot/webui/src/i18n/locales").glob("*/common.json"):
         zh = path.parent.name.startswith("zh")
         content = json.loads(path.read_text())
@@ -76,11 +105,15 @@ def prepare_build():
         empty["examples"]["label"] = "先設定可用的 Luna API 金鑰，再試試以下問題" if zh else "Configure your Luna API key, then try these questions"
         examples = {
             "data": ("資料範圍", "列出目前資料庫的所有比賽紀錄、球員，以及每筆紀錄的拍數。", "Dataset catalog", "List all match records, their players and shot counts in the current database."),
-            "reel": ("影片來源", "哪些比賽有原始影片網址？請保留來源連結並說明尚未驗證播放狀態。", "Video sources", "List original video URLs and note that availability has not been verified."),
-            "chart": ("球種圖表", "畫長條圖呈現 2022 年所有比賽的球種次數分布。", "Shot distribution", "Draw a bar chart of shot-type counts across the 2022 matches."),
-            "analysis": ("球員比較", "計算 2019 福州公開賽男單決賽兩位球員的出手次數與百分比。", "Player comparison", "Compare player shot counts and percentages in the 2019 Fuzhou Open men's singles final."),
+            "reel": ("影片清單", "目前有多少回合在 HF 遠端影片清單中有對應？請區分遠端清單與本機已下載影片。", "Video inventory", "Count rallies with remote HF clips and distinguish listed videos from locally downloaded files."),
+            "chart": ("球種圖表", "畫長條圖呈現 2025 年所有正式比賽的球種次數分布。", "Shot distribution", "Draw a bar chart of shot-type counts across official 2025 matches."),
+            "analysis": ("球員比較", "計算 2025game1 兩位球員的出手次數與百分比，先查明 A/B 姓名。", "Player comparison", "Compare player shot counts and percentages in 2025game1 after checking A/B names."),
             "search": ("年份統計", "依年份列出目前資料庫的比賽數。", "Yearly catalog", "Count the available matches by year."),
         }
+        if not hf:
+            examples['reel'] = ("影片連結", "列出資料中的原始影片連結，並說明是否有本機回合影片。", "Video links", "List source video links and report whether local rally clips exist.")
+            examples['chart'] = ("球種圖表", "畫長條圖呈現 2022 年正式比賽的球種次數分布。", "Shot distribution", "Draw a bar chart of shot-type counts across official 2022 matches.")
+            examples['analysis'] = ("球員比較", "比較 2019 福州決賽 Momota 與 Chou 的出手次數與百分比。", "Player comparison", "Compare shot counts and percentages for Momota and Chou in the 2019 Fuzhou final.")
         for key, (zt, zp, et, ep) in examples.items():
             empty["examples"][key] = {"title": zt if zh else et, "prompt": zp if zh else ep}
         path.write_text(json.dumps(content, ensure_ascii=False, indent=2) + "\n")
@@ -157,15 +190,52 @@ shot type must distinguish the hitter from the point winner.
         "disabled_remote_services": ["badminton-analyze", "badminton-video-retrieval", "badminton-reels"],
         "model_validation": "pending_user_api_key",
     }, ensure_ascii=False, indent=2) + "\n")
+    from badminton_gpt_reels import configure
+    configure()
     print(f"Prepared {RUNTIME}; no model request was made.")
 
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("command", choices=["setup", "build", "ingest", "up", "down", "status", "logs", "verify", "benchmark", "preview", "verify-auth"])
+    p.add_argument("command", choices=["setup", "build", "ingest", "up", "down", "status", "logs", "verify", "benchmark", "preview", "verify-auth", "sync-hf", "reels-enable", "reels-disable", "reels-verify"])
+    p.add_argument("--reels-path", default=str(ROOT.parent / "badminton-reels"), help="Local reels source and .env; used only by reels-enable")
     p.add_argument("--live", action="store_true", help="Explicitly run paid model evaluation")
+    p.add_argument("--test-model", help="reels-verify --live only: model override for that test process")
+    p.add_argument("--test-reels-key", action="store_true", help="reels-verify --live only: use the reels OpenAI credentials in the test process; no config is saved")
+    p.add_argument('--source',choices=['hf','shuttleset'],default='hf',help='Dataset for ingest (default: authorized HF CSV snapshot)')
+    p.add_argument('--revision',help='Optional full HF dataset commit SHA')
     args = p.parse_args()
-    if args.command == "setup":
+    if args.command == "reels-verify":
+        from badminton_gpt_reels import enabled
+        if not enabled():
+            raise RuntimeError("Run reels-enable first")
+        compose("exec", "-T", "gateway", "python3", "/app/local/reels-verification.py", "--mode", "mcp")
+        compose("--profile", "auth-test", "run", "--rm", "--no-deps", "auth-test", "python3", "/app/reels-verification.py", "--mode", "http")
+        if args.live:
+            credentials = None
+            if args.test_reels_key:
+                from badminton_gpt_reels import test_credentials
+                credentials = test_credentials()
+            compose("exec", "-T", "gateway", "python3", "/app/local/reels-verification.py", "--mode", "agent",
+                    *(["--model", args.test_model] if args.test_model else []),
+                    *(["--credentials-stdin"] if credentials else []),
+                    **({"input": credentials, "text": True} if credentials else {}))
+    elif args.command == "reels-enable":
+        from badminton_gpt_reels import enable
+        enable(args.reels_path)
+        setup()
+        compose("up", "-d", "--build", "--wait", "--wait-timeout", "180", "auth", "gateway", "badminton-reels")
+        print("Local reels enabled for BadmintonGPT at http://127.0.0.1:8765")
+    elif args.command == "reels-disable":
+        from badminton_gpt_reels import MARKER, enabled
+        if enabled():
+            compose("stop", "badminton-reels")
+            MARKER.unlink()
+        setup()
+        compose("up", "-d", "--wait", "auth", "gateway")
+    elif args.command == "sync-hf":
+        run([sys.executable, str(ROOT / 'scripts/sync_huggingface_data.py')]+(['--revision',args.revision] if args.revision else []))
+    elif args.command == "setup":
         setup()
     elif args.command == "build":
         setup()
@@ -173,9 +243,14 @@ def main():
         compose("build")
     elif args.command == "ingest":
         setup()
-        # Frozen expectations come from a separate CSV reader, before changing the live DB.
-        run([sys.executable, str(ROOT / 'scripts/create_shuttleset_benchmark.py'), '--verify'])
-        run([sys.executable, str(ROOT / 'scripts/import_shuttleset_data.py')])
+        if args.source=='hf':
+            run([sys.executable,str(ROOT/'scripts/activate_huggingface_data.py')]+(['--revision',args.revision] if args.revision else []))
+        else:
+            from activate_huggingface_data import backup_active
+            backup_active()
+            run([sys.executable, str(ROOT / 'scripts/create_shuttleset_benchmark.py'), '--verify'])
+            run([sys.executable, str(ROOT / 'scripts/import_shuttleset_data.py')])
+        setup()
     elif args.command == "up":
         setup()
         if not (RUNTIME / "data/badminton.db").exists():
